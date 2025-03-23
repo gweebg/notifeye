@@ -20,7 +20,7 @@ config :notifeye, NotifeyeWeb.Endpoint,
     layout: false
   ],
   pubsub_server: Notifeye.PubSub,
-  live_view: [signing_salt: "DenOm3iI"]
+  live_view: [signing_salt: "7LpMwmWz"]
 
 # Configures the mailer
 #

@@ -7,7 +7,7 @@ defmodule NotifeyeWeb.Endpoint do
   @session_options [
     store: :cookie,
     key: "_notifeye_key",
-    signing_salt: "sIqxLwWg",
+    signing_salt: "nVQIqEAW",
     same_site: "Lax"
   ]
 

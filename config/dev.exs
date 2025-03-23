@@ -23,7 +23,7 @@ config :notifeye, NotifeyeWeb.Endpoint,
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
-  secret_key_base: "dsWpknO7keO0V2SbflJjTEuwrYp3BFCFH/oE0DQpTNuVrquHy6SUq/0D6PKedHWw",
+  secret_key_base: "58EK7Y1OyxtZ+7H3CjNR7AyF2jA++nLGjMIlYY1fSCfkRlQYC7yKLYcl6GAQPW8h",
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:notifeye, ~w(--sourcemap=inline --watch)]},
     tailwind: {Tailwind, :install_and_run, [:notifeye, ~w(--watch)]}
