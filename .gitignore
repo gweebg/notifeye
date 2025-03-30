@@ -35,3 +35,7 @@ notifeye-*.tar
 npm-debug.log
 /assets/node_modules/
 
+# Ignore dev & prod .env
+.env.dev
+.env.prod
+
