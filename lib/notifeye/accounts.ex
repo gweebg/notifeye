@@ -96,8 +96,7 @@ defmodule Notifeye.Accounts do
       |> String.split("@")
       |> hd()
       |> String.split(".")
-      |> Enum.map(&String.capitalize/1)
-      |> Enum.join(" ")
+      |> Enum.map_join(&String.capitalize/1, " ")
 
     Ecto.Changeset.put_change(changeset, :name, name)
   end
