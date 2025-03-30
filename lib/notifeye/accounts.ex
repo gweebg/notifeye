@@ -77,8 +77,32 @@ defmodule Notifeye.Accounts do
   def register_user(attrs) do
     %User{}
     |> User.registration_changeset(attrs)
+    |> add_name_from_email()
+    |> add_role()
     |> Repo.insert()
   end
+
+  defp add_role(%Ecto.Changeset{valid?: true} = changeset) do
+    Ecto.Changeset.put_change(changeset, :role, :user)
+  end
+
+  defp add_role(changeset) do
+    changeset
+  end
+
+  defp add_name_from_email(%Ecto.Changeset{valid?: true, changes: %{email: email}} = changeset) do
+    name =
+      email
+      |> String.split("@")
+      |> hd()
+      |> String.split(".")
+      |> Enum.map(&String.capitalize/1)
+      |> Enum.join(" ")
+
+    Ecto.Changeset.put_change(changeset, :name, name)
+  end
+
+  defp add_name_from_email(changeset), do: changeset
 
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking user changes.
