@@ -43,7 +43,7 @@ defmodule NotifeyeWeb do
         layouts: [html: NotifeyeWeb.Layouts]
 
       import Plug.Conn
-      import NotifeyeWeb.Gettext
+      use Gettext, backend: NotifeyeWeb.Gettext
 
       unquote(verified_routes())
     end
@@ -85,7 +85,7 @@ defmodule NotifeyeWeb do
       import Phoenix.HTML
       # Core UI components and translation
       import NotifeyeWeb.CoreComponents
-      import NotifeyeWeb.Gettext
+      use Gettext, backend: NotifeyeWeb.Gettext
 
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS
