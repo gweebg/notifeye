@@ -2,7 +2,7 @@ services:
   db:
     image: postgres:14.1
     container_name: notifeye_db_dev
-    env_file: .env.dev
+    env_file: .envrc
     environment:
       POSTGRES_USER: ${DB_USERNAME:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}

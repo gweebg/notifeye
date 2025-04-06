@@ -9,7 +9,9 @@ import Config
 
 config :notifeye,
   ecto_repos: [Notifeye.Repo],
-  generators: [timestamp_type: :utc_datetime]
+  generators: [timestamp_type: :utc_datetime],
+  logz_base_url: System.get_env("LOGZ_BASE_URL", "https://api.logz.io/v2"),
+  logz_api_key: System.get_env("LOGZ_API_KEY")
 
 # Configures the endpoint
 config :notifeye, NotifeyeWeb.Endpoint,
