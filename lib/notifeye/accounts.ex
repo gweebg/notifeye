@@ -6,7 +6,7 @@ defmodule Notifeye.Accounts do
   import Ecto.Query, warn: false
   alias Notifeye.Repo
 
-  alias Notifeye.Accounts.{User, UserToken, UserNotifier}
+  alias Notifeye.Accounts.{User, UserNotifier, UserToken}
 
   ## Database getters
 

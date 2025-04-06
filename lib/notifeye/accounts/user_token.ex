@@ -1,4 +1,6 @@
 defmodule Notifeye.Accounts.UserToken do
+  @moduledoc false
+
   use Ecto.Schema
   import Ecto.Query
   alias Notifeye.Accounts.UserToken

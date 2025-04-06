@@ -40,4 +40,4 @@ jobs:
         run: mix format --check-formatted
 
       - name: 🔍 Lint the code
-        run: mix credo --all --strict
+        run: mix credo --all

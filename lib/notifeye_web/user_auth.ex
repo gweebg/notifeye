@@ -1,4 +1,6 @@
 defmodule NotifeyeWeb.UserAuth do
+  @moduledoc false
+
   use NotifeyeWeb, :verified_routes
 
   import Plug.Conn
