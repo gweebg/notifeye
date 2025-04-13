@@ -8,6 +8,11 @@ defmodule Logzio.LogzioClient do
   @impl true
   def me, do: endpoint("/whoami")
 
+  @impl true
+  def get_alert_by_id(alert_id) when is_integer(alert_id) and alert_id > 0 do
+    endpoint("/alerts/#{alert_id}")
+  end
+
   defp endpoint(path, method \\ :get, params \\ []) when method in [:get, :post] do
     url = put_params(base_url() <> path, params)
 

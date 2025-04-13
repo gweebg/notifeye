@@ -7,4 +7,7 @@ defmodule Logzio.Logzio do
 
   @callback me() :: return()
   defdelegate me, to: @adapter
+
+  @callback get_alert_by_id(pos_integer()) :: return()
+  defdelegate get_alert_by_id(alert_id), to: @adapter
 end
