@@ -37,7 +37,3 @@ npm-debug.log
 
 # Ignore env variables
 .envrc
-
-# Ignore personal documentation
-docs/
-
