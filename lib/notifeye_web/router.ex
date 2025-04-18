@@ -24,9 +24,11 @@ defmodule NotifeyeWeb.Router do
   end
 
   # Other scopes may use custom stacks.
-  # scope "/api", NotifeyeWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", NotifeyeWeb do
+    pipe_through :api
+
+    post "/alerts", AlertController, :create
+  end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:notifeye, :dev_routes) do
