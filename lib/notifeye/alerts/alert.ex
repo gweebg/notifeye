@@ -9,8 +9,10 @@ defmodule Notifeye.Alerts.Alert do
   schema "alerts" do
     field :alert_id, :string
     field :definition_id, :string
+
     field :title, :string
     field :description, :string
+
     field :severity, :string
     field :tags, :string
     field :samples, :string

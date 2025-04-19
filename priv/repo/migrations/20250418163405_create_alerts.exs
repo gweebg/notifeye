@@ -5,10 +5,12 @@ defmodule Notifeye.Repo.Migrations.CreateAlerts do
     create table(:alerts, primary_key: false) do
       add :id, :binary_id, primary_key: true
       add :alert_id, :string
+      add :definition_id, :string
+
       add :title, :string
       add :description, :text
-      add :definition_id, :string
       add :severity, :string
+
       add :tags, :string
       add :samples, :text
 
