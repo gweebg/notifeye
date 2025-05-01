@@ -6,9 +6,7 @@ defmodule Notifeye.Repo.Migrations.CreateUsersAuthTables do
 
     create table(:users) do
       add :email, :citext, null: false
-      add :name, :string
-      add :role, :string, null: false
-      add :hashed_password, :string, null: false
+      add :hashed_password, :string
       add :confirmed_at, :utc_datetime
 
       timestamps(type: :utc_datetime)
@@ -21,6 +19,7 @@ defmodule Notifeye.Repo.Migrations.CreateUsersAuthTables do
       add :token, :binary, null: false
       add :context, :string, null: false
       add :sent_to, :string
+      add :authenticated_at, :utc_datetime
 
       timestamps(type: :utc_datetime, updated_at: false)
     end

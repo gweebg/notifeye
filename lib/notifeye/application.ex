@@ -12,8 +12,6 @@ defmodule Notifeye.Application do
       Notifeye.Repo,
       {DNSCluster, query: Application.get_env(:notifeye, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Notifeye.PubSub},
-      # Start the Finch HTTP client for sending emails
-      {Finch, name: Notifeye.Finch},
       # Start a worker by calling: Notifeye.Worker.start_link(arg)
       # {Notifeye.Worker, arg},
       # Start to serve requests, typically the last entry

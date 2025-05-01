@@ -38,12 +38,11 @@ defmodule NotifeyeWeb do
 
   def controller do
     quote do
-      use Phoenix.Controller,
-        formats: [:html, :json],
-        layouts: [html: NotifeyeWeb.Layouts]
+      use Phoenix.Controller, formats: [:html, :json]
+
+      use Gettext, backend: NotifeyeWeb.Gettext
 
       import Plug.Conn
-      use Gettext, backend: NotifeyeWeb.Gettext
 
       unquote(verified_routes())
     end
@@ -51,8 +50,7 @@ defmodule NotifeyeWeb do
 
   def live_view do
     quote do
-      use Phoenix.LiveView,
-        layout: {NotifeyeWeb.Layouts, :app}
+      use Phoenix.LiveView
 
       unquote(html_helpers())
     end
@@ -81,14 +79,17 @@ defmodule NotifeyeWeb do
 
   defp html_helpers do
     quote do
-      # HTML escaping functionality
-      import Phoenix.HTML
-      # Core UI components and translation
-      import NotifeyeWeb.CoreComponents
+      # Translation
       use Gettext, backend: NotifeyeWeb.Gettext
 
-      # Shortcut for generating JS commands
+      # HTML escaping functionality
+      import Phoenix.HTML
+      # Core UI components
+      import NotifeyeWeb.CoreComponents
+
+      # Common modules used in templates
       alias Phoenix.LiveView.JS
+      alias NotifeyeWeb.Layouts
 
       # Routes generation with the ~p sigil
       unquote(verified_routes())

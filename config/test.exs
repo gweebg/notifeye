@@ -20,7 +20,7 @@ config :notifeye, Notifeye.Repo,
 # you can enable the server option below.
 config :notifeye, NotifeyeWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
-  secret_key_base: "95BHcH8lPLEMKcdulT4rRoV65NfTz+jTuMOkJGA8Xun0XngBZ1IvmeBX1x3Ky/Xp",
+  secret_key_base: "mlP9ppoHcRtg+xypIQauESV1JHdLgLFXLRbSIuDy5dKwtmXvlK/GQu45F+qlUHBW",
   server: false
 
 # In test we don't send emails
