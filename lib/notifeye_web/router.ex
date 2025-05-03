@@ -16,6 +16,7 @@ defmodule NotifeyeWeb.Router do
   pipeline :api do
     plug :accepts, ["json"]
     plug :fetch_current_scope_for_api_user
+    plug NotifeyeWeb.Plugs.LogRequestBody
   end
 
   scope "/", NotifeyeWeb do
@@ -24,10 +25,11 @@ defmodule NotifeyeWeb.Router do
     get "/", PageController, :home
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", NotifeyeWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", NotifeyeWeb do
+    pipe_through :api
+
+    post "/alerts", AlertController, :create
+  end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:notifeye, :dev_routes) do
