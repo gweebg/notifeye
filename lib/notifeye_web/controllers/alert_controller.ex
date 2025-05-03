@@ -3,6 +3,7 @@ defmodule NotifeyeWeb.AlertController do
 
   alias Notifeye.Monitoring
   alias Notifeye.Monitoring.Alert
+  alias NotifeyeWeb.AlertJSON
 
   action_fallback NotifeyeWeb.FallbackController
 
@@ -11,7 +12,7 @@ defmodule NotifeyeWeb.AlertController do
            Monitoring.create_alert(conn.assigns.current_scope, alert_params) do
       conn
       |> put_status(:created)
-      |> json(alert)
+      |> json(AlertJSON.show(%{alert: alert}))
     end
   end
 end
