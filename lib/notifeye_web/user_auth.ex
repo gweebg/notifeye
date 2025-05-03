@@ -100,6 +100,20 @@ defmodule NotifeyeWeb.UserAuth do
     end
   end
 
+  def fetch_current_scope_for_api_user(conn, _opts) do
+    with [<<bearer::binary-size(6), " ", token::binary>>] <-
+           get_req_header(conn, "authorization"),
+         true <- String.downcase(bearer) == "bearer",
+         {:ok, user} <- Accounts.fetch_user_by_api_token(token) do
+      assign(conn, :current_scope, Scope.for_user(user))
+    else
+      _ ->
+        conn
+        |> send_resp(:unauthorized, "No access for you :)")
+        |> halt()
+    end
+  end
+
   # This function is the one responsible for creating session tokens
   # and storing them safely in the session and cookies. It may be called
   # either when logging in, during sudo mode, or to renew a session which

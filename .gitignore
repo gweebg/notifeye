@@ -38,4 +38,7 @@ npm-debug.log
 # Ignore env variables
 .envrc
 
-docs/collect
+# Documentation
+/docs/collect
+_old
+.elixir_ls
