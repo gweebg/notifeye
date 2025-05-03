@@ -7,13 +7,6 @@ on:
       - "**/*.ex"
       - "**/*.exs"
       - "**/*.html.heex"
-  # pull_request:
-  #   branches: [main, develop]
-  #   types: [opened, synchronize]
-  #   paths:
-  #     - "**/*.ex"
-  #     - "**/*.exs"
-  #     - "**/*.html.heex"
 
 jobs:
   style:
