@@ -30,4 +30,8 @@ However, it also comes with some disadvantages:
 + **Potential latency**:  
     - Depending on the network setup, there might be slight delays when accessing the development environment remotely.  
 
+### Security
 
+Due to the need of exposing the application to the internet and due to it being a development build, I took the decision of only allowing certain IP addresses to access the application.
+
+This behaviour is achieved via the configuration of an access control list at the virtual host (reverse proxy level).
