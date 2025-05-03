@@ -16,7 +16,6 @@ defmodule NotifeyeWeb.Router do
   pipeline :api do
     plug :accepts, ["json"]
     plug :fetch_current_scope_for_api_user
-    plug NotifeyeWeb.Plugs.LogRequestBody
   end
 
   scope "/", NotifeyeWeb do
