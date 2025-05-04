@@ -20,7 +20,7 @@ defmodule Notifeye.MixProject do
   def application do
     [
       mod: {Notifeye.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :logger_file_backend, :runtime_tools]
     ]
   end
 
@@ -60,7 +60,8 @@ defmodule Notifeye.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
-      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:logger_file_backend, "~> 0.0.10", only: [:dev]}
     ]
   end
 
