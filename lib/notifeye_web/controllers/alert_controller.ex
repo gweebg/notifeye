@@ -11,7 +11,7 @@ defmodule NotifeyeWeb.AlertController do
 
   def create(conn, %{"alert" => alert_params}) do
     # temporary logging for alert discovery
-    Logger.debug("alert: #{inspect(alert_params)}", request_logger: true)
+    Logger.debug("#{inspect(alert_params)}", request_logger: true)
 
     with {:ok, %Alert{} = alert} <-
            Monitoring.create_alert(conn.assigns.current_scope, alert_params) do

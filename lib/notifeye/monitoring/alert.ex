@@ -4,7 +4,8 @@ defmodule Notifeye.Monitoring.Alert do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @required_fields ~w(logz_id alert_title alert_description alert_severity alert_event_samples alert_tags start end)a
+  @fields ~w(logz_id alert_title alert_description alert_severity alert_event_samples alert_tags start end)a
+  @required_fields ~w(logz_id alert_title alert_severity alert_event_samples alert_tags)a
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -25,7 +26,7 @@ defmodule Notifeye.Monitoring.Alert do
   @doc false
   def changeset(alert, attrs, user_scope) do
     alert
-    |> cast(attrs, @required_fields)
+    |> cast(attrs, @fields)
     |> validate_required(@required_fields)
     |> put_change(:user_id, user_scope.user.id)
   end
