@@ -10,6 +10,14 @@ defmodule Notifeye.EctoTypes.UnixTimestamp do
   def type, do: :utc_datetime
 
   def cast(timestamp) when is_integer(timestamp), do: DateTime.from_unix(timestamp)
+
+  def cast(timestamp) when is_binary(timestamp) do
+    case Integer.parse(timestamp) do
+      {int, _} -> DateTime.from_unix(int)
+      :error -> :error
+    end
+  end
+
   def cast(_), do: :error
 
   def dump(value), do: Type.dump(:utc_datetime, value)
