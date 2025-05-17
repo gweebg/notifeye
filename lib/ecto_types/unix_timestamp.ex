@@ -9,7 +9,7 @@ defmodule Notifeye.EctoTypes.UnixTimestamp do
 
   def type, do: :utc_datetime
 
-  def cast(timestamp) when is_integer(timestamp), do: DateTime.from_unix(timestamp)
+  def cast(timestamp) when is_integer(timestamp), do: DateTime.from_unix(timestamp, :millisecond)
 
   def cast(timestamp) when is_binary(timestamp) do
     with {int, _} <- Integer.parse(timestamp),
