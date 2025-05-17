@@ -2,12 +2,18 @@ name: Code Quality
 
 on:
   push:
-    branches: [main, actions]
+    branches: [main, development]
     paths:
       - "**/*.ex"
       - "**/*.exs"
       - "**/*.html.heex"
-
+  pull_request:
+    branches: [main, development]
+    types: [opened, synchronize]
+    paths:
+      - '**/*.ex'
+      - '**/*.exs'
+      - '**/*.html.heex'
 jobs:
   style:
     runs-on: ubuntu-latest
