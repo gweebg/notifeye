@@ -13,7 +13,7 @@ defmodule Notifeye.EctoTypes.UnixTimestamp do
 
   def cast(timestamp) when is_binary(timestamp) do
     with {int, _} <- Integer.parse(timestamp),
-         {:ok, datetime} = DateTime.from_unix(int, :millisecond) do
+         {:ok, datetime} <- DateTime.from_unix(int, :millisecond) do
       {:ok, DateTime.truncate(datetime, :second)}
     else
       error -> error
