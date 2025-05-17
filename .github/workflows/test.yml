@@ -2,11 +2,18 @@ name: Build and Test
 
 on:
   push:
-    branches: [main, actions]
+    branches: [main, development]
     paths:
       - "**/*.ex"
       - "**/*.exs"
       - "**/*.html.heex"
+  pull_request:
+    branches: [main, development]
+    types: [opened, synchronize]
+    paths:
+      - '**/*.ex'
+      - '**/*.exs'
+      - '**/*.html.heex'
 jobs:
   build:
     runs-on: ubuntu-latest
