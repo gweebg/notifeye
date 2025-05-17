@@ -12,9 +12,11 @@ defmodule Notifeye.EctoTypes.UnixTimestamp do
   def cast(timestamp) when is_integer(timestamp), do: DateTime.from_unix(timestamp)
 
   def cast(timestamp) when is_binary(timestamp) do
-    case Integer.parse(timestamp) do
-      {int, _} -> DateTime.from_unix(int)
-      :error -> :error
+    with {int, _} <- Integer.parse(timestamp),
+         {:ok, datetime} = DateTime.from_unix(int, :millisecond) do
+      {:ok, DateTime.truncate(datetime, :second)}
+    else
+      error -> error
     end
   end
 
