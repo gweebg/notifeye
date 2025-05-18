@@ -15,9 +15,9 @@ defmodule Notifeye.MonitoringFixtures do
         alert_severity: "some alert_severity",
         alert_tags: ["option1", "option2"],
         alert_title: "some alert_title",
-        end: ~U[2025-05-02 15:02:00Z],
+        end: "1747064520000",
         logz_id: "some logz_id",
-        start: ~U[2025-05-02 15:02:00Z]
+        start: "1747067000000"
       })
 
     {:ok, alert} = Notifeye.Monitoring.create_alert(scope, attrs)
