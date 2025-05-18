@@ -2,13 +2,13 @@ name: Code Quality
 
 on:
   push:
-    branches: [main, development]
+    branches: [main, develop]
     paths:
       - "**/*.ex"
       - "**/*.exs"
       - "**/*.html.heex"
   pull_request:
-    branches: [main, development]
+    branches: [main, develop]
     types: [opened, synchronize]
     paths:
       - '**/*.ex'
