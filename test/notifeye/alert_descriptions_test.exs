@@ -21,11 +21,15 @@ defmodule Notifeye.AlertDescriptionsTest do
     end
 
     test "create_alert_description/1 with valid data creates a alert_description" do
-      valid_attrs = %{enabled: true, pattern: "some pattern", verified: true}
+      scope = Notifeye.AccountsFixtures.user_scope_fixture()
+      alert = Notifeye.MonitoringFixtures.alert_fixture(scope)
+
+      valid_attrs = %{id: alert.logz_id, enabled: true, pattern: "some pattern", verified: true}
 
       assert {:ok, %AlertDescription{} = alert_description} =
                AlertDescriptions.create_alert_description(valid_attrs)
 
+      assert alert_description.id == alert.logz_id
       assert alert_description.enabled == true
       assert alert_description.pattern == "some pattern"
       assert alert_description.verified == true
