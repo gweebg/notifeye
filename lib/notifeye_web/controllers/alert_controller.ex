@@ -9,6 +9,13 @@ defmodule NotifeyeWeb.AlertController do
 
   action_fallback NotifeyeWeb.FallbackController
 
+  def index(conn, _params) do
+    alerts = Monitoring.list_alerts(conn.assigns.current_scope)
+
+    conn
+    |> json(AlertJSON.index(%{alerts: alerts}))
+  end
+
   def create(conn, %{"alert" => alert_params}) do
     # temporary logging for alert discovery
     Logger.debug("#{inspect(alert_params)}", request_logger: true)

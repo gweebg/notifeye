@@ -27,7 +27,10 @@ defmodule NotifeyeWeb.Router do
   scope "/api", NotifeyeWeb do
     pipe_through :api
 
-    post "/alerts", AlertController, :create
+    scope "/alerts" do
+      get "/", AlertController, :index
+      post "/", AlertController, :create
+    end
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
