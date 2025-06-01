@@ -58,8 +58,7 @@ defmodule Notifeye.Accounts.User do
     |> String.split("@")
     |> hd()
     |> String.split(".")
-    |> Enum.map(&String.capitalize/1)
-    |> Enum.join(" ")
+    |> Enum.map_join(" ", &String.capitalize/1)
   end
 
   defp validate_email(changeset, opts) do
@@ -188,14 +187,14 @@ defmodule Notifeye.Accounts.User do
   defp validate_lead_id(changeset) do
     lead_id = get_field(changeset, :lead_id)
 
-    if lead_id && !is_lead_user?(lead_id) do
+    if lead_id && !lead_user?(lead_id) do
       add_error(changeset, :lead_id, "must be a valid lead user")
     else
       changeset
     end
   end
 
-  defp is_lead_user?(user_id) do
+  defp lead_user?(user_id) do
     user = Accounts.get_user!(user_id)
     user.role == :lead
   end
