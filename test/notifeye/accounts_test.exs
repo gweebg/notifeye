@@ -99,10 +99,6 @@ defmodule Notifeye.AccountsTest do
       assert user.username == username
     end
 
-    # only user with admin or lead role can set lead_id on users
-    # lead_id always corresponds to a user with lead/admin role
-    # deleting a lead user will set lead_id to nil on all users with that lead_id
-
     test "registers users without password" do
       email = unique_user_email()
       {:ok, user} = Accounts.register_user(valid_user_attributes(email: email))
@@ -420,6 +416,59 @@ defmodule Notifeye.AccountsTest do
       token = Accounts.create_user_api_token(user)
       assert Accounts.fetch_user_by_api_token(token) == {:ok, user}
       assert Accounts.fetch_user_by_api_token("invalid") == :error
+    end
+  end
+
+  # lead_id always corresponds to a user with lead/admin role
+  describe "update_user_role/3" do
+    defp create_user_with_role(role) do
+      user_fixture_with_role(%{}, role)
+      |> user_scope_fixture()
+    end
+
+    test "updates user role if user has admin role" do
+      admin_scope = create_user_with_role(:admin)
+      user = user_fixture()
+
+      for target_role <- [:user, :lead, :admin] do
+        assert {:ok, updated_user} = Accounts.update_user_role(admin_scope, user, target_role)
+        assert updated_user.role == target_role
+        assert Repo.get!(User, user.id).role == target_role
+      end
+    end
+
+    test "updates user role to :lead or :user if user has lead role" do
+      lead_scope = create_user_with_role(:lead)
+      user = user_fixture()
+
+      for target_role <- [:user, :lead] do
+        assert {:ok, updated_user} = Accounts.update_user_role(lead_scope, user, target_role)
+        assert updated_user.role == target_role
+        assert Repo.get!(User, user.id).role == target_role
+      end
+    end
+
+    test "lead cannot promote user to :admin" do
+      lead_scope = create_user_with_role(:lead)
+      user = user_fixture()
+
+      assert {:error, _reason} = Accounts.update_user_role(lead_scope, user, :admin)
+    end
+
+    test "user cannot promote user to any role" do
+      lead_scope = create_user_with_role(:user)
+      user = user_fixture()
+
+      for target_role <- [:user, :lead, :admin] do
+        assert {:error, _reason} = Accounts.update_user_role(lead_scope, user, target_role)
+      end
+    end
+
+    test "promoting to a non-existing role is not possible" do
+      lead_scope = create_user_with_role(:admin)
+      user = user_fixture()
+
+      assert {:error, _reason} = Accounts.update_user_role(lead_scope, user, :invalid_role)
     end
   end
 end

@@ -7,6 +7,7 @@ defmodule Notifeye.Accounts do
   alias Notifeye.Repo
 
   alias Notifeye.Accounts.{User, UserToken, UserNotifier}
+  alias Notifeye.Accounts.Scope
 
   ## Database getters
 
@@ -331,4 +332,37 @@ defmodule Notifeye.Accounts do
       _ -> :error
     end
   end
+
+  @roles ~w(admin lead user)a
+
+  @doc """
+  Updates the user role, if and only if the user has the role of `:admin` or `:lead`.
+
+  Returns `{:ok, user}` if the role was updated successfully, or `{:error, reason}` if the user
+  does not have permission to change roles.
+  ## Examples
+
+      iex> update_user_role(%User{role: :admin}, :user)
+      {:ok, %User{role: :user}}
+
+      iex> update_user_role(%User{role: :lead}, :invalid_role)
+      {:error, %Ecto.Changeset{}}
+
+      iex> update_user_role(%User{role: :user}, :admin)
+      {:error, "user does not have permission to change roles"}
+  """
+  def update_user_role(%Scope{user: %User{role: :admin}} = _scope, target_user, new_role)
+      when new_role in @roles do
+    changeset = Ecto.Changeset.change(target_user, role: new_role)
+    Repo.update(changeset)
+  end
+
+  def update_user_role(%Scope{user: %User{role: :lead}} = _scope, target_user, new_role)
+      when new_role in ~w(lead user)a do
+    changeset = Ecto.Changeset.change(target_user, role: new_role)
+    Repo.update(changeset)
+  end
+
+  def update_user_role(_scope, _target, _new_role),
+    do: {:error, "user does not have permission to change roles or invalid role"}
 end
