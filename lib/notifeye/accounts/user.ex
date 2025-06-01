@@ -4,6 +4,8 @@ defmodule Notifeye.Accounts.User do
   use Ecto.Schema
   import Ecto.Changeset
 
+  alias Notifeye.Accounts
+
   @roles ~w(user admin lead)a
 
   schema "users" do
@@ -159,5 +161,42 @@ defmodule Notifeye.Accounts.User do
   def valid_password?(_, _) do
     Bcrypt.no_user_verify()
     false
+  end
+
+  @doc """
+  A user changeset for creating or updating a user.
+  """
+  def role_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:role])
+    |> validate_required([:role])
+    |> validate_inclusion(:role, @roles)
+  end
+
+  @doc """
+  A user changeset for changing the lead.
+  This changeset is used to assign a lead to a user.
+  """
+  def lead_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:lead_id])
+    |> validate_required([:lead_id])
+    |> validate_lead_id()
+    |> foreign_key_constraint(:lead_id)
+  end
+
+  defp validate_lead_id(changeset) do
+    lead_id = get_field(changeset, :lead_id)
+
+    if lead_id && !is_lead_user?(lead_id) do
+      add_error(changeset, :lead_id, "must be a valid lead user")
+    else
+      changeset
+    end
+  end
+
+  defp is_lead_user?(user_id) do
+    user = Accounts.get_user!(user_id)
+    user.role == :lead
   end
 end

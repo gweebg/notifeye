@@ -333,13 +333,20 @@ defmodule Notifeye.Accounts do
     end
   end
 
-  @roles ~w(admin lead user)a
-
   @doc """
   Updates the user role, if and only if the user has the role of `:admin` or `:lead`.
 
-  Returns `{:ok, user}` if the role was updated successfully, or `{:error, reason}` if the user
-  does not have permission to change roles.
+  Lead users can only change roles to `:lead` or `:user`, while admin users can change to any role.
+
+  ## Parameters
+  - `scope`: A `%Scope{}` struct containing the user making the request.
+  - `target_user`: The user whose role is to be updated.
+  - `new_role`: The new role to assign to the target user, which must be one of `:admin`, `:lead`, or `:user`.
+
+  ## Returns
+  - `{:ok, user}`: If the role was updated successfully.
+  - `{:error, reason}`: If the user does not have permission to change roles or if the new role is invalid.
+
   ## Examples
 
       iex> update_user_role(%User{role: :admin}, :user)
@@ -351,18 +358,62 @@ defmodule Notifeye.Accounts do
       iex> update_user_role(%User{role: :user}, :admin)
       {:error, "user does not have permission to change roles"}
   """
-  def update_user_role(%Scope{user: %User{role: :admin}} = _scope, target_user, new_role)
-      when new_role in @roles do
-    changeset = Ecto.Changeset.change(target_user, role: new_role)
-    Repo.update(changeset)
+  def update_user_role(%Scope{user: %User{role: :admin}} = _scope, user_id, new_role) do
+    update_role(user_id, new_role)
   end
 
-  def update_user_role(%Scope{user: %User{role: :lead}} = _scope, target_user, new_role)
+  def update_user_role(%Scope{user: %User{role: :lead}} = _scope, user_id, new_role)
       when new_role in ~w(lead user)a do
-    changeset = Ecto.Changeset.change(target_user, role: new_role)
-    Repo.update(changeset)
+    update_role(user_id, new_role)
   end
 
-  def update_user_role(_scope, _target, _new_role),
+  def update_user_role(_scope, _user_id, _new_role),
     do: {:error, "user does not have permission to change roles or invalid role"}
+
+  defp update_role(user_id, new_role) do
+    user_id
+    |> get_user!()
+    |> User.role_changeset(%{role: new_role})
+    |> Repo.update()
+  end
+
+  @doc """
+  Updates the lead for the current user or a specified user.
+  The lead can only be updated by the user themselves or an admin user.
+
+  ## Parameters
+  - `scope`: A `%Scope{}` struct containing the user making the request.
+  - `lead_id`: The ID of the lead to assign to the user.
+  - `user_id`: Optional. If provided, the lead will be updated for this user instead of the current user.
+
+  ## Returns
+  - `{:ok, user}`: If the lead was updated successfully.
+  - `{:error, reason}`: If the user does not have permission to change the lead or if the lead ID is invalid.
+
+  ## Examples
+
+      iex> update_user_lead(%Scope{user: %User{role: :user}}, 1)
+      {:ok, %User{lead_id: 1}}
+
+      iex> update_user_lead(%Scope{user: %User{role: :admin}}, 2, 1)
+      {:ok, %User{lead_id: 1}}
+
+      iex> update_user_lead(%Scope{user: %User{role: :user}}, 2, 1)
+      {:error, "you do not have permission to change the lead for this user"}
+  """
+  def update_user_lead(%Scope{user: %User{} = user} = _scope, lead_id) do
+    user
+    |> User.lead_changeset(%{lead_id: lead_id})
+    |> Repo.update()
+  end
+
+  def update_user_lead(%Scope{user: %User{role: :admin}} = _scope, user_id, lead_id) do
+    user_id
+    |> get_user!()
+    |> User.lead_changeset(%{lead_id: lead_id})
+    |> Repo.update()
+  end
+
+  def update_user_lead(_scope, _user_id, _lead_id),
+    do: {:error, "you do not have permission to change the lead for this user"}
 end

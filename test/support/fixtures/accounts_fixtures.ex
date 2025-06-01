@@ -102,4 +102,9 @@ defmodule Notifeye.AccountsFixtures do
       set: [inserted_at: dt, authenticated_at: dt]
     )
   end
+
+  def create_user_with_role(role) do
+    user_fixture_with_role(%{}, role)
+    |> user_scope_fixture()
+  end
 end
