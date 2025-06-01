@@ -405,6 +405,7 @@ defmodule Notifeye.Accounts do
     user
     |> User.lead_changeset(%{lead_id: lead_id})
     |> Repo.update()
+    |> maybe_preload_lead()
   end
 
   def update_user_lead(%Scope{user: %User{role: :admin}} = _scope, user_id, lead_id) do
@@ -412,8 +413,17 @@ defmodule Notifeye.Accounts do
     |> get_user!()
     |> User.lead_changeset(%{lead_id: lead_id})
     |> Repo.update()
+    |> maybe_preload_lead()
   end
 
   def update_user_lead(_scope, _user_id, _lead_id),
     do: {:error, "you do not have permission to change the lead for this user"}
+
+  defp maybe_preload_lead({:ok, user}) do
+    {:ok, Repo.preload(user, :lead)}
+  end
+
+  defp maybe_preload_lead({:error, _} = error) do
+    error
+  end
 end

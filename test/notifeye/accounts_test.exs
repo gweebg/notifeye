@@ -474,6 +474,7 @@ defmodule Notifeye.AccountsTest do
       assert {:ok, updated_user} = Accounts.update_user_lead(user_scope, lead.id)
       assert updated_user.lead_id == lead.id
       assert Repo.get!(User, user_scope.user.id).lead_id == lead.id
+      assert updated_user.lead == lead
     end
 
     test "returns error if lead_id does not correspond to a lead user" do
@@ -495,6 +496,7 @@ defmodule Notifeye.AccountsTest do
       assert {:ok, updated_user} = Accounts.update_user_lead(user_scope, target_user.id, lead.id)
       assert updated_user.lead_id == lead.id
       assert Repo.get!(User, target_user.id).lead_id == lead.id
+      assert updated_user.lead == lead
     end
 
     test "returns error if user is not admin" do
