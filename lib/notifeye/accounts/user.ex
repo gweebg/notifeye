@@ -4,12 +4,20 @@ defmodule Notifeye.Accounts.User do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @roles ~w(user admin lead)a
+
   schema "users" do
     field :email, :string
+    field :username, :string
     field :password, :string, virtual: true, redact: true
     field :hashed_password, :string, redact: true
     field :confirmed_at, :utc_datetime
     field :authenticated_at, :utc_datetime, virtual: true
+
+    field :standing, :integer, default: 10
+    field :role, Ecto.Enum, values: @roles, default: :user
+
+    belongs_to :lead, __MODULE__
 
     timestamps(type: :utc_datetime)
   end
@@ -27,8 +35,29 @@ defmodule Notifeye.Accounts.User do
   """
   def email_changeset(user, attrs, opts \\ []) do
     user
-    |> cast(attrs, [:email])
+    |> cast(attrs, [:email, :username])
     |> validate_email(opts)
+    |> maybe_put_username()
+  end
+
+  defp maybe_put_username(changeset) do
+    case {get_field(changeset, :username), get_field(changeset, :email)} do
+      {nil, email} when is_binary(email) ->
+        username = infer_name_from_email(email)
+        put_change(changeset, :username, username)
+
+      _ ->
+        changeset
+    end
+  end
+
+  def infer_name_from_email(email) do
+    email
+    |> String.split("@")
+    |> hd()
+    |> String.split(".")
+    |> Enum.map(&String.capitalize/1)
+    |> Enum.join(" ")
   end
 
   defp validate_email(changeset, opts) do

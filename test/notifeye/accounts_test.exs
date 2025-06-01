@@ -77,6 +77,32 @@ defmodule Notifeye.AccountsTest do
       assert "has already been taken" in errors_on(changeset).email
     end
 
+    test "creates user with expected defaults" do
+      email = unique_user_email()
+      {:ok, user} = Accounts.register_user(valid_user_attributes(email: email))
+
+      assert user.email == email
+      assert user.username == Notifeye.Accounts.User.infer_name_from_email(email)
+      assert user.role == :user
+      assert user.standing == 10
+      assert is_nil(user.lead_id)
+    end
+
+    test "creates user with custom username" do
+      email = unique_user_email()
+      username = "Custom User"
+
+      {:ok, user} =
+        Accounts.register_user(valid_user_attributes(email: email, username: username))
+
+      assert user.email == email
+      assert user.username == username
+    end
+
+    # only user with admin or lead role can set lead_id on users
+    # lead_id always corresponds to a user with lead/admin role
+    # deleting a lead user will set lead_id to nil on all users with that lead_id
+
     test "registers users without password" do
       email = unique_user_email()
       {:ok, user} = Accounts.register_user(valid_user_attributes(email: email))
