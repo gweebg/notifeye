@@ -16,6 +16,8 @@ defmodule Notifeye.AlertDescriptions.AlertDescription do
 
     belongs_to :user, Notifeye.Accounts.User, foreign_key: :edited_by
 
+    has_many :alert_assignments, Notifeye.AlertAssignments.AlertAssignment, on_replace: :delete
+
     timestamps(type: :utc_datetime)
   end
 

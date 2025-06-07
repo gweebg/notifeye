@@ -21,6 +21,9 @@ defmodule Notifeye.Accounts.User do
 
     belongs_to :lead, __MODULE__
 
+    has_many :alert_assignments, Notifeye.AlertAssignments.AlertAssignment, on_replace: :delete
+    has_many :alert_descriptions, Notifeye.AlertDescriptions.AlertDescription
+
     timestamps(type: :utc_datetime)
   end
 

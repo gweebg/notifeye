@@ -23,7 +23,7 @@ defmodule Notifeye.Monitoring.Alert do
     field :start, UnixTimestamp
     field :end, UnixTimestamp
 
-    field :user_id, :id
+    belongs_to :user, Notifeye.Accounts.User, type: :id
 
     timestamps(type: :utc_datetime)
   end
