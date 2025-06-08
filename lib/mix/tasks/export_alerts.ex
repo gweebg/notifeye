@@ -3,11 +3,15 @@ defmodule Mix.Tasks.ExportAlerts do
   Exports all alerts to a JSON file, excluding the user that added it and eventual
   table metadata.
 
+  ## Parameters
+  - `path` - A valid path to a file where the alerts will be exported. If not
+    provided, defaults to `alerts.json`.
+
   ## Usage
+      mix export_alerts [path]
 
-      mix export users path/to/alerts.json
-
-  If no path is given, defaults to `alerts.json`.
+  ## Example
+      mix export_alerts all_alerts.json
   """
 
   @shortdoc "Export alerts from the database to a file as JSON"
