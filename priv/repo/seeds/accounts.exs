@@ -1,7 +1,7 @@
 defmodule Notifeye.Repo.Seeds.Accounts do
   alias Notifeye.Accounts
 
-  @users ~w(guilherme@notifeye.com logz@eurotux.com)a
+  @users ~w(guilherme@notifeye.com logz@eurotux.com)
 
   def run do
     case accounts?() do
