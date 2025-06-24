@@ -17,13 +17,13 @@ defmodule NotifeyeWeb.AlertLive.Index do
         </:actions>
       </.header>
 
-      <%= for {alert_id, alert} <- @streams.alerts do %>
-        <section>
+      <div class="flex flex-col gap-4 w-full mx-auto">
+        <%= for {alert_id, alert} <- @streams.alerts do %>
           <.live_component module={Cards.AlertCard} id={alert_id} alert={alert} />
-        </section>
-      <% end %>
+        <% end %>
+      </div>
 
-      <.table
+      <%!-- <.table
         id="alerts"
         rows={@streams.alerts}
         row_click={fn {_id, alert} -> JS.navigate(~p"/alerts/#{alert}") end}
@@ -50,7 +50,7 @@ defmodule NotifeyeWeb.AlertLive.Index do
             Delete
           </.link>
         </:action>
-      </.table>
+      </.table> --%>
     </Layouts.app>
     """
   end

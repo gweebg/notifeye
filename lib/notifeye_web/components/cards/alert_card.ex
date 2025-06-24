@@ -3,14 +3,27 @@ defmodule NotifeyeWeb.Components.Cards.AlertCard do
 
   def render(assigns) do
     ~H"""
-    <div class="card w-max bg-base-100 shadow-sm">
+    <div class="card w-full bg-base-100 shadow-sm cursor-pointer hover:bg-base-200 transition-colors duration-200">
       <div class="card-body">
-        {severity_badge(assigns)}
-        <h2 class="text-3xl font-bold">{@alert.alert_title}</h2>
-        <p class="text-gray-600 line-clamp-3">{@alert.alert_description}</p>
-        <div class="mt-6">
-          <button class="btn btn-primary btn-block">Handle</button>
-        </div>
+        <.link navigate={~p"/alerts/#{@alert.id}"}>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              {severity_badge(assigns)}
+              <span class="text-sm text-gray-500">
+                {@alert.inserted_at |> Timex.format!("%Y-%m-%d %H:%M:%S", :strftime)}
+              </span>
+            </div>
+            <h2 class="text-2xl font-bold">{@alert.alert_title}</h2>
+            <p class="text-gray-600 line-clamp-3">{@alert.alert_description}</p>
+            <section>
+              <%= for tag <- @alert.alert_tags do %>
+                <span class="badge badge-soft badge-primary badge-sm mr-1 mb-1">
+                  {tag}
+                </span>
+              <% end %>
+            </section>
+          </div>
+        </.link>
       </div>
     </div>
     """
