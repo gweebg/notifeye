@@ -1,4 +1,9 @@
 defmodule NotifeyeWeb.Components.Cards.AlertCard do
+  @moduledoc """
+  A component to display an alert card with details like title, description, severity, and tags.
+  It includes a link to the alert details page and displays the creation date.
+  """
+
   use NotifeyeWeb, :live_component
 
   def render(assigns) do
