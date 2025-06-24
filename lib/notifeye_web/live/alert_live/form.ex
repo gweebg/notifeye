@@ -68,7 +68,9 @@ defmodule NotifeyeWeb.AlertLive.Form do
 
   @impl true
   def handle_event("validate", %{"alert" => alert_params}, socket) do
-    changeset = Monitoring.change_alert(socket.assigns.current_scope, socket.assigns.alert, alert_params)
+    changeset =
+      Monitoring.change_alert(socket.assigns.current_scope, socket.assigns.alert, alert_params)
+
     {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
   end
 
