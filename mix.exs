@@ -62,7 +62,9 @@ defmodule Notifeye.MixProject do
       {:bandit, "~> 1.5"},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:logger_file_backend, "~> 0.0.10"},
-      {:timex, "~> 3.0"}
+      {:timex, "~> 3.0"},
+      {:oban, "~> 2.19"},
+      {:igniter, "~> 0.5", only: [:dev]}
     ]
   end
 

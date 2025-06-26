@@ -7,6 +7,15 @@
 # General application configuration
 import Config
 
+config :notifeye, Oban,
+  engine: Oban.Engines.Basic,
+  notifier: Oban.Notifiers.Postgres,
+  queues: [
+    processing: 10,
+    mailers: [limit: 10, dispach_cooldown: 100]
+  ],
+  repo: Notifeye.Repo
+
 config :notifeye, :scopes,
   user: [
     default: true,

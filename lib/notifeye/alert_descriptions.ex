@@ -38,6 +38,22 @@ defmodule Notifeye.AlertDescriptions do
   def get_alert_description!(id), do: Repo.get!(AlertDescription, id)
 
   @doc """
+  Gets a single alert_description.
+
+  Returns `nil` if the Alert description does not exist.
+
+  ## Examples
+
+      iex> get_alert_description(123)
+      %AlertDescription{}
+
+      iex> get_alert_description(456)
+      nil
+
+  """
+  def get_alert_description(id), do: Repo.get(AlertDescription, id)
+
+  @doc """
   Creates a alert_description.
 
   ## Examples
@@ -100,5 +116,16 @@ defmodule Notifeye.AlertDescriptions do
   """
   def change_alert_description(%AlertDescription{} = alert_description, attrs \\ %{}) do
     AlertDescription.changeset(alert_description, attrs)
+  end
+
+  @doc """
+  Matches the Regex pattern in `pattern` agains the alert event samples of an alert.
+
+  ## Returns
+    - ["match1", "match2", ...] if the pattern matches any part of the alert event samples.
+    - [] if the pattern does not match any part of the alert event samples.
+    - {:error, reason} if the pattern is not a valid Regex.
+  """
+  def match_against(%AlertDescription{} = description, alert_event_samples) do
   end
 end
