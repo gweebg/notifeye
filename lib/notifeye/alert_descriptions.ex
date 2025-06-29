@@ -136,8 +136,6 @@ defmodule Notifeye.AlertDescriptions do
     - `nil` if the pattern does not match any part of the alert event samples.
     - `{:error "named capture 'user' is mandatory in the pattern"}` if the pattern does not contain a named capture group `user`.
     - `{:error, reason}` if the pattern is not a valid Regex.
-
-  TODO: Pass the regex validation logic to the changeset validation of the AlertDescription.
   """
   def maybe_match_samples(pattern, alert_event_samples) do
     with {:ok, regex} <- Regex.compile(pattern),

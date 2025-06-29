@@ -29,5 +29,26 @@ defmodule Notifeye.AlertDescriptions.AlertDescription do
     alert_description
     |> cast(attrs, @fields)
     |> validate_required(@required_fields)
+
+    # |> validate_pattern()
   end
+
+  # defp validate_pattern(changeset) do
+  #   case get_field(changeset, :pattern) do
+  #     nil ->
+  #       changeset
+
+  #     pattern ->
+  #       with {:ok, regex} <- Regex.compile(pattern),
+  #            %{"user" => _} <- Regex.named_captures(regex, "") do
+  #         changeset
+  #       else
+  #         {:error, {reason, pos}} ->
+  #           add_error(changeset, :pattern, "invalid regex: #{inspect(reason)} at position #{pos}")
+
+  #         nil ->
+  #           add_error(changeset, :pattern, "named capture 'user' is mandatory in the pattern")
+  #       end
+  #   end
+  # end
 end
