@@ -10,8 +10,8 @@ defmodule Notifeye.Workers.Alerts do
   TODO: Dig into Worker settings, p.e. `limit`.
   """
 
+  alias Notifeye.{Accounts, AlertDescriptions, AlertAssignments}
   alias Notifeye.Monitoring.Alert
-  alias Notifeye.AlertDescriptions
   alias Notifeye.AlertDescriptions.AlertDescription
 
   use Oban.Worker,
@@ -36,15 +36,32 @@ defmodule Notifeye.Workers.Alerts do
     case AlertDescriptions.maybe_match_samples(description.pattern, alert.alert_event_samples) do
       nil -> {:cancel, "pattern did not match any part of the alert event samples"}
       {:error, reason} -> {:cancel, reason}
-      user -> user |> verify_user_match()
+      user -> verify_user_match(user, description)
     end
   end
 
-  defp verify_user_match(_user_match) do
+  defp verify_user_match(user_match, %AlertDescription{} = description)
+       when is_binary(user_match) do
     # check if user is registered or matches any of its aliases
     # if it does create a new alert assignment for the respective user
     # else create it for the admin user
-    # dispach a notification job
-    nil
+    user_id =
+      case Accounts.get_user_by_name_or_alias(user_match) do
+        nil -> Accounts.get_admin_user!().id
+        %Accounts.User{id: id} -> id
+      end
+
+    case AlertAssignments.create_alert_assignment(%{
+           match: user_match,
+           user_id: user_id,
+           alert_description_id: description.id
+         }) do
+      {:ok, _assignment} ->
+        # create new job in notification queue
+        :ok
+
+      {:error, changeset} ->
+        {:cancel, "failed to create alert assignment: #{inspect(changeset.errors)}"}
+    end
   end
 end

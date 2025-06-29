@@ -5,6 +5,9 @@ defmodule Notifeye.AlertAssignments.AlertAssignment do
 
   import Ecto.Changeset
 
+  @fields ~w(match status user_id alert_description_id)a
+  @required_fields ~w(match user_id alert_description_id)a
+
   @status ~w(unassigned open waiting closed)a
 
   @primary_key {:id, :binary_id, autogenerate: true}
@@ -22,7 +25,7 @@ defmodule Notifeye.AlertAssignments.AlertAssignment do
   @doc false
   def changeset(alert_assignment, attrs) do
     alert_assignment
-    |> cast(attrs, [:match, :status])
-    |> validate_required([:match, :status])
+    |> cast(attrs, @fields)
+    |> validate_required(@required_fields)
   end
 end

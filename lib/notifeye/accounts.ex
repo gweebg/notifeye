@@ -334,6 +334,16 @@ defmodule Notifeye.Accounts do
   end
 
   @doc """
+  Returns the admin user, or raises an error if no admin user exists.
+
+  It is mandatory to have at least one admin user in the application.
+  """
+  def get_admin_user! do
+    from(u in User, where: u.role == :admin)
+    |> Repo.one!()
+  end
+
+  @doc """
   Updates the user role, if and only if the user has the role of `:admin` or `:lead`.
 
   Lead users can only change roles to `:lead` or `:user`, while admin users can change to any role.
@@ -425,5 +435,28 @@ defmodule Notifeye.Accounts do
 
   defp maybe_preload_lead({:error, _} = error) do
     error
+  end
+
+  @doc """
+  Checks whether a name matches the an user's name or its aliases.
+
+  ## Parameters
+  - `name`: A binary string representing the username.
+
+  ## Returns
+  - `%User{}`: If a user with the given name or alias exists.
+  - `nil`: If no user matches the given name or alias.
+  """
+  def get_user_by_name_or_alias(name) when is_binary(name) do
+    normalized_name =
+      name
+      |> String.trim()
+      |> String.downcase()
+
+    from(user in Notifeye.Accounts.User,
+      where: user.username == ^normalized_name or ^normalized_name in user.aliases,
+      select: user
+    )
+    |> Repo.one()
   end
 end
