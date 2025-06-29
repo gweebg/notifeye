@@ -32,16 +32,19 @@ defmodule Notifeye.Workers.Alerts do
     end
   end
 
-  @doc """
-  1. Get alert description pattern and run it agains the alert_event_samples.
-  2. If anything matches:
-    2.1. If if resembles an username/email, extract it and assign the alert to the user.
-      2.1.1. If the user is not registerd, assign it to the user `admin`;
-      2.1.2. Else, assign the alert to the user.
-    2.2. Else, cancel the job with the reason that the alert is not relevant to any known user.
-  3. Else, cancel the job with the reason that the alert did not match any known user.
-  4. Enqueue a new job to notify the user about the alert.
-  """
   defp process_alert(%AlertDescription{} = description, %Alert{} = alert) do
+    case AlertDescriptions.maybe_match_samples(description.pattern, alert.alert_event_samples) do
+      nil -> {:cancel, "pattern did not match any part of the alert event samples"}
+      {:error, reason} -> {:cancel, reason}
+      user -> user |> verify_user_match()
+    end
+  end
+
+  defp verify_user_match(_user_match) do
+    # check if user is registered or matches any of its aliases
+    # if it does create a new alert assignment for the respective user
+    # else create it for the admin user
+    # dispach a notification job
+    nil
   end
 end

@@ -76,5 +76,43 @@ defmodule Notifeye.AlertDescriptionsTest do
       alert_description = alert_description_fixture()
       assert %Ecto.Changeset{} = AlertDescriptions.change_alert_description(alert_description)
     end
+
+    test "maybe_match_samples/2 returns nil if the pattern does not match any part of the samples" do
+      pattern = "\"dvchost\" : \"(?<user>[A-Za-z0-9\-\.]+)\""
+
+      samples =
+        "[ {\n  \"dvchost\" : \"this wont match\",\n  \"dvc\" : \"10.10.10.10\",\n \"count\" : 1.0\n} ]"
+
+      assert AlertDescriptions.maybe_match_samples(pattern, samples) == nil
+    end
+
+    test "maybe_match_samples/2 returns a match from the samples" do
+      pattern = "\"dvchost\" : \"(?<user>[A-Za-z0-9\-\.]+)\""
+
+      samples =
+        "[ {\n  \"dvchost\" : \"this-will-match.109\",\n  \"dvc\" : \"10.10.10.10\",\n \"count\" : 1.0\n} ]"
+
+      assert AlertDescriptions.maybe_match_samples(pattern, samples) ==
+               "this-will-match.109"
+    end
+
+    test "maybe_match_samples/2 returns error due to bad regex expression" do
+      pattern = "\"dvchost\" : \"(?<user>[\w\d\-\.]+)\""
+
+      samples =
+        "[ {\n  \"dvchost\" : \"doesnt matter\",\n  \"dvc\" : \"10.10.10.10\",\n \"count\" : 1.0\n} ]"
+
+      assert {:error, _reason} = AlertDescriptions.maybe_match_samples(pattern, samples)
+    end
+
+    test "maybe_match_samples/2 returns error due to no named capture group 'user'" do
+      pattern = "\"dvchost\" : \"([A-Za-z0-9\-\.]+)\""
+
+      samples =
+        "[ {\n  \"dvchost\" : \"this-matches-but-no-group\",\n  \"dvc\" : \"10.10.10.10\",\n \"count\" : 1.0\n} ]"
+
+      assert {:error, "named capture 'user' is mandatory in the pattern"} =
+               AlertDescriptions.maybe_match_samples(pattern, samples)
+    end
   end
 end

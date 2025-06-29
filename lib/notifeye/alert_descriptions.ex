@@ -119,13 +119,38 @@ defmodule Notifeye.AlertDescriptions do
   end
 
   @doc """
-  Matches the Regex pattern in `pattern` agains the alert event samples of an alert.
+  Tries to match the regular expression pattern defined in the alert description
+  agains the alert event samples of an alert.
+
+  The regular expression pattern is expected to be a valid Regex with at least
+  one named capture group named `user`, which in combination with `named_captures/2`
+  will extract the possible username (or email, depending on the pattern) from
+  the alert samples.
+
+  ## Parameters
+    - `description`: The `%AlertDescription{}` for the alert.
+    - `alert_event_samples`: The string samples from the alert event to match against the pattern.
 
   ## Returns
-    - ["match1", "match2", ...] if the pattern matches any part of the alert event samples.
-    - [] if the pattern does not match any part of the alert event samples.
-    - {:error, reason} if the pattern is not a valid Regex.
+    - `match` if the pattern matches any part of the alert event samples.
+    - `nil` if the pattern does not match any part of the alert event samples.
+    - `{:error "named capture 'user' is mandatory in the pattern"}` if the pattern does not contain a named capture group `user`.
+    - `{:error, reason}` if the pattern is not a valid Regex.
+
+  TODO: Pass the regex validation logic to the changeset validation of the AlertDescription.
   """
-  def match_against(%AlertDescription{} = description, alert_event_samples) do
+  def maybe_match_samples(pattern, alert_event_samples) do
+    with {:ok, regex} <- Regex.compile(pattern),
+         captures <- Regex.named_captures(regex, alert_event_samples) do
+      maybe_match_user(captures)
+    else
+      {:error, _reason} = error -> error
+    end
+  end
+
+  defp maybe_match_user(nil), do: nil
+
+  defp maybe_match_user(captures) do
+    Map.get(captures, "user") || {:error, "named capture 'user' is mandatory in the pattern"}
   end
 end
