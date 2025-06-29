@@ -2,6 +2,7 @@ defmodule Notifeye.Accounts.User do
   @moduledoc false
 
   use Ecto.Schema
+
   import Ecto.Changeset
 
   alias Notifeye.Accounts
@@ -18,6 +19,7 @@ defmodule Notifeye.Accounts.User do
 
     field :standing, :integer, default: 10
     field :role, Ecto.Enum, values: @roles, default: :user
+    field :aliases, {:array, :string}, default: []
 
     belongs_to :lead, __MODULE__
 
