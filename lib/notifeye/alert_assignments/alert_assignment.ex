@@ -16,7 +16,7 @@ defmodule Notifeye.AlertAssignments.AlertAssignment do
     field :match, :string
     field :status, Ecto.Enum, values: @status, default: :unassigned
 
-    belongs_to :user, Notifeye.Accounts.User
+    belongs_to :user, Notifeye.Accounts.User, type: :integer
     belongs_to :alert_description, Notifeye.AlertDescriptions.AlertDescription
 
     timestamps(type: :utc_datetime)

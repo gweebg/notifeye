@@ -5,6 +5,8 @@ defmodule Notifeye.AlertAssignmentsTest do
 
   describe "alert_assignments" do
     alias Notifeye.AlertAssignments.AlertAssignment
+    alias Notifeye.Accounts.User
+    alias Notifeye.AlertDescriptions.AlertDescription
 
     import Notifeye.AlertAssignmentsFixtures
 
@@ -21,7 +23,17 @@ defmodule Notifeye.AlertAssignmentsTest do
     end
 
     test "create_alert_assignment/1 with valid data creates a alert_assignment" do
-      valid_attrs = %{match: "some match", status: :unassigned}
+      %User{id: id} = Notifeye.AccountsFixtures.user_fixture()
+
+      %AlertDescription{id: alert_description_id} =
+        Notifeye.AlertDescriptionsFixtures.alert_description_fixture()
+
+      valid_attrs = %{
+        match: "some match",
+        status: :unassigned,
+        user_id: id,
+        alert_description_id: alert_description_id
+      }
 
       assert {:ok, %AlertAssignment{} = alert_assignment} =
                AlertAssignments.create_alert_assignment(valid_attrs)
