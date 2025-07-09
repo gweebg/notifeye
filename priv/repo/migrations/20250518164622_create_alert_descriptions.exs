@@ -3,7 +3,7 @@ defmodule Notifeye.Repo.Migrations.CreateAlertDescriptions do
 
   def change do
     create table(:alert_descriptions, primary_key: false) do
-      add :id, :binary_id, primary_key: true
+      add :id, :integer, primary_key: true
       add :enabled, :boolean, default: false, null: false
       add :pattern, :string
       add :verified, :boolean, default: false, null: false

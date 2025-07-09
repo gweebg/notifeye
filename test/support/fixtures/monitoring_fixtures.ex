@@ -16,7 +16,7 @@ defmodule Notifeye.MonitoringFixtures do
         alert_tags: ["option1", "option2"],
         alert_title: "some alert_title",
         end: "1747064520000",
-        logz_id: Ecto.UUID.generate(),
+        logz_id: 1000,
         start: "1747067000000"
       })
 

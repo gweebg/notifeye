@@ -7,7 +7,7 @@ defmodule Notifeye.AlertDescriptions.AlertDescription do
   @required_fields ~w(id enabled verified)a
   @fields @required_fields ++ ~w(pattern edited_by)a
 
-  @primary_key {:id, :binary_id, autogenerate: false}
+  @primary_key {:id, :integer, autogenerate: false}
   @foreign_key_type :binary_id
   schema "alert_descriptions" do
     field :enabled, :boolean, default: false
@@ -29,8 +29,6 @@ defmodule Notifeye.AlertDescriptions.AlertDescription do
     alert_description
     |> cast(attrs, @fields)
     |> validate_required(@required_fields)
-
-    # |> validate_pattern()
   end
 
   # defp validate_pattern(changeset) do

@@ -20,12 +20,10 @@ defmodule Notifeye.MonitoringTest do
     }
 
     test "create_alert/2 with valid data creates a alert" do
-      logz_id = Ecto.UUID.generate()
-
       valid_attrs = %{
         start: "1747064520000",
         end: "1747067000000",
-        logz_id: logz_id,
+        logz_id: 1000,
         alert_title: "some alert_title",
         alert_description: "some alert_description",
         alert_severity: "some alert_severity",
@@ -38,7 +36,7 @@ defmodule Notifeye.MonitoringTest do
 
       assert alert.start == ~U[2025-05-12 15:42:00Z]
       assert alert.end == ~U[2025-05-12 16:23:20Z]
-      assert alert.logz_id == logz_id
+      assert alert.logz_id == 1000
       assert alert.alert_title == "some alert_title"
       assert alert.alert_description == "some alert_description"
       assert alert.alert_severity == "some alert_severity"

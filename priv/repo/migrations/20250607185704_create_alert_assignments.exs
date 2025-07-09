@@ -10,7 +10,7 @@ defmodule Notifeye.Repo.Migrations.CreateAlertAssignments do
       add :user_id, references(:users, on_delete: :nothing)
 
       add :alert_description_id,
-          references(:alert_descriptions, on_delete: :nilify_all, type: :binary_id)
+          references(:alert_descriptions, on_delete: :nilify_all, type: :integer)
 
       timestamps(type: :utc_datetime)
     end
