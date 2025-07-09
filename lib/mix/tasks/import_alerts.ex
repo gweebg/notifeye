@@ -33,7 +33,7 @@ defmodule Mix.Tasks.Alerts.Import do
   defp import_alerts_from_file(path) do
     with {:ok, content} <- File.read(path),
          {:ok, alerts} <- Jason.decode(content) do
-      admin = Accounts.get_user!(1)
+      admin = Accounts.get_admin_user!()
       scope = Accounts.Scope.for_user(admin)
 
       alerts

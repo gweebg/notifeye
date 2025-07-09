@@ -96,6 +96,18 @@ defmodule Notifeye.Accounts.User do
   end
 
   @doc """
+  A user changeset for creating an admin user.
+  """
+  def admin_changeset(user, attrs, opts \\ []) do
+    user
+    |> cast(attrs, [:email, :role, :username])
+    |> validate_email(opts)
+    |> validate_required([:email, :role, :username])
+    |> validate_inclusion(:role, [:admin])
+    |> unique_constraint(:email)
+  end
+
+  @doc """
   A user changeset for changing the password.
 
   It is important to validate the length of the password, as long passwords may

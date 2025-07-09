@@ -339,8 +339,21 @@ defmodule Notifeye.Accounts do
   It is mandatory to have at least one admin user in the application.
   """
   def get_admin_user! do
-    from(u in User, where: u.role == :admin)
-    |> Repo.one!()
+    Repo.get_by!(User, role: :admin)
+  end
+
+  def get_admin_user do
+    Repo.get_by(User, role: :admin)
+  end
+
+  def create_admin_user() do
+    if get_admin_user() do
+      {:error, "admin user already exists, cannot create another one"}
+    else
+      %User{}
+      |> User.admin_changeset(%{email: "admin@notifeye.com", role: :admin, username: "Watchdog"})
+      |> Repo.insert()
+    end
   end
 
   @doc """

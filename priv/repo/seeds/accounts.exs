@@ -1,7 +1,7 @@
 defmodule Notifeye.Repo.Seeds.Accounts do
   alias Notifeye.Accounts
 
-  @users ~w(guilherme@notifeye.com logz@eurotux.com)
+  @users ~w(logz@eurotux.com)
 
   def run do
     case accounts?() do
@@ -18,6 +18,9 @@ defmodule Notifeye.Repo.Seeds.Accounts do
   end
 
   defp generate_users(users) do
+
+    Accounts.create_admin_user()
+
     for email <- users do
       # Register the user
       {:ok, user} = Accounts.register_user(%{"email" => email})
