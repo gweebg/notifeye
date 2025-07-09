@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.ExportAlerts do
+defmodule Mix.Tasks.Alerts.Export do
   @moduledoc """
   Exports all alerts to a JSON file, excluding the user that added it and eventual
   table metadata.
@@ -18,13 +18,13 @@ defmodule Mix.Tasks.ExportAlerts do
 
   use Mix.Task
 
+  alias Notifeye.Repo
+  alias Notifeye.Monitoring.Alert
+
   def run(args) do
     Mix.Task.run("app.start")
 
-    alias Notifeye.Repo
-    alias Notifeye.Monitoring.Alert
-
-    output_path = get_path(args)
+    output_path = parse_args(args)
     alerts = Repo.all(Alert) |> Jason.encode!(pretty: true)
 
     File.write!(output_path, alerts)
@@ -32,10 +32,6 @@ defmodule Mix.Tasks.ExportAlerts do
     Mix.shell().info("Alerts exported to #{output_path}")
   end
 
-  defp get_path(args) do
-    case args do
-      [path] -> path
-      _ -> "alerts.json"
-    end
-  end
+  defp parse_args([path]), do: path
+  defp parse_args(_), do: "alerts.json"
 end
