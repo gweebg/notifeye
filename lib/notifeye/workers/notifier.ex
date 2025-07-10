@@ -9,8 +9,6 @@ defmodule Notifeye.Workers.Notifier do
 
   require Logger
 
-  alias Notifeye.{Accounts, AlertAssignments}
-
   use Oban.Worker,
     queue: :notifier,
     max_attempts: 3,
@@ -20,7 +18,7 @@ defmodule Notifeye.Workers.Notifier do
   Performs the notifying job.
   """
   @impl Oban.Worker
-  def perform(%Oban.Job{args: args}) do
+  def perform(%Oban.Job{args: _args}) do
     :ok
   end
 end
