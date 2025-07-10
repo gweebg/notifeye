@@ -1,0 +1,210 @@
+[
+  {
+    "id": "7a314626-67e5-4187-9546-b68f478755c9",
+    "start": "2025-07-07T13:37:09Z",
+    "end": "2025-07-07T13:37:10Z",
+    "user_id": 2,
+    "inserted_at": "2025-07-07T13:44:04Z",
+    "updated_at": "2025-07-07T13:44:04Z",
+    "alert_description": "A Darktrace RESPOND action has been triggered, whether manually or automatically. This is an informational alert, meant to inform the SOC team that an action upon a device has been taken. Access the link in the field darktraceUrl to see the action that was taken.",
+    "alert_event_samples": "The following have met the condition: \n[ {\n  \"dvchost\" : \"iPhone\",\n  \"dvc\" : \"10.10.60.223\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/1446/875\",\n  \"count\" : 1.0\n} ]",
+    "logz_id": "2112698",
+    "alert_title": "Darktrace - RESPOND action triggered",
+    "alert_severity": "Low",
+    "alert_tags": [
+      "network_threat"
+    ]
+  },
+  {
+    "id": "a23497ee-7152-4bf3-81cb-9887206e0532",
+    "start": "2025-07-07T13:38:25Z",
+    "end": "2025-07-07T13:38:26Z",
+    "user_id": 2,
+    "inserted_at": "2025-07-07T13:44:04Z",
+    "updated_at": "2025-07-07T13:44:04Z",
+    "alert_description": "A Darktrace RESPOND action has been triggered, whether manually or automatically. This is an informational alert, meant to inform the SOC team that an action upon a device has been taken. Access the link in the field darktraceUrl to see the action that was taken.",
+    "alert_event_samples": "The following have met the condition: \n[ {\n  \"dvchost\" : \"HONOR-70-Lite-joana\",\n  \"dvc\" : \"10.10.60.185\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/1220/890\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"HONOR-70-Lite-joana\",\n  \"dvc\" : \"10.10.60.185\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/1220/892\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"Nothing-phone-1\",\n  \"dvc\" : \"10.10.60.229\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/1715/889\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"Nothing-phone-1\",\n  \"dvc\" : \"10.10.60.229\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/1715/891\",\n  \"count\" : 1.0\n} ]",
+    "logz_id": "2112698",
+    "alert_title": "Darktrace - RESPOND action triggered",
+    "alert_severity": "Low",
+    "alert_tags": [
+      "network_threat"
+    ]
+  },
+  {
+    "id": "43af6fab-9cc4-4b68-9150-dec9e824fa66",
+    "start": "2025-07-07T13:33:23Z",
+    "end": "2025-07-07T13:33:24Z",
+    "user_id": 2,
+    "inserted_at": "2025-07-07T13:45:04Z",
+    "updated_at": "2025-07-07T13:45:04Z",
+    "alert_description": "A Darktrace RESPOND action has been triggered, whether manually or automatically. This is an informational alert, meant to inform the SOC team that an action upon a device has been taken. Access the link in the field darktraceUrl to see the action that was taken.",
+    "alert_event_samples": "The following have met the condition: \n[ {\n  \"dvchost\" : \"ams-e14\",\n  \"dvc\" : \"10.10.10.25\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/1747/575\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"ams-e14\",\n  \"dvc\" : \"10.10.10.25\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/1747/577\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"asr.bofh.etux\",\n  \"dvc\" : \"10.10.10.48\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/532/570\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"asr.bofh.etux\",\n  \"dvc\" : \"10.10.10.48\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/532/572\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"dmr.com.etux\",\n  \"dvc\" : \"10.10.30.59\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/2093/568\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"dmr.com.etux\",\n  \"dvc\" : \"10.10.30.59\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/2093/569\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"filipa-vieira.com.etux\",\n  \"dvc\" : \"10.10.30.78\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/86/574\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"filipa-vieira.com.etux\",\n  \"dvc\" : \"10.10.30.78\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/86/576\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"joao-peixe.com.etux\",\n  \"dvc\" : \"10.10.30.232\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/756/566\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"joao-peixe.com.etux\",\n  \"dvc\" : \"10.10.30.232\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/756/567\",\n  \"count\" : 1.0\n} ]",
+    "logz_id": "2112698",
+    "alert_title": "Darktrace - RESPOND action triggered",
+    "alert_severity": "Low",
+    "alert_tags": [
+      "network_threat"
+    ]
+  },
+  {
+    "id": "f9081dc9-5c09-4ea9-810d-8c5a9343e93a",
+    "start": "2025-07-08T17:23:42Z",
+    "end": "2025-07-08T17:23:43Z",
+    "user_id": 2,
+    "inserted_at": "2025-07-08T17:25:02Z",
+    "updated_at": "2025-07-08T17:25:02Z",
+    "alert_description": "A Darktrace RESPOND action has been triggered, whether manually or automatically. This is an informational alert, meant to inform the SOC team that an action upon a device has been taken. Access the link in the field darktraceUrl to see the action that was taken.",
+    "alert_event_samples": "The following have met the condition: \n[ {\n  \"dvchost\" : \"super\",\n  \"dvc\" : \"10.10.10.37\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/129/901\",\n  \"count\" : 1.0\n} ]",
+    "logz_id": "2112698",
+    "alert_title": "Darktrace - RESPOND action triggered",
+    "alert_severity": "Low",
+    "alert_tags": [
+      "network_threat"
+    ]
+  },
+  {
+    "id": "36960924-c20b-4437-9280-f90eb6e629ee",
+    "start": "2025-07-09T12:58:56Z",
+    "end": "2025-07-09T12:58:57Z",
+    "user_id": 2,
+    "inserted_at": "2025-07-09T13:01:02Z",
+    "updated_at": "2025-07-09T13:01:02Z",
+    "alert_description": "A Darktrace RESPOND action has been triggered, whether manually or automatically. This is an informational alert, meant to inform the SOC team that an action upon a device has been taken. Access the link in the field darktraceUrl to see the action that was taken.",
+    "alert_event_samples": "The following have met the condition: \n[ {\n  \"dvchost\" : \"jps.bofh.etux\",\n  \"dvc\" : \"10.10.10.46\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/604/902\",\n  \"count\" : 1.0\n} ]",
+    "logz_id": "2112698",
+    "alert_title": "Darktrace - RESPOND action triggered",
+    "alert_severity": "Low",
+    "alert_tags": [
+      "network_threat"
+    ]
+  },
+  {
+    "id": "37549146-d9ca-4ca6-b00c-54dd1d812e2f",
+    "start": "2025-07-09T15:17:22Z",
+    "end": "2025-07-09T15:17:23Z",
+    "user_id": 2,
+    "inserted_at": "2025-07-09T15:22:03Z",
+    "updated_at": "2025-07-09T15:22:03Z",
+    "alert_description": "A Darktrace RESPOND action has been triggered, whether manually or automatically. This is an informational alert, meant to inform the SOC team that an action upon a device has been taken. Access the link in the field darktraceUrl to see the action that was taken.",
+    "alert_event_samples": "The following have met the condition: \n[ {\n  \"dvchost\" : \"jps.bofh.etux\",\n  \"dvc\" : \"10.10.10.46\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/604/903\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"jps.bofh.etux\",\n  \"dvc\" : \"10.10.10.46\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/604/904\",\n  \"count\" : 1.0\n} ]",
+    "logz_id": "2112698",
+    "alert_title": "Darktrace - RESPOND action triggered",
+    "alert_severity": "Low",
+    "alert_tags": [
+      "network_threat"
+    ]
+  },
+  {
+    "id": "e9444bc7-a2b9-49c0-b91f-eb82ae23796e",
+    "start": "2025-07-07T13:34:01Z",
+    "end": "2025-07-07T13:34:02Z",
+    "user_id": 2,
+    "inserted_at": "2025-07-07T13:46:02Z",
+    "updated_at": "2025-07-07T13:46:02Z",
+    "alert_description": "A Darktrace RESPOND action has been triggered, whether manually or automatically. This is an informational alert, meant to inform the SOC team that an action upon a device has been taken. Access the link in the field darktraceUrl to see the action that was taken.",
+    "alert_event_samples": "The following have met the condition: \n[ {\n  \"dvchost\" : \"comum-piso1-switch.gestao.etux\",\n  \"dvc\" : \"10.10.0.118\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/191/745\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"comum-piso1-switch.gestao.etux\",\n  \"dvc\" : \"10.10.0.118\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/191/748\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"mfh.bofh.etux\",\n  \"dvc\" : \"10.10.10.49\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/1166/742\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"mfh.bofh.etux\",\n  \"dvc\" : \"10.10.10.49\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/1166/744\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"upseaton2.gestao.etux\",\n  \"dvc\" : \"10.10.0.71\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/18/746\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"upseaton2.gestao.etux\",\n  \"dvc\" : \"10.10.0.71\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/18/747\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"nuc-windows-brgn\",\n  \"dvc\" : \"10.10.10.51\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/75/743\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"tec-switch3.gestao.etux\",\n  \"dvc\" : \"10.10.0.84\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/232/749\",\n  \"count\" : 1.0\n} ]",
+    "logz_id": "2112698",
+    "alert_title": "Darktrace - RESPOND action triggered",
+    "alert_severity": "Low",
+    "alert_tags": [
+      "network_threat"
+    ]
+  },
+  {
+    "id": "cce1d5d0-d20d-454c-83e3-bbb2d0d32ade",
+    "start": "2025-07-07T13:36:05Z",
+    "end": "2025-07-07T13:36:06Z",
+    "user_id": 2,
+    "inserted_at": "2025-07-07T13:46:03Z",
+    "updated_at": "2025-07-07T13:46:03Z",
+    "alert_description": "A Darktrace RESPOND action has been triggered, whether manually or automatically. This is an informational alert, meant to inform the SOC team that an action upon a device has been taken. Access the link in the field darktraceUrl to see the action that was taken.",
+    "alert_event_samples": "The following have met the condition: \n[ {\n  \"dvchost\" : \"Meet-s-Tab-A7-Lite\",\n  \"dvc\" : \"10.10.60.172\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/257/859\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"Meet-s-Tab-A7-Lite\",\n  \"dvc\" : \"10.10.60.172\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/257/860\",\n  \"count\" : 1.0\n} ]",
+    "logz_id": "2112698",
+    "alert_title": "Darktrace - RESPOND action triggered",
+    "alert_severity": "Low",
+    "alert_tags": [
+      "network_threat"
+    ]
+  },
+  {
+    "id": "1e470745-b62a-40df-8953-949d7347d303",
+    "start": "2025-07-07T13:35:01Z",
+    "end": "2025-07-07T13:35:02Z",
+    "user_id": 2,
+    "inserted_at": "2025-07-07T13:47:10Z",
+    "updated_at": "2025-07-07T13:47:10Z",
+    "alert_description": "A Darktrace RESPOND action has been triggered, whether manually or automatically. This is an informational alert, meant to inform the SOC team that an action upon a device has been taken. Access the link in the field darktraceUrl to see the action that was taken.",
+    "alert_event_samples": "The following have met the condition: \n[ {\n  \"dvchost\" : \"iPhone\",\n  \"dvc\" : \"10.10.60.222\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/2013/841\",\n  \"count\" : 1.0\n}, {\n  \"dvchost\" : \"iPhone\",\n  \"dvc\" : \"10.10.60.222\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/2013/842\",\n  \"count\" : 1.0\n} ]",
+    "logz_id": "2112698",
+    "alert_title": "Darktrace - RESPOND action triggered",
+    "alert_severity": "Low",
+    "alert_tags": [
+      "network_threat"
+    ]
+  },
+  {
+    "id": "f31aee53-c7aa-4bba-9867-6f3763360964",
+    "start": "2025-07-07T13:52:19Z",
+    "end": "2025-07-07T13:52:20Z",
+    "user_id": 2,
+    "inserted_at": "2025-07-07T13:54:03Z",
+    "updated_at": "2025-07-07T13:54:03Z",
+    "alert_description": "A Darktrace RESPOND action has been triggered, whether manually or automatically. This is an informational alert, meant to inform the SOC team that an action upon a device has been taken. Access the link in the field darktraceUrl to see the action that was taken.",
+    "alert_event_samples": "The following have met the condition: \n[ {\n  \"dvchost\" : \"bruno-gomes.com.etux\",\n  \"dvc\" : \"10.10.30.98\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/1343/897\",\n  \"count\" : 1.0\n} ]",
+    "logz_id": "2112698",
+    "alert_title": "Darktrace - RESPOND action triggered",
+    "alert_severity": "Low",
+    "alert_tags": [
+      "network_threat"
+    ]
+  },
+  {
+    "id": "035bbabf-414c-41b1-82f6-c306f3965bba",
+    "start": "2025-07-07T15:36:31Z",
+    "end": "2025-07-07T15:36:32Z",
+    "user_id": 2,
+    "inserted_at": "2025-07-07T15:38:03Z",
+    "updated_at": "2025-07-07T15:38:03Z",
+    "alert_description": "A Darktrace RESPOND action has been triggered, whether manually or automatically. This is an informational alert, meant to inform the SOC team that an action upon a device has been taken. Access the link in the field darktraceUrl to see the action that was taken.",
+    "alert_event_samples": "The following have met the condition: \n[ {\n  \"dvchost\" : \"XTKD\",\n  \"dvc\" : \"10.10.10.61\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/1024/898\",\n  \"count\" : 1.0\n} ]",
+    "logz_id": "2112698",
+    "alert_title": "Darktrace - RESPOND action triggered",
+    "alert_severity": "Low",
+    "alert_tags": [
+      "network_threat"
+    ]
+  },
+  {
+    "id": "809e2832-f4ef-498d-819f-165e4d0ca66c",
+    "start": "2025-07-07T16:11:03Z",
+    "end": "2025-07-07T16:11:04Z",
+    "user_id": 2,
+    "inserted_at": "2025-07-07T16:13:02Z",
+    "updated_at": "2025-07-07T16:13:02Z",
+    "alert_description": "A Darktrace RESPOND action has been triggered, whether manually or automatically. This is an informational alert, meant to inform the SOC team that an action upon a device has been taken. Access the link in the field darktraceUrl to see the action that was taken.",
+    "alert_event_samples": "The following have met the condition: \n[ {\n  \"dvchost\" : \"undefined\",\n  \"dvc\" : \"10.10.4.157\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/713/899\",\n  \"count\" : 1.0\n} ]",
+    "logz_id": "2112698",
+    "alert_title": "Darktrace - RESPOND action triggered",
+    "alert_severity": "Low",
+    "alert_tags": [
+      "network_threat"
+    ]
+  },
+  {
+    "id": "d588ccb7-fd50-4d62-bb09-a3a4427201ef",
+    "start": "2025-07-08T10:27:05Z",
+    "end": "2025-07-08T10:27:06Z",
+    "user_id": 2,
+    "inserted_at": "2025-07-08T10:29:02Z",
+    "updated_at": "2025-07-08T10:29:02Z",
+    "alert_description": "A Darktrace RESPOND action has been triggered, whether manually or automatically. This is an informational alert, meant to inform the SOC team that an action upon a device has been taken. Access the link in the field darktraceUrl to see the action that was taken.",
+    "alert_event_samples": "The following have met the condition: \n[ {\n  \"dvchost\" : \"undefined\",\n  \"dvc\" : \"10.10.10.206\",\n  \"darktraceUrl\" : \"https://darktrace.gestao.etux/#actions/2526/900\",\n  \"count\" : 1.0\n} ]",
+    "logz_id": "2112698",
+    "alert_title": "Darktrace - RESPOND action triggered",
+    "alert_severity": "Low",
+    "alert_tags": [
+      "network_threat"
+    ]
+  }
+]

@@ -12,7 +12,7 @@ config :notifeye, Oban,
   notifier: Oban.Notifiers.Postgres,
   queues: [
     processing: 10,
-    mailers: [limit: 10, dispatch_cooldown: 100]
+    notifier: [limit: 10, dispatch_cooldown: 100]
   ],
   repo: Notifeye.Repo
 
