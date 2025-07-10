@@ -4,6 +4,10 @@ defmodule Notifeye.AlertAssignments do
   """
 
   import Ecto.Query, warn: false
+
+  alias Ecto.Multi
+  alias Notifeye.Accounts
+
   alias Notifeye.Repo
 
   alias Notifeye.AlertAssignments.AlertAssignment
@@ -101,4 +105,35 @@ defmodule Notifeye.AlertAssignments do
   def change_alert_assignment(%AlertAssignment{} = alert_assignment, attrs \\ %{}) do
     AlertAssignment.changeset(alert_assignment, attrs)
   end
+
+  def create_alert_assignments_bulk_atomic(users, description_id) do
+    users
+    |> Enum.with_index()
+    |> Enum.reduce(Multi.new(), fn {user_match, index}, multi ->
+      params = build_assignment_params(user_match, description_id)
+      changeset = AlertAssignment.changeset(%AlertAssignment{}, params)
+
+      Multi.insert(multi, assignment_key(index), changeset)
+    end)
+    |> Repo.transaction()
+  end
+
+  defp build_assignment_params(user_match, description_id) do
+    user_id = resolve_user_id(user_match)
+
+    %{
+      match: user_match,
+      user_id: user_id,
+      alert_description_id: description_id
+    }
+  end
+
+  defp resolve_user_id(user_match) do
+    case Accounts.get_user_by_name_or_alias(user_match) do
+      nil -> Accounts.get_admin_user!().id
+      %Accounts.User{id: id} -> id
+    end
+  end
+
+  defp assignment_key(index), do: "assignment_#{index}"
 end

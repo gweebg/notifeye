@@ -10,9 +10,7 @@ defmodule Notifeye.Workers.Alerts do
   TODO: Dig into Worker settings, p.e. `limit`.
   """
 
-  require Logger
-
-  alias Notifeye.{Accounts, AlertDescriptions, AlertAssignments}
+  alias Notifeye.{AlertDescriptions, AlertAssignments}
   alias Notifeye.AlertDescriptions.AlertDescription
 
   use Oban.Worker,
@@ -24,10 +22,9 @@ defmodule Notifeye.Workers.Alerts do
   Performs the alert processing job.
   """
   @impl Oban.Worker
-  def perform(%Oban.Job{args: args}) do
-    logz_id = Map.get(args, "logz_id")
-    samples = Map.get(args, "alert_event_samples")
-
+  def perform(%Oban.Job{
+        args: %{"logz_id" => logz_id, "alert_event_samples" => samples}
+      }) do
     case AlertDescriptions.get_alert_description(logz_id) do
       # create new alert description if it does not exist
       nil -> AlertDescriptions.create_alert_description(%{id: logz_id})
@@ -40,7 +37,7 @@ defmodule Notifeye.Workers.Alerts do
     case AlertDescriptions.maybe_match_samples(description.pattern, samples) do
       nil -> {:cancel, "pattern did not match any part of the alert event samples"}
       {:error, reason} -> {:cancel, reason}
-      users -> verify_matches(users, description)
+      users -> enqueue_matches(users, description)
     end
   end
 
@@ -48,51 +45,28 @@ defmodule Notifeye.Workers.Alerts do
     {:cancel, "alert description found, but it is disabled"}
   end
 
-  # bellow here, must be another worker doing the matching
-  # because we want to be able to fail jobs
-
-  defp verify_matches(users, %AlertDescription{} = description)
+  defp enqueue_matches(users, %AlertDescription{} = description)
        when is_list(users) do
-    errors =
-      users
-      |> Enum.map(&verify_user_match(&1, description))
-      |> Enum.filter(&match?({:error, _}, &1))
+    case AlertAssignments.create_alert_assignments_bulk_atomic(users, description.id) do
+      {:ok, assignments_map} ->
+        assignments_map
+        |> Map.values()
+        |> enqueue_notifications()
 
-    case errors do
-      [] ->
         :ok
 
-      errors ->
-        Logger.error(
-          "Failed to create #{length(errors)} out of #{length(users)} alert assignments: #{inspect(errors)}"
-        )
-
-        # don't fail the job - accept partial success
-        :ok
+      {:error, failed_operation, changeset, _changes} ->
+        {:error,
+         "Failed to create alert assignments: #{failed_operation} - #{inspect(changeset)}"}
     end
   end
 
-  defp verify_user_match(user, description) do
-    # check if user is registered or matches any of its aliases
-    # if it does create a new alert assignment for the respective user
-    # else create it for the admin user
-    user_id =
-      case Accounts.get_user_by_name_or_alias(user) do
-        nil -> Accounts.get_admin_user!().id
-        %Accounts.User{id: id} -> id
-      end
-
-    case AlertAssignments.create_alert_assignment(%{
-           match: user,
-           user_id: user_id,
-           alert_description_id: description.id
-         }) do
-      {:ok, _assignment} ->
-        # create new job in notification queue
-        :ok
-
-      {:error, changeset} ->
-        {:cancel, "failed to create alert assignment: #{inspect(changeset.errors)}"}
-    end
+  defp enqueue_notifications(assignments) do
+    assignments
+    |> Enum.each(fn assignment ->
+      %{assignment_id: assignment.id}
+      |> Notifeye.Workers.Notifier.new()
+      |> Oban.insert()
+    end)
   end
 end
