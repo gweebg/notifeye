@@ -139,16 +139,21 @@ defmodule Notifeye.AlertDescriptions do
   """
   def maybe_match_samples(pattern, alert_event_samples) do
     with {:ok, regex} <- Regex.compile(pattern),
-         captures <- Regex.named_captures(regex, alert_event_samples) do
-      maybe_match_user(captures)
+         captures <- all_named_captures(regex, alert_event_samples, "user") do
+      captures
     else
       {:error, _reason} = error -> error
     end
   end
 
-  defp maybe_match_user(nil), do: nil
-
-  defp maybe_match_user(captures) do
-    Map.get(captures, "user") || {:error, "named capture 'user' is mandatory in the pattern"}
+  defp all_named_captures(regex, string, group_name) do
+    regex
+    |> Regex.scan(string, capture: [group_name])
+    |> List.flatten()
+    |> Enum.filter(&(&1 != ""))
+    |> case do
+      [] -> nil
+      captures -> captures
+    end
   end
 end
