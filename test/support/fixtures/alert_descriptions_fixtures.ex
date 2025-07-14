@@ -22,4 +22,12 @@ defmodule Notifeye.AlertDescriptionsFixtures do
 
     alert_description
   end
+
+  @doc """
+  Generate an alert_description with a notification group.
+  """
+  def alert_description_with_notification_group_fixture(notification_group, attrs \\ %{}) do
+    attrs = Map.put(attrs, :notification_group_id, notification_group.id)
+    alert_description_fixture(attrs)
+  end
 end

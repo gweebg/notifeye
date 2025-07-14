@@ -18,8 +18,6 @@ defmodule Notifeye.Repo.Migrations.CreateNotificationGroups do
           null: false
 
       add :user_id, references(:users, type: :integer, on_delete: :delete_all), null: false
-
-      timestamps(type: :utc_datetime)
     end
 
     # update alert_descriptions to include notification_group_id
