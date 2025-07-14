@@ -263,7 +263,7 @@ defmodule Notifeye.Notifications do
     from(u in User,
       join: ngu in "notification_group_users",
       on: ngu.user_id == u.id,
-      where: ngu.notification_group_id == ^group_id,
+      where: ngu.notification_group_id == type(^group_id, :binary_id),
       order_by: [u.email]
     )
     |> Repo.all()
