@@ -27,9 +27,23 @@ defmodule Notifeye.Workers.Alerts do
       }) do
     case AlertDescriptions.get_alert_description(logz_id) do
       # create new alert description if it does not exist
-      nil -> AlertDescriptions.create_alert_description(%{id: logz_id})
+      nil -> create_description(logz_id)
       # process the alert if information about the alert is available
       %AlertDescription{} = description -> process_alert(description, samples)
+    end
+  end
+
+  defp create_description(logz_id) do
+    case AlertDescriptions.create_alert_description(%{id: logz_id}) do
+      {:ok, %AlertDescription{} = description} = result ->
+        description
+        |> Notifeye.Workers.Notifier.new()
+        |> Oban.insert()
+
+        result
+
+      error ->
+        error
     end
   end
 
