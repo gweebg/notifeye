@@ -4,13 +4,14 @@ defmodule Notifeye.AlertDescriptions.AlertDescription do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @required_fields ~w(id enabled verified)a
+  @required_fields ~w(id state verified)a
   @fields @required_fields ++ ~w(pattern edited_by notification_group_id)a
+  @states ~w(disabled enabled grouponly)a
 
   @primary_key {:id, :integer, autogenerate: false}
   @foreign_key_type :binary_id
   schema "alert_descriptions" do
-    field :enabled, :boolean, default: false
+    field :state, Ecto.Enum, values: @states, default: :disabled
     field :pattern, :string
     field :verified, :boolean, default: false
 

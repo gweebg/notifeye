@@ -8,7 +8,7 @@ defmodule Notifeye.AlertDescriptionsTest do
 
     import Notifeye.AlertDescriptionsFixtures
 
-    @invalid_attrs %{enabled: nil, pattern: nil, verified: nil}
+    @invalid_attrs %{state: nil, pattern: nil, verified: nil}
 
     test "list_alert_descriptions/0 returns all alert_descriptions" do
       alert_description = alert_description_fixture()
@@ -24,13 +24,13 @@ defmodule Notifeye.AlertDescriptionsTest do
       scope = Notifeye.AccountsFixtures.user_scope_fixture()
       alert = Notifeye.MonitoringFixtures.alert_fixture(scope)
 
-      valid_attrs = %{id: alert.logz_id, enabled: true, pattern: "some pattern", verified: true}
+      valid_attrs = %{id: alert.logz_id, state: :enabled, pattern: "some pattern", verified: true}
 
       assert {:ok, %AlertDescription{} = alert_description} =
                AlertDescriptions.create_alert_description(valid_attrs)
 
       assert alert_description.id == alert.logz_id
-      assert alert_description.enabled == true
+      assert alert_description.state == :enabled
       assert alert_description.pattern == "some pattern"
       assert alert_description.verified == true
     end
@@ -42,12 +42,12 @@ defmodule Notifeye.AlertDescriptionsTest do
 
     test "update_alert_description/2 with valid data updates the alert_description" do
       alert_description = alert_description_fixture()
-      update_attrs = %{enabled: false, pattern: "some updated pattern", verified: false}
+      update_attrs = %{state: :grouponly, pattern: "some updated pattern", verified: false}
 
       assert {:ok, %AlertDescription{} = alert_description} =
                AlertDescriptions.update_alert_description(alert_description, update_attrs)
 
-      assert alert_description.enabled == false
+      assert alert_description.state == :grouponly
       assert alert_description.pattern == "some updated pattern"
       assert alert_description.verified == false
     end

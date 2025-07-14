@@ -15,6 +15,7 @@ defmodule Notifeye.AlertDescriptionsFixtures do
       attrs
       |> Enum.into(%{
         id: alert.logz_id,
+        state: :enabled,
         pattern: "^.*user_id\:\w+$",
         verified: true
       })
