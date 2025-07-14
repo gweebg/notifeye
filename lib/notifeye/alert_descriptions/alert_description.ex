@@ -5,7 +5,7 @@ defmodule Notifeye.AlertDescriptions.AlertDescription do
   import Ecto.Changeset
 
   @required_fields ~w(id enabled verified)a
-  @fields @required_fields ++ ~w(pattern edited_by)a
+  @fields @required_fields ++ ~w(pattern edited_by notification_group_id)a
 
   @primary_key {:id, :integer, autogenerate: false}
   @foreign_key_type :binary_id
@@ -15,6 +15,7 @@ defmodule Notifeye.AlertDescriptions.AlertDescription do
     field :verified, :boolean, default: false
 
     belongs_to :user, Notifeye.Accounts.User, foreign_key: :edited_by
+    belongs_to :notification_group, Notifeye.Notifications.NotificationGroup
 
     has_many :alert_assignments, Notifeye.AlertAssignments.AlertAssignment, on_replace: :delete
 

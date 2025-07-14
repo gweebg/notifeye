@@ -28,6 +28,11 @@ defmodule Notifeye.Accounts.User do
     has_many :alert_descriptions, Notifeye.AlertDescriptions.AlertDescription,
       foreign_key: :edited_by
 
+    many_to_many :notification_groups, Notifeye.Notifications.NotificationGroup,
+      join_through: "notification_group_users",
+      join_keys: [user_id: :id, notification_group_id: :id],
+      on_replace: :delete
+
     timestamps(type: :utc_datetime)
   end
 
