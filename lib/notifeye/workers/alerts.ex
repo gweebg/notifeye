@@ -47,7 +47,7 @@ defmodule Notifeye.Workers.Alerts do
 
   defp enqueue_matches(users, %AlertDescription{} = description)
        when is_list(users) do
-    case AlertAssignments.create_alert_assignments_bulk_atomic(users, description.id) do
+    case AlertAssignments.create_alert_assignments_bulk(users, description.id) do
       {:ok, assignments_map} ->
         assignments_map
         |> Map.values()

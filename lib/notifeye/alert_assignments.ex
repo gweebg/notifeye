@@ -106,7 +106,7 @@ defmodule Notifeye.AlertAssignments do
     AlertAssignment.changeset(alert_assignment, attrs)
   end
 
-  def create_alert_assignments_bulk_atomic(users, description_id) do
+  def create_alert_assignments_bulk(users, description_id) do
     users
     |> Enum.with_index()
     |> Enum.reduce(Multi.new(), fn {user_match, index}, multi ->
