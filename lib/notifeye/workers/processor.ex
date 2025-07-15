@@ -72,9 +72,7 @@ defmodule Notifeye.Workers.Processor do
           enqueue_assignment_notifications(assignments)
         end
 
-        # if only enabled for notification group, notify group members
-        # `and state == :grouponly` is not necessary here
-        if description.notification_group_id and state == :grouponly do
+        if description.notification_group_id do
           enqueue_group_notifications(assignments, description)
         end
 

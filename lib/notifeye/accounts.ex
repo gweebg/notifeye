@@ -459,6 +459,8 @@ defmodule Notifeye.Accounts do
   ## Returns
   - `%User{}`: If a user with the given name or alias exists.
   - `nil`: If no user matches the given name or alias.
+
+  To-Do: Make this function better. Maybe check work distance or other criteria.
   """
   def get_user_by_name_or_alias(name) when is_binary(name) do
     normalized_name =
@@ -467,7 +469,9 @@ defmodule Notifeye.Accounts do
       |> String.downcase()
 
     from(user in Notifeye.Accounts.User,
-      where: user.username == ^normalized_name or ^normalized_name in user.aliases,
+      where:
+        fragment("LOWER(?)", user.username) == ^normalized_name or
+          ^normalized_name in user.aliases,
       select: user
     )
     |> Repo.one()

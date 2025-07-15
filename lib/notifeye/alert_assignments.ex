@@ -106,6 +106,26 @@ defmodule Notifeye.AlertAssignments do
     AlertAssignment.changeset(alert_assignment, attrs)
   end
 
+  @doc """
+  Lists all alert assignments for a given alert description.
+
+  ## Examples
+
+      iex> list_alert_assignments_for_alert_description(123)
+      [%AlertAssignment{}, ...]
+
+      iex> list_alert_assignments_for_alert_description(456)
+      []
+  """
+  def list_alert_assignments_for_alert_description(alert_description_id) do
+    from(
+      a in AlertAssignment,
+      where: a.alert_description_id == ^alert_description_id,
+      order_by: [asc: a.id]
+    )
+    |> Repo.all()
+  end
+
   def create_alert_assignments_bulk(users, description_id) do
     users
     |> Enum.with_index()
