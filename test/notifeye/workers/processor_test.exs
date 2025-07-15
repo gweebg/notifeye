@@ -7,7 +7,7 @@ defmodule Notifeye.Workers.ProcessorTest do
   import Notifeye.NotificationsFixtures
 
   alias Notifeye.Workers.{Processor, Notifier}
-  alias Notifeye.{AlertDescriptions, AlertAssignments, Notifications}
+  alias Notifeye.{AlertAssignments, Notifications}
 
   @single_sample """
   The following have met the condition:
@@ -19,40 +19,25 @@ defmodule Notifeye.Workers.ProcessorTest do
   } ]
   """
 
-  @multi_samples """
-  The following have met the condition:
-  [ {
-    "dvchost" : "user1",
-    "dvc" : "10.10.60.185",
-    "darktraceUrl" : "",
-    "count" : 1.0
-  }, {
-    "dvchost" : "user2",
-    "dvc" : "10.10.60.185",
-    "darktraceUrl" : "",
-    "count" : 1.0
-  }, {
-    "dvchost" : "user3",
-    "dvc" : "10.10.60.229",
-    "darktraceUrl" : "",
-    "count" : 1.0
-  } ]
-  """
-
-  @server_samples """
-  The following have met the condition:
-  [ {
-    "dvchost" : "tablet-1",
-    "dvc" : "10.10.10.25",
-    "darktraceUrl" : "",
-    "count" : 1.0
-  }, {
-    "dvchost" : "tablet-2",
-    "dvc" : "10.10.10.48",
-    "darktraceUrl" : "",
-    "count" : 1.0
-  } ]
-  """
+  # @multi_samples """
+  # The following have met the condition:
+  # [ {
+  #   "dvchost" : "user1",
+  #   "dvc" : "10.10.60.185",
+  #   "darktraceUrl" : "",
+  #   "count" : 1.0
+  # }, {
+  #   "dvchost" : "user2",
+  #   "dvc" : "10.10.60.185",
+  #   "darktraceUrl" : "",
+  #   "count" : 1.0
+  # }, {
+  #   "dvchost" : "user3",
+  #   "dvc" : "10.10.60.229",
+  #   "darktraceUrl" : "",
+  #   "count" : 1.0
+  # } ]
+  # """
 
   # helper functions to reduce duplication
   defp standard_pattern, do: "\"dvchost\" : \"(?<user>[A-Za-z0-9\\-\\.]+)\""
@@ -71,25 +56,6 @@ defmodule Notifeye.Workers.ProcessorTest do
       |> Notifications.update_notification_group_users(users)
 
     notification_group
-  end
-
-  defp assert_assignment_notifications_enqueued(assignments) do
-    for assignment <- assignments do
-      assert_enqueued(worker: Notifier, args: %{assignment_id: assignment.id})
-    end
-  end
-
-  defp assert_group_notifications_enqueued(assignments, group_users, alert_description_id) do
-    for assignment <- assignments, user <- group_users do
-      assert_enqueued(
-        worker: Notifier,
-        args: %{
-          user_id: user.id,
-          alert_description_id: alert_description_id,
-          assignment_id: assignment.id
-        }
-      )
-    end
   end
 
   describe "perform/1" do
