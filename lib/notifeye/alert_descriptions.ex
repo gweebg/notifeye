@@ -132,9 +132,8 @@ defmodule Notifeye.AlertDescriptions do
     - `alert_event_samples`: The string samples from the alert event to match against the pattern.
 
   ## Returns
-    - `match` if the pattern matches any part of the alert event samples.
+    - `[match1, match2, ..., matchN]` if the pattern matches any part of the alert event samples.
     - `nil` if the pattern does not match any part of the alert event samples.
-    - `{:error "named capture 'user' is mandatory in the pattern"}` if the pattern does not contain a named capture group `user`.
     - `{:error, reason}` if the pattern is not a valid Regex.
   """
   def maybe_match_samples(pattern, alert_event_samples) do
