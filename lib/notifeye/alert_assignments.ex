@@ -131,7 +131,7 @@ defmodule Notifeye.AlertAssignments do
     |> Enum.with_index()
     |> Enum.reduce(Multi.new(), fn {user_match, index}, multi ->
       params = build_assignment_params(user_match, description_id)
-      changeset = AlertAssignment.changeset(%AlertAssignment{}, params)
+      changeset = AlertAssignment.changeset(%AlertAssignment{status: :open}, params)
 
       Multi.insert(multi, assignment_key(index), changeset)
     end)
