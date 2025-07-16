@@ -1,0 +1,32 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+
+  - repo: local
+    hooks:
+      - id: mix-test
+        name: "Elixir: mix test"
+        entry: mix test --all-warnings --warnings-as-errors
+        language: system
+        pass_filenames: false
+        files: \.exs*$
+
+      - id: mix-format
+        name: "Elixir: mix format"
+        entry: mix format --check-formatted
+        language: system
+        files: \.exs*$
+
+      - id: mix-credo
+        name: "Elixir: mix credo"
+        entry: mix credo --all
+        language: system
+        pass_filenames: false
+        files: \.exs*$
