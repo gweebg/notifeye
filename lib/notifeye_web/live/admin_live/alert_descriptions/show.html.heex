@@ -1,0 +1,218 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <.header>
+    Alert Description #{@alert_description.id}
+    <:subtitle>Detailed view of alert description and related events</:subtitle>
+    <:actions>
+      <.link
+        navigate={~p"/admin/alert-descriptions/#{@alert_description.id}/edit"}
+        class="btn btn-primary"
+      >
+        <.icon name="hero-pencil" class="w-4 h-4" /> Edit
+      </.link>
+      <.link navigate={~p"/admin/alert-descriptions"} class="btn btn-outline">
+        <.icon name="hero-arrow-left" class="w-4 h-4" /> Back to List
+      </.link>
+    </:actions>
+  </.header>
+
+  <div class="space-y-6">
+    <!-- Alert Description Details -->
+    <div class="card bg-base-100 shadow-sm border border-base-200">
+      <div class="card-body">
+        <h2 class="card-title">Alert Description Details</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">ID</span>
+              </label>
+              <div class="badge badge-outline font-mono">{@alert_description.id}</div>
+            </div>
+
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">State</span>
+              </label>
+              <div class={[
+                "badge",
+                case @alert_description.state do
+                  :enabled -> "badge-success"
+                  :disabled -> "badge-error"
+                  :grouponly -> "badge-warning"
+                end
+              ]}>
+                {String.capitalize(to_string(@alert_description.state))}
+              </div>
+            </div>
+
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">Verified</span>
+              </label>
+              <div class={[
+                "badge",
+                if @alert_description.verified do
+                  "badge-success"
+                else
+                  "badge-outline"
+                end
+              ]}>
+                {if @alert_description.verified, do: "Verified", else: "Unverified"}
+              </div>
+            </div>
+
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">Notification Group</span>
+              </label>
+              <div class="text-sm">
+                {if @alert_description.notification_group_id do
+                  "Group #{@alert_description.notification_group_id}"
+                else
+                  "No group assigned"
+                end}
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">Pattern</span>
+              </label>
+              <div class="textarea textarea-bordered bg-base-200 font-mono text-sm min-h-[100px]">
+                {if @alert_description.pattern do
+                  @alert_description.pattern
+                else
+                  "No pattern defined"
+                end}
+              </div>
+            </div>
+
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">Edited By</span>
+              </label>
+              <div class="text-sm">
+                {if @alert_description.edited_by do
+                  "User ID: #{@alert_description.edited_by}"
+                else
+                  "System generated"
+                end}
+              </div>
+            </div>
+
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">Timestamps</span>
+              </label>
+              <div class="text-sm space-y-1">
+                <div>
+                  Created: {Calendar.strftime(
+                    @alert_description.inserted_at,
+                    "%Y-%m-%d %H:%M:%S UTC"
+                  )}
+                </div>
+                <div>
+                  Updated: {Calendar.strftime(
+                    @alert_description.updated_at,
+                    "%Y-%m-%d %H:%M:%S UTC"
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<!-- Alert Assignments -->
+    <div class="card bg-base-100 shadow-sm border border-base-200">
+      <div class="card-body">
+        <h2 class="card-title">
+          Alert Assignments
+          <div class="badge badge-neutral">{length(@alert_assignments)}</div>
+        </h2>
+
+        <div :if={Enum.empty?(@alert_assignments)} class="text-center py-8 text-gray-500">
+          No alert assignments found for this description.
+        </div>
+
+        <div :if={not Enum.empty?(@alert_assignments)} class="overflow-x-auto">
+          <table class="table table-zebra w-full">
+            <thead>
+              <tr>
+                <th>Assignment ID</th>
+                <th>User</th>
+                <th>Notification Group</th>
+                <th>Assigned At</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr :for={assignment <- @alert_assignments}>
+                <td class="font-mono text-sm">{assignment.id}</td>
+                <td>{assignment.user_id}</td>
+                <td>{assignment.notification_group_id || "N/A"}</td>
+                <td class="text-sm">
+                  {Calendar.strftime(assignment.inserted_at, "%Y-%m-%d %H:%M")}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+<!-- Related Alerts -->
+    <div class="card bg-base-100 shadow-sm border border-base-200">
+      <div class="card-body">
+        <h2 class="card-title">
+          Related Alerts
+          <div class="badge badge-neutral">{length(@alerts)}</div>
+        </h2>
+
+        <div :if={Enum.empty?(@alerts)} class="text-center py-8 text-gray-500">
+          No alerts found related to this description ID.
+        </div>
+
+        <div :if={not Enum.empty?(@alerts)} class="overflow-x-auto">
+          <table class="table table-zebra w-full">
+            <thead>
+              <tr>
+                <th>Logz ID</th>
+                <th>Alert Title</th>
+                <th>Severity</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr :for={alert <- @alerts}>
+                <td class="font-mono text-sm">{alert.logz_id}</td>
+                <td class="max-w-xs truncate">{alert.alert_title}</td>
+                <td>
+                  <div class="badge badge-outline">{alert.alert_severity}</div>
+                </td>
+                <td class="text-sm">
+                  {if alert.start,
+                    do: Calendar.strftime(alert.start, "%Y-%m-%d %H:%M"),
+                    else: "N/A"}
+                </td>
+                <td class="text-sm">
+                  {if alert.end, do: Calendar.strftime(alert.end, "%Y-%m-%d %H:%M"), else: "N/A"}
+                </td>
+                <td>
+                  <.link navigate={~p"/alerts/#{alert.id}"} class="btn btn-ghost btn-sm">
+                    <.icon name="hero-eye" class="w-4 h-4" /> View
+                  </.link>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layouts.app>

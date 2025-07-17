@@ -63,6 +63,27 @@ defmodule Notifeye.Monitoring do
   end
 
   @doc """
+  Returns an alert that matches a given `%AlertDescription{}` id.
+
+  ## Examples
+
+      iex> get_alert_for_description!(1)
+      %Alert{}
+
+      iex> get_alert_for_description!(-1)
+      ** (Ecto.NoResultsError)
+
+  """
+  def get_alert_for_description!(description_id) do
+    from(
+      alert in Alert,
+      where: alert.logz_id == ^description_id,
+      limit: 1
+    )
+    |> Repo.one!()
+  end
+
+  @doc """
   Creates a alert.
 
   ## Examples

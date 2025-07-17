@@ -18,6 +18,14 @@ defmodule NotifeyeWeb.Router do
     plug :fetch_current_scope_for_api_user
   end
 
+  pipeline :require_admin do
+    plug NotifeyeWeb.Plugs.Authorize, :admin
+  end
+
+  pipeline :require_lead do
+    plug NotifeyeWeb.Plugs.Authorize, :lead
+  end
+
   scope "/", NotifeyeWeb do
     pipe_through :browser
 
@@ -81,5 +89,16 @@ defmodule NotifeyeWeb.Router do
 
     post "/users/log-in", UserSessionController, :create
     delete "/users/log-out", UserSessionController, :delete
+  end
+
+  scope "/admin", NotifeyeWeb do
+    pipe_through :browser
+
+    live_session :admin,
+      on_mount: [{NotifeyeWeb.UserAuth, :ensure_admin}] do
+      live "/alert-descriptions", AdminLive.AlertDescriptions.Index, :index
+      live "/alert-descriptions/:id", AdminLive.AlertDescriptions.Show, :show
+      live "/alert-descriptions/:id/edit", AdminLive.AlertDescriptions.Edit, :edit
+    end
   end
 end

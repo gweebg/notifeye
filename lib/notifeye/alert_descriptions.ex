@@ -18,7 +18,9 @@ defmodule Notifeye.AlertDescriptions do
 
   """
   def list_alert_descriptions do
-    Repo.all(AlertDescription)
+    AlertDescription
+    |> preload(:user)
+    |> Repo.all()
   end
 
   @doc """

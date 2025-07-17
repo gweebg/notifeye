@@ -1,0 +1,115 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <.header>
+    Alert Descriptions Administration
+    <:subtitle>
+      Manage and view all alert descriptions in the system
+    </:subtitle>
+  </.header>
+
+  <div class="flex gap-4">
+    <div class="w-full">
+      <div class="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="table table-zebra w-full">
+            <thead class="bg-base-200">
+              <tr>
+                <th>ID</th>
+                <th>State</th>
+                <th>Verified</th>
+                <th>Pattern Preview</th>
+                <th>Notification Group</th>
+                <th>Last Updated</th>
+                <th>Updated By</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="alert_descriptions" phx-update="stream">
+              <tr
+                :for={{id, alert_description} <- @streams.alert_descriptions}
+                id={id}
+                class="hover"
+              >
+                <td class="font-mono text-sm">
+                  <div class="badge badge-outline">
+                    {alert_description.id}
+                  </div>
+                </td>
+                <td>
+                  <div class={[
+                    "badge",
+                    case alert_description.state do
+                      :enabled -> "badge-success"
+                      :disabled -> "badge-warning"
+                      :grouponly -> "badge-success"
+                    end
+                  ]}>
+                    {String.capitalize(to_string(alert_description.state))}
+                  </div>
+                </td>
+                <td>
+                  <div class={[
+                    "badge",
+                    if alert_description.verified do
+                      "badge-success"
+                    else
+                      "badge-error"
+                    end
+                  ]}>
+                    {if alert_description.verified, do: "Verified", else: "Unverified"}
+                  </div>
+                </td>
+                <td class="max-w-xs">
+                  <div class="font-mono text-sm truncate">
+                    {alert_description.pattern || "No pattern"}
+                  </div>
+                </td>
+                <td>
+                  {if alert_description.notification_group_id do
+                    "Group #{alert_description.notification_group_id}"
+                  else
+                    "No group"
+                  end}
+                </td>
+
+                <td class="text-sm text-gray-500">
+                  <div class="tooltip">
+                    <div class="tooltip-content">
+                      {Timex.format!(alert_description.updated_at, "{YYYY}-{0M}-{0D} {h24}:{m}")}
+                    </div>
+                    {Timex.format!(alert_description.updated_at, "{relative}", :relative)}
+                  </div>
+                </td>
+
+                <td class="text-sm text-gray-500">
+                  <%= if alert_description.user do %>
+                    <div class="tooltip ml-5">
+                      <div class="tooltip-content">
+                        {alert_description.user.email}
+                      </div>
+                      <div class="avatar">
+                        <div class="h-10 w-10 rounded-full">
+                          <img src="https://img.daisyui.com/images/profile/demo/yellingcat@192.webp" />
+                        </div>
+                      </div>
+                    </div>
+                  <% else %>
+                    No user
+                  <% end %>
+                </td>
+
+                <td>
+                  <.link
+                    navigate={~p"/admin/alert-descriptions/#{alert_description.id}"}
+                    class="btn btn-ghost btn-sm"
+                  >
+                    <.icon name="hero-eye" class="w-4 h-4" /> View
+                  </.link>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layouts.app>

@@ -11,8 +11,8 @@ defmodule Notifeye.AlertDescriptionsTest do
     @invalid_attrs %{state: nil, pattern: nil, verified: nil}
 
     test "list_alert_descriptions/0 returns all alert_descriptions" do
-      alert_description = alert_description_fixture()
-      assert AlertDescriptions.list_alert_descriptions() == [alert_description]
+      alert_description_fixture()
+      assert length(AlertDescriptions.list_alert_descriptions()) == 1
     end
 
     test "get_alert_description!/1 returns the alert_description with given id" do

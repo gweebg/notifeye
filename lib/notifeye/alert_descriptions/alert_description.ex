@@ -15,7 +15,7 @@ defmodule Notifeye.AlertDescriptions.AlertDescription do
     field :pattern, :string
     field :verified, :boolean, default: false
 
-    belongs_to :user, Notifeye.Accounts.User, foreign_key: :edited_by
+    belongs_to :user, Notifeye.Accounts.User, foreign_key: :edited_by, type: :integer
     belongs_to :notification_group, Notifeye.Notifications.NotificationGroup
 
     has_many :alert_assignments, Notifeye.AlertAssignments.AlertAssignment, on_replace: :delete
