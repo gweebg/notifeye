@@ -45,6 +45,25 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Edit do
 
   @impl true
   def handle_event("save", %{"alert_description" => alert_description_params}, socket) do
+    perform_save(socket, alert_description_params)
+  end
+
+  @impl true
+  def handle_event("force_save", _params, socket) do
+    # Get the current changeset values for force save
+    changeset = socket.assigns.changeset
+
+    # Convert changeset to params format
+    alert_description_params =
+      changeset.changes
+      |> Enum.into(%{})
+      |> Enum.map(fn {key, value} -> {to_string(key), value} end)
+      |> Enum.into(%{})
+
+    perform_save(socket, alert_description_params)
+  end
+
+  defp perform_save(socket, alert_description_params) do
     # add the last person that edited the description onto the description
     current_user = socket.assigns.current_scope.user
 
@@ -72,22 +91,23 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Edit do
 
   @impl true
   def handle_event("do_test", _params, socket) do
-    %{alert_description: alert_description, sample_alert: alert} = socket.assigns
+    %{changeset: changeset, sample_alert: alert} = socket.assigns
 
-    pattern = alert_description.pattern
+    pattern =
+      case Map.get(changeset.changes, :pattern) do
+        nil -> changeset.data.pattern
+        value -> value
+      end
+
     sample = alert.alert_event_samples
 
-    if sample && pattern && String.trim(pattern) != "" do
-      result =
-        pattern
-        |> AlertDescriptions.maybe_match_samples(sample)
+    result =
+      pattern
+      |> AlertDescriptions.maybe_match_samples(sample)
 
-      {:noreply,
-       socket
-       |> assign(:test_result, result)}
-    else
-      {:noreply, assign(socket, :test_result, {:error, "Test failed due to missing pattern."})}
-    end
+    {:noreply,
+     socket
+     |> assign(:test_result, result)}
   end
 
   @impl true

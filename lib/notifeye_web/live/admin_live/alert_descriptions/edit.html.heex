@@ -1,165 +1,233 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
-  <.header>
-    Edit Alert Description #{@alert_description.id}
-    <:subtitle>Modify alert description settings and test pattern matching</:subtitle>
-    <:actions>
-      <.link
-        navigate={~p"/admin/alert-descriptions/#{@alert_description.id}"}
-        class="btn btn-outline"
-      >
-        <.icon name="hero-arrow-left" class="w-4 h-4" /> Back to Details
-      </.link>
-    </:actions>
-  </.header>
-
-  <div class="flex gap-6">
-    <!-- Left side - Edit Form -->
-    <div class="w-1/2 space-y-6">
-      <!-- Main Edit Form -->
-      <div class="card bg-base-100 shadow-sm border border-base-200">
-        <div class="card-body">
-          <h2 class="card-title">Edit Alert Description</h2>
-
-          <.form
-            :let={form}
-            for={@changeset}
-            id="alert_description_form"
-            phx-change="validate"
-            phx-submit="save"
+  <div class="max-w-4xl mx-auto p-6">
+    <!-- Page Header -->
+    <div class="mb-8">
+      <div class="flex items-center gap-4 mb" <!-- Form Actions -->
+        <div class="mt-8 flex justify-end gap-3">
+          <.link
+            navigate={~p"/admin/alert-descriptions/#{@alert_description.id}"}
+            class="btn btn-outline"
           >
-            <div class="grid grid-cols-1 gap-4">
-              <!-- State -->
-              <.input field={form[:state]} type="select" label="State" options={state_options()} />
+            Cancel
+          </.link>
+          <%= if match?(matches when is_list(matches), @test_result) do %>
+            <.button phx-disable-with="Saving..." class="btn btn-primary" type="submit">
+              <.icon name="hero-check" class="w-4 h-4" /> Save Changes
+            </.button>
+          <% else %>
+            <button type="button" class="btn btn-primary" onclick="save_confirmation.showModal()">
+              <.icon name="hero-check" class="w-4 h-4" /> Save Changes
+            </button>
+          <% end %>
+        </div>
 
-<!-- Notification Group -->
+        <.link
+          navigate={~p"/admin/alert-descriptions/#{@alert_description.id}"}
+          class="btn btn-ghost btn-sm"
+        >
+          <.icon name="hero-arrow-left" class="w-4 h-4" />
+        </.link>
+        <h1 class="text-2xl font-bold">Edit Alert Description #{@alert_description.id}</h1>
+      </div>
+      <p class="text-base-content/70">
+        Update the alert description settings and test your regex pattern.
+      </p>
+    </div>
+
+    <dialog id="save_confirmation" class="modal">
+      <div class="modal-box">
+        <h3 class="text-lg font-bold text-warning">
+          <.icon name="hero-exclamation-triangle" class="w-6 h-6 inline mr-2" />
+          Pattern Not Tested
+        </h3>
+        <p class="py-4 text-base-content/80">
+          It appears you haven't tested your regex pattern yet, or the test resulted in an error.
+          Without proper testing, the alert description may not work as expected and could miss important alerts.
+        </p>
+        <p class="text-sm text-base-content/60 mb-4">
+          We recommend testing your pattern against the sample data before saving.
+        </p>
+        <div class="modal-action">
+          <form method="dialog">
+            <button class="btn btn-outline">Cancel</button>
+          </form>
+          <button class="btn btn-warning" phx-click="force_save">
+            <.icon name="hero-exclamation-triangle" class="w-4 h-4" /> Save Anyway
+          </button>
+        </div>
+      </div>
+    </dialog>
+
+<!-- Centered Form -->
+    <div class="card bg-base-100 shadow-sm border border-base-200">
+      <div class="card-body">
+        <.form
+          :let={form}
+          for={@changeset}
+          id="alert_description_form"
+          phx-change="validate"
+          phx-submit="save"
+        >
+          <div class="space-y-8">
+            <!-- State Field -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium">State</span>
+              </label>
+              <.input field={form[:state]} type="select" options={state_options()} />
+              <label class="label">
+                <span class="label-text-alt text-base-content/60">
+                  Controls whether this alert description is active and how it processes alerts.
+                </span>
+              </label>
+            </div>
+
+<!-- Notification Group Field -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium">Notification Group</span>
+              </label>
               <.input
                 field={form[:notification_group_id]}
                 type="select"
-                label="Notification Group"
                 options={[{"No group", nil} | Enum.map(@notification_groups, &{&1.name, &1.id})]}
               />
-
-<!-- Pattern -->
-              <.input
-                field={form[:pattern]}
-                type="textarea"
-                label="Pattern (Regex)"
-                placeholder="Enter regex pattern..."
-                phx-value-pattern={form[:pattern].value || ""}
-                phx-debounce="500"
-              />
+              <label class="label">
+                <span class="label-text-alt text-base-content/60">
+                  Select the notification group that will receive alerts matching this description.
+                </span>
+              </label>
             </div>
 
-            <div class="mt-6">
+<!-- Pattern Field Section -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium">Pattern (Regex)</span>
+              </label>
+              <label class="label">
+                <span class="label-text-alt text-base-content/60">
+                  Enter a regex pattern to match alert events. The pattern must include at least one named capture group called "user".
+                </span>
+              </label>
+
+<!-- Sample Alert Display -->
+              <div class="mt-4 p-4 bg-base-200 rounded-lg">
+                <h4 class="font-semibold mb-2 text-sm">Sample Alert for Testing</h4>
+                <div class="mb-3">
+                  <div class="text-sm font-medium text-base-content/80">Title:</div>
+                  <div class="text-sm text-base-content/70">
+                    {@sample_alert.alert_title || "No title"}
+                  </div>
+                </div>
+                <div>
+                  <div class="text-sm font-medium text-base-content/80 mb-1">Event Samples:</div>
+                  <div class="bg-base-100 text-accent p-3 rounded font-mono text-xs max-h-32 overflow-y-auto border">
+                    {@sample_alert.alert_event_samples}
+                  </div>
+                </div>
+              </div>
+
+<!-- Test Results (above input) -->
+              <div class="mt-4">
+                <%= cond do %>
+                  <% @test_result == "" -> %>
+                    <div class="bg-base-100 border border-base-300 p-3 rounded text-center">
+                      <p class="text-sm text-base-content/60">
+                        Enter a pattern and click "Test Pattern" to see results.
+                      </p>
+                    </div>
+                  <% match?(matches when is_list(matches), @test_result) -> %>
+                    <div class="bg-base-100 border border-success p-3 rounded">
+                      <div class="flex items-center gap-2 mb-2">
+                        <.icon name="hero-check-circle" class="w-5 h-5 text-success" />
+                        <span class="font-semibold text-base-content">
+                          Test Passed ({"#{length(@test_result)} #{if length(@test_result) == 1, do: "match", else: "matches"})"}
+                        </span>
+                      </div>
+                      <div class="space-y-2">
+                        <%= for match <- @test_result do %>
+                          <div class="bg-success border border-success p-2 rounded">
+                            <div class="font-mono text-sm break-all text-success-content">
+                              {inspect(match, pretty: true)}
+                            </div>
+                          </div>
+                        <% end %>
+                      </div>
+                    </div>
+                  <% match?(nil, @test_result) -> %>
+                    <div class="bg-base-100 border border-warning p-3 rounded">
+                      <div class="flex items-center gap-2">
+                        <.icon name="hero-exclamation-triangle" class="w-5 h-5 text-warning" />
+                        <span class="font-semibold text-base-content">No Matches Found</span>
+                      </div>
+                      <p class="text-sm text-base-content mt-1">
+                        Pattern is valid but doesn't match any event samples.
+                      </p>
+                    </div>
+                  <% match?({:error, {_reason, _pos}}, @test_result) -> %>
+                    <% {:error, {reason, pos}} = @test_result %>
+                    <div class="bg-base-100 border border-error p-3 rounded">
+                      <div class="flex items-center gap-2">
+                        <.icon name="hero-x-circle" class="w-5 h-5 text-error" />
+                        <span class="font-semibold text-base-content">Test Failed</span>
+                      </div>
+                      <p class="text-sm text-base-content mt-1">
+                        {"Regex error: #{List.to_string(reason)} at position #{pos}"}
+                      </p>
+                    </div>
+                <% end %>
+              </div>
+
+<!-- Pattern Input with Test Buttons -->
+              <div class="mt-4 flex gap-2">
+                <div class="flex-1">
+                  <.input
+                    field={form[:pattern]}
+                    type="textarea"
+                    placeholder="Enter regex pattern..."
+                    phx-debounce="500"
+                  />
+                </div>
+                <div class="flex flex-col gap-2">
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    phx-click="do_test"
+                    phx-disable-with="Testing..."
+                  >
+                    <.icon name="hero-play" class="w-4 h-4" /> Test
+                  </button>
+                  <button type="button" class="btn btn-outline btn-sm" phx-click="clear_test">
+                    <.icon name="hero-x-mark" class="w-4 h-4" /> Clear
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+<!-- Form Actions -->
+          <div class="mt-8 flex justify-end gap-3">
+            <.link
+              navigate={~p"/admin/alert-descriptions/#{@alert_description.id}"}
+              class="btn btn-outline"
+            >
+              Cancel
+            </.link>
+            <%= if match?(matches when is_list(matches), @test_result) do %>
               <.button phx-disable-with="Saving..." class="btn btn-primary" type="submit">
                 <.icon name="hero-check" class="w-4 h-4" /> Save Changes
               </.button>
-            </div>
-          </.form>
-        </div>
-      </div>
-    </div>
-
-<!-- Right side - Pattern Testing -->
-    <div class="w-1/2 space-y-6">
-      <!-- Sample Alert Selection -->
-      <div class="card bg-base-100 shadow-sm border border-base-200">
-        <div class="card-body">
-          <div class="flex flex-col gap-2">
-            <h3 class="card-title">
-              Pattern Definition
-            </h3>
-            <p class="text-sm text-gray-500">
-              Bellow, follows an example alert for you to test the pattern for this description. Please not that
-              for the pattern to match, it must include, at least, one named capture group, named "user".
-            </p>
+            <% else %>
+              <button
+                type="button"
+                class="btn btn-primary"
+                onclick="save_confirmation.showModal()"
+              >
+                <.icon name="hero-check" class="w-4 h-4" /> Save Changes
+              </button>
+            <% end %>
           </div>
-
-<!-- Selected Alert Details -->
-
-          <div class="mt-4 p-4 bg-base-200 rounded-lg">
-            <h4 class="font-semibold mb-2">Alert Title</h4>
-            <div class="text-md space-y-1">
-              <div>{@sample_alert.alert_title || "No title"}</div>
-            </div>
-
-<!-- Event Samples -->
-
-            <div class="mt-4">
-              <h5 class="font-semibold mb-2">Event Samples</h5>
-              <div class="bg-gray-800 text-green-400 p-3 rounded font-mono text-xs max-h-40 overflow-y-auto">
-                {@sample_alert.alert_event_samples}
-              </div>
-            </div>
-
-<!-- Test Results Section -->
-            <div class="mt-4">
-              <h5 class="font-semibold mb-2">Test Results</h5>
-              <%= cond do %>
-                <% @test_result == "" -> %>
-                  <div class="bg-base-100 border-base-30 p-3 rounded text-center text-gray-500">
-                    <%!-- <.icon name="hero-clock" class="w-5 h-5 mx-auto mb-1" />
-                    <p class="text-sm">Waiting for pattern test...</p> --%>
-                    <p class="text-xs">
-                      Enter a pattern and click "Test Pattern" to see results.
-                    </p>
-                  </div>
-                <% match?(matches when is_list(matches), @test_result) -> %>
-                  <div class="bg-green-50 border border-green-200 p-3 rounded">
-                    <div class="flex items-center gap-2 mb-2">
-                      <.icon name="hero-check-circle" class="w-5 h-5 text-green-600" />
-                      <span class="font-semibold text-green-800">Pattern matched!</span>
-                      <span class="text-sm text-green-600">
-                        Found {length(@test_result)} match(es)
-                      </span>
-                    </div>
-                    <div class="space-y-2">
-                      <%= for match <- @test_result do %>
-                        <div class="bg-green-100 border border-green-300 p-2 rounded">
-                          <div class="font-mono text-sm break-all text-green-900">
-                            {inspect(match, pretty: true)}
-                          </div>
-                        </div>
-                      <% end %>
-                    </div>
-                  </div>
-                <% match?(nil, @test_result) -> %>
-                  <div class="bg-yellow-50 border border-yellow-200 p-3 rounded">
-                    <div class="flex items-center gap-2">
-                      <.icon name="hero-exclamation-triangle" class="w-5 h-5 text-yellow-600" />
-                      <span class="font-semibold text-yellow-800">No matches found</span>
-                    </div>
-                    <p class="text-sm text-yellow-700 mt-1">
-                      Pattern is valid but doesn't match any event samples.
-                    </p>
-                  </div>
-                <% match?({:error, _reason}, @test_result) -> %>
-                  <div class="bg-red-50 border border-red-200 p-3 rounded">
-                    <div class="flex items-center gap-2">
-                      <.icon name="hero-x-circle" class="w-5 h-5 text-red-600" />
-                      <span class="font-semibold text-red-800">Test Failed</span>
-                    </div>
-                    <p class="text-sm text-red-700 mt-1">{elem(@test_result, 1)}</p>
-                  </div>
-              <% end %>
-            </div>
-          </div>
-
-<!-- Test Controls -->
-          <div class="mt-4 flex flex-row justify-end gap-2">
-            <button type="button" class="btn btn-outline btn-sm" phx-click="clear_test">
-              <.icon name="hero-x-mark" class="w-4 h-4" /> Clear
-            </button>
-            <button
-              type="button"
-              class="btn btn-primary btn-sm"
-              phx-click="do_test"
-              phx-disable-with="Loading..."
-            >
-              <.icon name="hero-play" class="w-4 h-4" /> Test Pattern
-            </button>
-          </div>
-        </div>
+        </.form>
       </div>
     </div>
   </div>
