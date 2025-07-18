@@ -9,105 +9,190 @@
   <div class="flex gap-4">
     <div class="w-full">
       <div class="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
+        <!-- Filters -->
+        <div class="card-body pb-4">
+          <.form
+            :let={f}
+            for={%{}}
+            as={:filters}
+            phx-change="update-filter"
+            phx-submit="update-filter"
+          >
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-medium">State</span>
+                </label>
+                <.input
+                  field={f[:state]}
+                  type="select"
+                  prompt="All states"
+                  options={[
+                    {"Enabled", "enabled"},
+                    {"Disabled", "disabled"},
+                    {"Group Only", "grouponly"}
+                  ]}
+                  class="select select-bordered select-sm"
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-medium">Verified</span>
+                </label>
+                <.input
+                  field={f[:verified]}
+                  type="select"
+                  prompt="All"
+                  options={[
+                    {"Verified", "true"},
+                    {"Unverified", "false"}
+                  ]}
+                  class="select select-bordered select-sm"
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-medium">Notification Group</span>
+                </label>
+                <.input
+                  field={f[:notification_group_id]}
+                  type="select"
+                  prompt="All groups"
+                  options={Enum.map(@notification_groups, &{&1.name, &1.id})}
+                  class="select select-bordered select-sm"
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-medium">Pattern</span>
+                </label>
+                <.input
+                  field={f[:pattern]}
+                  type="text"
+                  placeholder="Search pattern..."
+                  class="input input-bordered input-sm"
+                  phx-debounce="500"
+                />
+              </div>
+            </div>
+          </.form>
+        </div>
+
         <div class="overflow-x-auto">
-          <table class="table table-zebra w-full">
-            <thead class="bg-base-200">
-              <tr>
-                <th>ID</th>
-                <th>State</th>
-                <th>Verified</th>
-                <th>Pattern Preview</th>
-                <th>Notification Group</th>
-                <th>Last Updated</th>
-                <th>Updated By</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="alert_descriptions" phx-update="stream">
-              <tr
-                :for={{id, alert_description} <- @streams.alert_descriptions}
-                id={id}
-                class="hover"
-              >
-                <td class="font-mono text-sm">
-                  <div class="badge badge-outline">
-                    {alert_description.id}
-                  </div>
-                </td>
-                <td>
-                  <div class={[
-                    "badge",
-                    case alert_description.state do
-                      :enabled -> "badge-success"
-                      :disabled -> "badge-warning"
-                      :grouponly -> "badge-success"
-                    end
-                  ]}>
-                    {String.capitalize(to_string(alert_description.state))}
-                  </div>
-                </td>
-                <td>
-                  <div class={[
-                    "badge",
-                    if alert_description.verified do
-                      "badge-success"
-                    else
-                      "badge-error"
-                    end
-                  ]}>
-                    {if alert_description.verified, do: "Verified", else: "Unverified"}
-                  </div>
-                </td>
-                <td class="max-w-xs">
-                  <div class="font-mono text-sm truncate">
-                    {alert_description.pattern || "No pattern"}
-                  </div>
-                </td>
-                <td>
-                  {if alert_description.notification_group_id do
-                    "Group #{alert_description.notification_group_id}"
+          <div class="table table-zebra w-full">
+            <Flop.Phoenix.table
+              items={@streams.alert_descriptions}
+              meta={@meta}
+              path={~p"/admin/alert-descriptions"}
+              id="alert-descriptions-table"
+              opts={[container: true, table_attrs: [class: "w-full"]]}
+            >
+              <:col :let={{_id, alert_description}} label="ID" field={:id}>
+                <div class="badge badge-outline">
+                  {alert_description.id}
+                </div>
+              </:col>
+
+              <:col :let={{_id, alert_description}} label="State" field={:state}>
+                <div class={[
+                  "badge",
+                  case alert_description.state do
+                    :enabled -> "badge-success"
+                    :disabled -> "badge-warning"
+                    :grouponly -> "badge-success"
+                  end
+                ]}>
+                  {String.capitalize(to_string(alert_description.state))}
+                </div>
+              </:col>
+
+              <:col :let={{_id, alert_description}} label="Verified" field={:verified}>
+                <div class={[
+                  "badge",
+                  if alert_description.verified do
+                    "badge-success"
                   else
-                    "No group"
-                  end}
-                </td>
+                    "badge-error"
+                  end
+                ]}>
+                  {if alert_description.verified, do: "Verified", else: "Unverified"}
+                </div>
+              </:col>
 
-                <td class="text-sm text-gray-500">
-                  <div class="tooltip">
-                    <div class="tooltip-content">
-                      {Timex.format!(alert_description.updated_at, "{YYYY}-{0M}-{0D} {h24}:{m}")}
-                    </div>
-                    {Timex.format!(alert_description.updated_at, "{relative}", :relative)}
+              <:col :let={{_id, alert_description}} label="Pattern Preview">
+                <div class="font-mono text-sm truncate max-w-xs">
+                  {alert_description.pattern || "No pattern"}
+                </div>
+              </:col>
+
+              <:col :let={{_id, alert_description}} label="Notification Group">
+                {if alert_description.notification_group do
+                  alert_description.notification_group.name
+                else
+                  "No group"
+                end}
+              </:col>
+
+              <:col :let={{_id, alert_description}} label="Last Updated" field={:updated_at}>
+                <div class="tooltip text-sm text-gray-500">
+                  <div class="tooltip-content">
+                    {Timex.format!(alert_description.updated_at, "{YYYY}-{0M}-{0D} {h24}:{m}")}
                   </div>
-                </td>
+                  {Timex.format!(alert_description.updated_at, "{relative}", :relative)}
+                </div>
+              </:col>
 
-                <td class="text-sm text-gray-500">
-                  <%= if alert_description.user do %>
-                    <div class="tooltip ml-5">
-                      <div class="tooltip-content">
-                        {alert_description.user.email}
-                      </div>
-                      <div class="avatar">
-                        <div class="h-10 w-10 rounded-full">
-                          <img src="https://img.daisyui.com/images/profile/demo/yellingcat@192.webp" />
-                        </div>
+              <:col :let={{_id, alert_description}} label="Updated By">
+                <%= if alert_description.user do %>
+                  <div class="tooltip ml-5 text-sm text-gray-500">
+                    <div class="tooltip-content">
+                      {alert_description.user.email}
+                    </div>
+                    <div class="avatar">
+                      <div class="h-10 w-10 rounded-full">
+                        <img src="https://img.daisyui.com/images/profile/demo/yellingcat@192.webp" />
                       </div>
                     </div>
-                  <% else %>
-                    No user
-                  <% end %>
-                </td>
+                  </div>
+                <% else %>
+                  <span class="text-base-content/50 text-sm">No user</span>
+                <% end %>
+              </:col>
 
-                <td>
-                  <.link
-                    navigate={~p"/admin/alert-descriptions/#{alert_description.id}"}
-                    class="btn btn-ghost btn-sm"
-                  >
-                    <.icon name="hero-eye" class="w-4 h-4" /> View
-                  </.link>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+              <:col :let={{_id, alert_description}} label="Actions">
+                <.link
+                  navigate={~p"/admin/alert-descriptions/#{alert_description.id}"}
+                  class="btn btn-ghost btn-sm"
+                >
+                  <.icon name="hero-eye" class="w-4 h-4" /> View
+                </.link>
+              </:col>
+            </Flop.Phoenix.table>
+          </div>
+        </div>
+
+<!-- Pagination -->
+        <div class="border-t border-base-200 px-4 py-4 flex justify-center">
+          <Flop.Phoenix.pagination
+            meta={@meta}
+            path={~p"/admin/alert-descriptions"}
+            page_links={5}
+            aria-label="Alert descriptions pagination"
+            class="flex gap-1"
+            page_list_attrs={[class: "join"]}
+            page_list_item_attrs={[class: ""]}
+            page_link_attrs={[class: "join-item btn"]}
+            current_page_link_attrs={[class: "join-item btn btn-active"]}
+          >
+            <:previous></:previous>
+            <:next></:next>
+            <:ellipsis>
+              <span class="join-item btn btn-disabled" aria-hidden="true">&hellip;</span>
+            </:ellipsis>
+          </Flop.Phoenix.pagination>
         </div>
       </div>
     </div>

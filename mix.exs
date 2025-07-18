@@ -64,7 +64,9 @@ defmodule Notifeye.MixProject do
       {:logger_file_backend, "~> 0.0.10"},
       {:timex, "~> 3.0"},
       {:oban, "~> 2.19"},
-      {:igniter, "~> 0.5", only: [:dev]}
+      {:igniter, "~> 0.5", only: [:dev]},
+      {:flop, "~> 0.26.3"},
+      {:flop_phoenix, "~> 0.25.2"}
     ]
   end
 

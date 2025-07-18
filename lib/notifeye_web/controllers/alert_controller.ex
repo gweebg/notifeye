@@ -22,6 +22,10 @@ defmodule NotifeyeWeb.AlertController do
 
     with {:ok, %Alert{} = alert} <-
            Monitoring.create_alert(conn.assigns.current_scope, alert_params) do
+      alert
+      |> Notifeye.Workers.Processor.new()
+      |> Oban.insert()
+
       conn
       |> put_status(:created)
       |> json(AlertJSON.show(%{alert: alert}))

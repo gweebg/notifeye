@@ -63,6 +63,32 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Edit do
     perform_save(socket, alert_description_params)
   end
 
+  @impl true
+  def handle_event("do_test", _params, socket) do
+    %{changeset: changeset, sample_alert: alert} = socket.assigns
+
+    pattern =
+      case Map.get(changeset.changes, :pattern) do
+        nil -> ""
+        value -> value
+      end
+
+    sample = alert.alert_event_samples
+
+    result =
+      pattern
+      |> AlertDescriptions.maybe_match_samples(sample)
+
+    {:noreply,
+     socket
+     |> assign(:test_result, result)}
+  end
+
+  @impl true
+  def handle_event("clear_test", _params, socket) do
+    {:noreply, socket |> assign(:test_result, "")}
+  end
+
   defp perform_save(socket, alert_description_params) do
     # add the last person that edited the description onto the description
     current_user = socket.assigns.current_scope.user
@@ -87,32 +113,6 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Edit do
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, :changeset, changeset)}
     end
-  end
-
-  @impl true
-  def handle_event("do_test", _params, socket) do
-    %{changeset: changeset, sample_alert: alert} = socket.assigns
-
-    pattern =
-      case Map.get(changeset.changes, :pattern) do
-        nil -> changeset.data.pattern
-        value -> value
-      end
-
-    sample = alert.alert_event_samples
-
-    result =
-      pattern
-      |> AlertDescriptions.maybe_match_samples(sample)
-
-    {:noreply,
-     socket
-     |> assign(:test_result, result)}
-  end
-
-  @impl true
-  def handle_event("clear_test", _params, socket) do
-    {:noreply, socket |> assign(:test_result, "")}
   end
 
   defp state_options do

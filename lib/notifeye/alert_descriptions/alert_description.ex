@@ -2,11 +2,17 @@ defmodule Notifeye.AlertDescriptions.AlertDescription do
   @moduledoc false
 
   use Ecto.Schema
+
   import Ecto.Changeset
 
   @required_fields ~w(id state verified)a
-  @fields @required_fields ++ ~w(pattern edited_by notification_group_id)a
+  @optional_fields ~w(pattern edited_by notification_group_id)a
   @states ~w(disabled enabled grouponly)a
+
+  @derive {Flop.Schema,
+           filterable: [:state, :verified, :pattern, :notification_group_id, :edited_by],
+           sortable: [:updated_at, :id],
+           default_order: %{order_by: [:updated_at], order_directions: [:desc]}}
 
   @primary_key {:id, :integer, autogenerate: false}
   @foreign_key_type :binary_id
@@ -29,7 +35,7 @@ defmodule Notifeye.AlertDescriptions.AlertDescription do
   """
   def changeset(alert_description, attrs) do
     alert_description
-    |> cast(attrs, @fields)
+    |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
   end
 

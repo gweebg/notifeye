@@ -17,10 +17,46 @@ defmodule Notifeye.AlertDescriptions do
       [%AlertDescription{}, ...]
 
   """
-  def list_alert_descriptions do
+
+  def list_alert_descriptions(), do: AlertDescription |> Repo.all()
+
+  def list_alert_descriptions(preloads) when is_list(preloads) do
     AlertDescription
-    |> preload(:user)
     |> Repo.all()
+    |> Repo.preload(preloads)
+  end
+
+  def list_alert_descriptions(flop, preloads \\ []) do
+    AlertDescription
+    |> Flop.validate_and_run(flop, for: AlertDescription)
+    |> case do
+      {:ok, {posts, meta}} ->
+        {:ok, {posts |> Repo.preload(preloads), meta}}
+
+      error ->
+        error
+    end
+  end
+
+  @doc """
+  Returns the list of alert_descriptions in a paginated way.
+
+  ## Examples
+  """
+  def list_alert_descriptions_paginated(flop, page_size \\ 10, preloads \\ []) do
+    flop =
+      flop
+      |> Map.put("page_size", page_size)
+
+    AlertDescription
+    |> Flop.validate_and_run(flop, for: AlertDescription)
+    |> case do
+      {:ok, {posts, meta}} ->
+        {:ok, {posts |> Repo.preload(preloads), meta}}
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -71,6 +107,7 @@ defmodule Notifeye.AlertDescriptions do
     %AlertDescription{}
     |> AlertDescription.changeset(attrs)
     |> Repo.insert()
+    |> broadcast(:new_description)
   end
 
   @doc """
@@ -104,7 +141,9 @@ defmodule Notifeye.AlertDescriptions do
 
   """
   def delete_alert_description(%AlertDescription{} = alert_description) do
-    Repo.delete(alert_description)
+    alert_description
+    |> Repo.delete()
+    |> broadcast(:deleted_description)
   end
 
   @doc """
@@ -156,5 +195,37 @@ defmodule Notifeye.AlertDescriptions do
       [] -> nil
       captures -> captures
     end
+  end
+
+  @doc """
+  Subscribes to alert description events.
+  """
+  def subscribe(topic) when topic in ["new_description", "deleted_description"] do
+    Phoenix.PubSub.subscribe(Notifeye.PubSub, topic)
+  end
+
+  @doc """
+  Broadcasts an event to the pubsub.
+
+  ## Examples
+
+      iex> broadcast(:new_description, alert_description)
+      {:ok, %AlertDescription{}}
+
+      iex> broadcast(:deleted_enrollment, nil)
+      {:ok, nil}
+  """
+  def broadcast({:error, _reason} = error, _event), do: error
+
+  def broadcast({:ok, %AlertDescription{} = alert_description}, event)
+      when event in [:new_description] do
+    Phoenix.PubSub.broadcast!(Notifeye.PubSub, "new_description", {event, alert_description})
+    {:ok, alert_description}
+  end
+
+  def broadcast({:ok, %AlertDescription{} = alert_description}, event)
+      when event in [:deleted_description] do
+    Phoenix.PubSub.broadcast!(Notifeye.PubSub, "deleted_description", {event, alert_description})
+    {:ok, alert_description}
   end
 end
