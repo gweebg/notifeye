@@ -59,7 +59,7 @@ defmodule NotifeyeWeb.Layouts do
     </header>
 
     <main class="px-4 py-8 sm:px-6 lg:px-8">
-      <div class="mx-auto space-y-4">
+      <div class="mx-32 space-y-4">
         {render_slot(@inner_block)}
       </div>
     </main>
