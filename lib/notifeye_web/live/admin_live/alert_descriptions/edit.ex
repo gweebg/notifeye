@@ -50,10 +50,8 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Edit do
 
   @impl true
   def handle_event("force_save", _params, socket) do
-    # Get the current changeset values for force save
     changeset = socket.assigns.changeset
 
-    # Convert changeset to params format
     alert_description_params =
       changeset.changes
       |> Enum.into(%{})
@@ -69,7 +67,7 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Edit do
 
     pattern =
       case Map.get(changeset.changes, :pattern) do
-        nil -> ""
+        nil -> socket.assigns.alert_description.pattern
         value -> value
       end
 
@@ -105,10 +103,7 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Edit do
       {:ok, _alert_description} ->
         {:noreply,
          socket
-         |> put_flash(:info, "Alert description updated successfully")
-         |> push_navigate(
-           to: ~p"/admin/alert-descriptions/#{socket.assigns.alert_description.id}"
-         )}
+         |> put_flash(:info, "Alert description updated successfully")}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, :changeset, changeset)}

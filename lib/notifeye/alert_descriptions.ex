@@ -126,6 +126,7 @@ defmodule Notifeye.AlertDescriptions do
     alert_description
     |> AlertDescription.changeset(attrs)
     |> Repo.update()
+    |> broadcast(:updated_description)
   end
 
   @doc """
@@ -140,6 +141,7 @@ defmodule Notifeye.AlertDescriptions do
       {:error, %Ecto.Changeset{}}
 
   """
+
   def delete_alert_description(%AlertDescription{} = alert_description) do
     alert_description
     |> Repo.delete()
@@ -198,9 +200,50 @@ defmodule Notifeye.AlertDescriptions do
   end
 
   @doc """
+  Returns general statistics about alert descriptions.
+
+  In specific, returns a map containing the total count of alert descriptions,
+  the number of verified descriptions and the respective percentage relative to the total,
+  the number of enabled descriptions
+  """
+  def statistics do
+    total_count = Repo.aggregate(AlertDescription, :count, :id)
+
+    verified_count =
+      from(ad in AlertDescription, where: ad.verified == true, select: count(ad.id))
+      |> Repo.one()
+
+    enabled_count =
+      from(ad in AlertDescription, where: ad.state != :disabled, select: count(ad.id))
+      |> Repo.one()
+
+    verified_percentage =
+      if total_count > 0 do
+        (verified_count * 100 / total_count) |> Float.round()
+      else
+        0
+      end
+
+    unique_patterns_count =
+      from(ad in AlertDescription,
+        where: not is_nil(ad.pattern) and ad.pattern != "",
+        select: count(fragment("DISTINCT ?", ad.pattern))
+      )
+      |> Repo.one()
+
+    %{
+      verified_count: verified_count,
+      verified_percentage: verified_percentage,
+      enabled_count: enabled_count,
+      unique_patterns_count: unique_patterns_count
+    }
+  end
+
+  @doc """
   Subscribes to alert description events.
   """
-  def subscribe(topic) when topic in ["new_description", "deleted_description"] do
+  def subscribe(topic)
+      when topic in ["new_description", "deleted_description", "updated_description"] do
     Phoenix.PubSub.subscribe(Notifeye.PubSub, topic)
   end
 
@@ -220,6 +263,12 @@ defmodule Notifeye.AlertDescriptions do
   def broadcast({:ok, %AlertDescription{} = alert_description}, event)
       when event in [:new_description] do
     Phoenix.PubSub.broadcast!(Notifeye.PubSub, "new_description", {event, alert_description})
+    {:ok, alert_description}
+  end
+
+  def broadcast({:ok, %AlertDescription{} = alert_description}, event)
+      when event in [:updated_description] do
+    Phoenix.PubSub.broadcast!(Notifeye.PubSub, "updated_description", {event, alert_description})
     {:ok, alert_description}
   end
 

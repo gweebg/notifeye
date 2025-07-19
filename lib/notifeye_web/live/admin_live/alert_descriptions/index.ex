@@ -10,9 +10,11 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Index do
 
   @impl true
   def mount(_params, _session, socket) do
+    topics = ~w(new_description updated_description deleted_description)
+
     if connected?(socket) do
-      AlertDescriptions.subscribe("new_description")
-      AlertDescriptions.subscribe("deleted_description")
+      topics
+      |> Enum.each(&AlertDescriptions.subscribe/1)
     end
 
     notification_groups = Notifications.list_notification_groups()
@@ -39,13 +41,10 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Index do
         :notification_group
       ])
 
-    # Build current filter values from URL params
-
     {:noreply,
      socket
      |> assign(:meta, meta)
      |> assign(:current_page_size, Integer.to_string(page_size))
-     |> assign(:loading, false)
      |> stream(:alert_descriptions, alert_descriptions, reset: true)}
   end
 
@@ -55,15 +54,21 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Index do
 
     {:noreply,
      socket
+     |> assign(:stats, calculate_stats())
      |> stream_insert(:alert_descriptions, alert_description, at: 0)}
   end
 
   @impl true
-  def handle_info({:deleted_description, alert_description}, socket) do
+  def handle_info({:updated_description, alert_description}, socket) do
+    # recalculate stats and re-insert the description
     {:noreply,
      socket
-     |> stream_delete(:alert_descriptions, alert_description)}
+     |> assign(:stats, calculate_stats())
+     |> stream_insert(:alert_descriptions, alert_description)}
   end
+
+  # : re-fetch data if one is removed, else the table page will
+  # not be correct
 
   @impl true
   def handle_event("update-filter", %{"filters" => filters}, socket) do
@@ -93,21 +98,6 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Index do
   end
 
   @impl true
-  def handle_event("delete", %{"id" => _id}, socket) do
-    # implement delete functionality
-    # alert_description = AlertDescriptions.get_alert_description!(id)
-    # case AlertDescriptions.delete_alert_description(alert_description) do
-    #   {:ok, _} ->
-    #     {:noreply, put_flash(socket, :info, "Alert description deleted successfully")}
-    #   {:error, _} ->
-    #     {:noreply, put_flash(socket, :error, "Failed to delete alert description")}
-    # end
-    # then redirect to index.ex
-
-    {:noreply, put_flash(socket, :info, "Delete functionality coming soon")}
-  end
-
-  @impl true
   def handle_event("export", _params, socket) do
     # implement export functionalitty to a json file
     {:noreply, put_flash(socket, :info, "Export functionality coming soon")}
@@ -127,7 +117,6 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Index do
     ]
   end
 
-  # Helper functions
   defp page_size_options do
     [
       {"5", "5"},
@@ -139,12 +128,8 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Index do
   end
 
   defp calculate_stats do
-    # make this real values from the database
-    %{
-      verified_count: 42,
-      verified_percentage: 75,
-      unverified_count: 14,
-      active_patterns: 38
-    }
+    # this is inside a function in case something else is needed on
+    # this function
+    AlertDescriptions.statistics()
   end
 end
