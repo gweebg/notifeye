@@ -476,4 +476,24 @@ defmodule Notifeye.Accounts do
     )
     |> Repo.one()
   end
+
+  @doc """
+  Takes a specified number of points from the user's standing.
+
+  If the resulting standing is campled between 0 and 10.
+
+  ## Parameters
+
+    - `%User{}`: The user to calculate the new standing.
+    - `amount`: An integer representing how many points to deduct.
+    - `direction`: Can be `:decrease`, `:increase`, depending on the operation.
+  """
+  def calculate_new_standing(%User{standing: current}, amount, direction)
+      when is_integer(amount) and amount >= 0 do
+    case direction do
+      :decrease -> max(current - amount, 0)
+      :increase -> min(current + amount, 10)
+      _ -> current
+    end
+  end
 end

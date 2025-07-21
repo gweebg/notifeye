@@ -197,6 +197,16 @@ defmodule Notifeye.Accounts.User do
   end
 
   @doc """
+  A user changeset for updating the user's standing.
+  """
+  def standing_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:standing])
+    |> validate_required([:standing])
+    |> validate_number(:standing, greater_than_or_equal_to: 0, less_than_or_equal_to: 10)
+  end
+
+  @doc """
   A user changeset for changing the lead.
   This changeset is used to assign a lead to a user.
   """

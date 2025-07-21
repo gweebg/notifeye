@@ -5,12 +5,16 @@ defmodule Notifeye.AlertAssignments do
 
   import Ecto.Query, warn: false
 
-  alias Ecto.Multi
   alias Notifeye.Accounts
+  alias Notifeye.Accounts.Scope
+  alias Notifeye.Accounts.User
+  alias Notifeye.AlertAssignments
+  alias Notifeye.AlertAssignments.AlertAssignment
+  alias Notifeye.Monitoring
+
+  alias Ecto.Multi
 
   alias Notifeye.Repo
-
-  alias Notifeye.AlertAssignments.AlertAssignment
 
   @doc """
   Returns the list of alert_assignments.
@@ -39,7 +43,16 @@ defmodule Notifeye.AlertAssignments do
       ** (Ecto.NoResultsError)
 
   """
-  def get_alert_assignment!(id), do: Repo.get!(AlertAssignment, id)
+  def get_alert_assignment!(id) do
+    AlertAssignment
+    |> Repo.get!(id)
+  end
+
+  def get_alert_assignment!(id, preloads) do
+    AlertAssignment
+    |> Repo.get!(id)
+    |> Repo.preload(preloads)
+  end
 
   @doc """
   Creates a alert_assignment.
@@ -126,34 +139,137 @@ defmodule Notifeye.AlertAssignments do
     |> Repo.all()
   end
 
-  def create_alert_assignments_bulk(users, description_id) do
+  @doc """
+  Creates atomically and in bulk `%AlertAssignments{}`, associated with `description_id`
+  for each user in `users`. If any of the assignments fails during creation, the whole insertion
+  is rollbacked and the function returns.
+
+  ## Parameters
+
+  * `users` - String list of the matched usernamed. The function tries to match the username
+    to an actual `%User{}`. If it can't, defaults to the `admin` user.
+
+  * `description_id` - The `%AlertDescription{}` id to associate on the assignment.
+
+  * `alert_id` - The `%Alert{}` id to associate on the assignment.
+
+  ## Examples
+
+      iex> create_alert_assignments_bulk(["username1", ..., "usernameN"], 1, "alert-id")
+      {:ok, result}
+
+      iex> create_alert_assignments_bulk(["username1", ..., "usernameN"], 2, "alert-id")
+      {}:error, failed_operation, changeset, _changes}
+  """
+  def create_alert_assignments_bulk(users, description_id, alert_id) do
     users
     |> Enum.with_index()
     |> Enum.reduce(Multi.new(), fn {user_match, index}, multi ->
-      params = build_assignment_params(user_match, description_id)
-      changeset = AlertAssignment.changeset(%AlertAssignment{status: :open}, params)
+      {params, status} = build_assignment_params(user_match, description_id, alert_id)
+      changeset = AlertAssignment.changeset(%AlertAssignment{status: status}, params)
 
       Multi.insert(multi, assignment_key(index), changeset)
     end)
     |> Repo.transaction()
   end
 
-  defp build_assignment_params(user_match, description_id) do
-    user_id = resolve_user_id(user_match)
+  defp build_assignment_params(user_match, description_id, alert_id) do
+    {user_id, is_admin} = resolve_user_id(user_match)
+    status = if is_admin, do: :unassigned, else: :open
 
-    %{
-      match: user_match,
-      user_id: user_id,
-      alert_description_id: description_id
-    }
+    {%{
+       match: user_match,
+       user_id: user_id,
+       alert_id: alert_id,
+       alert_description_id: description_id
+     }, status}
   end
 
   defp resolve_user_id(user_match) do
     case Accounts.get_user_by_name_or_alias(user_match) do
-      nil -> Accounts.get_admin_user!().id
-      %Accounts.User{id: id} -> id
+      nil -> {Accounts.get_admin_user!().id, true}
+      %Accounts.User{id: id} -> {id, false}
     end
   end
 
   defp assignment_key(index), do: "assignment_#{index}"
+
+  @doc """
+  Acknowledges an alert assignment based on its `id`. An alert acknowledgment always
+  results in setting the `status` of the alert to `:closed`, however, it doesn't always
+  exibit the same proceadure.
+
+  An assignment is successfully closed without repercusions if:
+
+  * It isn't a regular occurence;
+  * It was acknowledged within 24 hours of the assignment.
+
+  If the above conditions are met, the points are restored to the user and the
+  assignment is closed.
+
+  {:ok, current_standing, eligible_for_restore} - ok
+  {:error, reason} - something went wrong
+  """
+  def acknowledge_assignment(%Scope{} = scope, assignment_id) do
+    assignment =
+      AlertAssignments.get_alert_assignment!(assignment_id, [:alert, :alert_description])
+
+    true = scope.user.id == assignment.user_id
+
+    delta_hours = DateTime.diff(DateTime.utc_now(), assignment.inserted_at, :hour)
+
+    if eligible_for_restore?(scope, assignment, delta_hours) do
+      restore_and_close_assignment(scope, assignment)
+    else
+      case update_alert_assignment(assignment, %{status: :closed}) do
+        {:ok, _updated} -> {:ok, scope.user.standing, false}
+        {:error, reason} -> {:error, :failed_to_close, reason}
+      end
+    end
+  end
+
+  defp eligible_for_restore?(scope, assignment, delta_hours) do
+    delta_hours < 24 and not recurrent?(scope, assignment.alert_description_id)
+  end
+
+  defp restore_and_close_assignment(%Scope{user: user}, assignment) do
+    amount =
+      assignment.alert.severity
+      |> Monitoring.calculate_standing_amount_by_severity()
+
+    standing = Accounts.calculate_new_standing(user, amount, :decrease)
+
+    Multi.new()
+    |> Multi.update(
+      :restore_points,
+      Accounts.User.standing_changeset(user, %{standing: standing})
+    )
+    |> Multi.update(
+      :close_assignment,
+      AlertAssignment.changeset(assignment, %{status: :closed})
+    )
+    |> Repo.transaction()
+    |> case do
+      {:ok, _result} -> {:ok, standing, true}
+      {:error, _step, reason, _changes_so_far} -> {:error, reason}
+    end
+  end
+
+  def recurrent?(
+        %Scope{user: %User{id: user_id}},
+        description_id,
+        limit_days \\ 10,
+        threshold \\ 3
+      ) do
+    since = DateTime.utc_now() |> DateTime.add(-limit_days, :day)
+
+    count =
+      AlertAssignment
+      |> where([a], a.user_id == ^user_id)
+      |> where([a], a.alert_description_id == ^description_id)
+      |> where([a], a.inserted_at >= ^since)
+      |> Repo.aggregate(:count, :id)
+
+    count >= threshold
+  end
 end

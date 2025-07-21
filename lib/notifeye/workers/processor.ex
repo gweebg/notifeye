@@ -19,18 +19,46 @@ defmodule Notifeye.Workers.Processor do
     max_attempts: 3,
     tags: ["alert"]
 
+  defmodule Context do
+    @moduledoc """
+    This is  a simple struct to keep track of the arguments passed onto the
+    `Oban.Job{}` struct, when a new job is queued.
+    """
+
+    defstruct ~w(alert_id logz_id samples description)a
+
+    def new(alert_id, logz_id, samples) do
+      %__MODULE__{
+        alert_id: alert_id,
+        logz_id: logz_id,
+        samples: samples
+      }
+    end
+
+    def with_description(%__MODULE__{} = context, %AlertDescription{} = description) do
+      %{context | description: description}
+    end
+  end
+
   @doc """
   Performs the alert processing job.
   """
   @impl Oban.Worker
   def perform(%Oban.Job{
-        args: %{"logz_id" => logz_id, "alert_event_samples" => samples}
+        args: %{"id" => alert_id, "logz_id" => logz_id, "alert_event_samples" => samples}
       }) do
-    case AlertDescriptions.get_alert_description(logz_id) do
+    context = Context.new(alert_id, logz_id, samples)
+
+    case AlertDescriptions.get_alert_description(context.logz_id) do
       # create new alert description if it does not exist
-      nil -> create_description(logz_id)
+      nil ->
+        create_description(context.logz_id)
+
       # process the alert if information about the alert is available
-      %AlertDescription{} = description -> process_alert(description, samples)
+      %AlertDescription{} = description ->
+        context
+        |> Context.with_description(description)
+        |> process_alert()
     end
   end
 
@@ -42,12 +70,12 @@ defmodule Notifeye.Workers.Processor do
     end
   end
 
-  defp process_alert(%AlertDescription{state: :disabled} = description, _samples) do
+  defp process_alert(%Context{description: %AlertDescription{state: :disabled} = description}) do
     {:cancel, "alert (#{description.id}) is disabled"}
   end
 
-  defp process_alert(%AlertDescription{} = description, samples) do
-    case AlertDescriptions.maybe_match_samples(description.pattern, samples) do
+  defp process_alert(%Context{description: description} = context) do
+    case AlertDescriptions.maybe_match_samples(description.pattern, context.samples) do
       nil ->
         {:cancel, "pattern #{description.pattern} does not match any part of the alert samples"}
 
@@ -55,20 +83,20 @@ defmodule Notifeye.Workers.Processor do
         {:cancel, reason}
 
       users ->
-        create_assignments_and_notify(users, description)
+        create_assignments_and_notify(context, users)
     end
   end
 
-  defp create_assignments_and_notify(users, %AlertDescription{state: state} = description) do
+  defp create_assignments_and_notify(%Context{description: description} = context, users) do
     # we either create assignments for all users or for none
     # create_alert_assignments_bulk/2 is atomic and only succeeds if all assignments are created
     # if at least one error occurs, no assignments are created and the tx are rolled back
-    case AlertAssignments.create_alert_assignments_bulk(users, description.id) do
+    case AlertAssignments.create_alert_assignments_bulk(users, description.id, context.alert_id) do
       {:ok, assignments_map} ->
         assignments = Map.values(assignments_map)
 
         # if desc. is enabled, notify the assigned user(s)
-        if state == :enabled do
+        if description.state == :enabled do
           enqueue_assignment_notifications(assignments)
         end
 

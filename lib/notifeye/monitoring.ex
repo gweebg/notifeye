@@ -165,4 +165,20 @@ defmodule Notifeye.Monitoring do
 
     Alert.changeset(alert, attrs, scope)
   end
+
+  @doc """
+  Returns the value to increase/decrease on the standing value for an user.
+
+  ## Examples
+
+      iex> calculate_standing_amount_by_severity("low")
+      1
+
+      iex> calculate_standing_amount_by_severity("something"
+      0
+  """
+  def calculate_standing_amount_by_severity("low"), do: 1
+  def calculate_standing_amount_by_severity("medium"), do: 2
+  def calculate_standing_amount_by_severity("high"), do: 3
+  def calculate_standing_amount_by_severity(_severity), do: 0
 end

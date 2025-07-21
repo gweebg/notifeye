@@ -92,7 +92,7 @@ defmodule NotifeyeWeb.Router do
   end
 
   scope "/admin", NotifeyeWeb do
-    pipe_through :browser
+    pipe_through [:browser]
 
     live_session :admin,
       on_mount: [{NotifeyeWeb.UserAuth, :ensure_admin}] do

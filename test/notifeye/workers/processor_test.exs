@@ -3,6 +3,7 @@ defmodule Notifeye.Workers.ProcessorTest do
   use Oban.Testing, repo: Notifeye.Repo
 
   import Notifeye.AccountsFixtures
+  import Notifeye.MonitoringFixtures
   import Notifeye.AlertDescriptionsFixtures
   import Notifeye.NotificationsFixtures
 
@@ -46,8 +47,16 @@ defmodule Notifeye.Workers.ProcessorTest do
   defp invalid_pattern, do: "["
 
   defp create_job(logz_id, samples \\ @single_sample) do
+    alert =
+      user_scope_fixture()
+      |> alert_fixture()
+
     %Oban.Job{
-      args: %{"logz_id" => logz_id, "alert_event_samples" => samples}
+      args: %{
+        "logz_id" => logz_id,
+        "alert_event_samples" => samples,
+        "id" => alert.id
+      }
     }
   end
 
