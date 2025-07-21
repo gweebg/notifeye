@@ -2,14 +2,36 @@ defmodule Notifeye.Accounts.User do
   @moduledoc false
 
   use Ecto.Schema
+
   import Ecto.Changeset
+
+  alias Notifeye.Accounts
+
+  @roles ~w(user admin lead)a
 
   schema "users" do
     field :email, :string
+    field :username, :string
     field :password, :string, virtual: true, redact: true
     field :hashed_password, :string, redact: true
     field :confirmed_at, :utc_datetime
     field :authenticated_at, :utc_datetime, virtual: true
+
+    field :standing, :integer, default: 10
+    field :role, Ecto.Enum, values: @roles, default: :user
+    field :aliases, {:array, :string}, default: []
+
+    belongs_to :lead, __MODULE__
+
+    has_many :alert_assignments, Notifeye.AlertAssignments.AlertAssignment, on_replace: :delete
+
+    has_many :alert_descriptions, Notifeye.AlertDescriptions.AlertDescription,
+      foreign_key: :edited_by
+
+    many_to_many :notification_groups, Notifeye.Notifications.NotificationGroup,
+      join_through: "notification_group_users",
+      join_keys: [user_id: :id, notification_group_id: :id],
+      on_replace: :delete
 
     timestamps(type: :utc_datetime)
   end
@@ -27,8 +49,28 @@ defmodule Notifeye.Accounts.User do
   """
   def email_changeset(user, attrs, opts \\ []) do
     user
-    |> cast(attrs, [:email])
+    |> cast(attrs, [:email, :username])
     |> validate_email(opts)
+    |> maybe_put_username()
+  end
+
+  defp maybe_put_username(changeset) do
+    case {get_field(changeset, :username), get_field(changeset, :email)} do
+      {nil, email} when is_binary(email) ->
+        username = infer_name_from_email(email)
+        put_change(changeset, :username, username)
+
+      _ ->
+        changeset
+    end
+  end
+
+  def infer_name_from_email(email) do
+    email
+    |> String.split("@")
+    |> hd()
+    |> String.split(".")
+    |> Enum.map_join(" ", &String.capitalize/1)
   end
 
   defp validate_email(changeset, opts) do
@@ -56,6 +98,18 @@ defmodule Notifeye.Accounts.User do
     else
       changeset
     end
+  end
+
+  @doc """
+  A user changeset for creating an admin user.
+  """
+  def admin_changeset(user, attrs, opts \\ []) do
+    user
+    |> cast(attrs, [:email, :role, :username])
+    |> validate_email(opts)
+    |> validate_required([:email, :role, :username])
+    |> validate_inclusion(:role, [:admin])
+    |> unique_constraint(:email)
   end
 
   @doc """
@@ -130,5 +184,52 @@ defmodule Notifeye.Accounts.User do
   def valid_password?(_, _) do
     Bcrypt.no_user_verify()
     false
+  end
+
+  @doc """
+  A user changeset for creating or updating a user.
+  """
+  def role_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:role])
+    |> validate_required([:role])
+    |> validate_inclusion(:role, @roles)
+  end
+
+  @doc """
+  A user changeset for updating the user's standing.
+  """
+  def standing_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:standing])
+    |> validate_required([:standing])
+    |> validate_number(:standing, greater_than_or_equal_to: 0, less_than_or_equal_to: 10)
+  end
+
+  @doc """
+  A user changeset for changing the lead.
+  This changeset is used to assign a lead to a user.
+  """
+  def lead_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:lead_id])
+    |> validate_required([:lead_id])
+    |> validate_lead_id()
+    |> foreign_key_constraint(:lead_id)
+  end
+
+  defp validate_lead_id(changeset) do
+    lead_id = get_field(changeset, :lead_id)
+
+    if lead_id && !lead_user?(lead_id) do
+      add_error(changeset, :lead_id, "must be a valid lead user")
+    else
+      changeset
+    end
+  end
+
+  defp lead_user?(user_id) do
+    user = Accounts.get_user!(user_id)
+    user.role == :lead
   end
 end

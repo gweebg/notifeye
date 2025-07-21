@@ -11,6 +11,7 @@ defmodule Notifeye.Application do
       NotifeyeWeb.Telemetry,
       Notifeye.Repo,
       {DNSCluster, query: Application.get_env(:notifeye, :dns_cluster_query) || :ignore},
+      {Oban, Application.fetch_env!(:notifeye, Oban)},
       {Phoenix.PubSub, name: Notifeye.PubSub},
       # Start a worker by calling: Notifeye.Worker.start_link(arg)
       # {Notifeye.Worker, arg},

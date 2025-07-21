@@ -3,7 +3,7 @@
 
 ### The Problem
 
-Being used to develop local-only applications, building an application that integrates with an outside service via webhooks (Logz.io), came with some challenges when we discussing about the development environment. 
+Being used to develop local-only applications, building an application that integrates with an outside service via webhooks (Logz.io), came with some challenges when we discussing about the development environment.
 
 For instance, configuring webhooks in Logz.io requires a valid endpoint to execute the HTTP requests. This meant that, even for testing, we need a valid (SSL-prefered) URL.
 
@@ -15,20 +15,20 @@ Thankfully, I already meet the requirements. So my half-baked solution involves 
 
 This setup brings several advantages:
 
-+ **Flexibility**:  
-    - No need for production-ready releases to test integrations.  
-    - Enables remote development via SSH, allowing coding from any machine with internet access.  
++ **Flexibility**:
+    - No need for production-ready releases to test integrations.
+    - Enables remote development via SSH, allowing coding from any machine with internet access.
 
-+ **Cost-effectiveness**:  
-    - Utilizes existing infrastructure, avoiding the need for additional hosting services.  
++ **Cost-effectiveness**:
+    - Utilizes existing infrastructure, avoiding the need for additional hosting services.
 
 However, it also comes with some disadvantages:
 
-+ **Network dependency**:  
-    - Requires a VPN to access the development server when working outside the homeserver's network.  
++ **Network dependency**:
+    - Requires a VPN to access the development server when working outside the homeserver's network.
 
-+ **Potential latency**:  
-    - Depending on the network setup, there might be slight delays when accessing the development environment remotely.  
++ **Potential latency**:
+    - Depending on the network setup, there might be slight delays when accessing the development environment remotely.
 
 ### Security
 

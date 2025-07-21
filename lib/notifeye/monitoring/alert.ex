@@ -11,8 +11,9 @@ defmodule Notifeye.Monitoring.Alert do
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
+  @derive {Jason.Encoder, except: [:user, :__meta__]}
   schema "alerts" do
-    field :logz_id, :string
+    field :logz_id, :integer
 
     field :alert_title, :string
     field :alert_description, :string
@@ -23,7 +24,8 @@ defmodule Notifeye.Monitoring.Alert do
     field :start, UnixTimestamp
     field :end, UnixTimestamp
 
-    field :user_id, :id
+    belongs_to :user, Notifeye.Accounts.User, type: :id
+    has_many :alert_assignments, Notifeye.AlertAssignments.AlertAssignment
 
     timestamps(type: :utc_datetime)
   end
@@ -33,6 +35,14 @@ defmodule Notifeye.Monitoring.Alert do
     alert
     |> cast(attrs, @fields)
     |> validate_required(@required_fields)
+    |> normalize_severity()
     |> put_change(:user_id, user_scope.user.id)
+  end
+
+  defp normalize_severity(changeset) do
+    case get_change(changeset, :alert_severity) do
+      nil -> changeset
+      severity -> put_change(changeset, :alert_severity, String.downcase(severity))
+    end
   end
 end

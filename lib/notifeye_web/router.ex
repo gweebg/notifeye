@@ -18,6 +18,14 @@ defmodule NotifeyeWeb.Router do
     plug :fetch_current_scope_for_api_user
   end
 
+  pipeline :require_admin do
+    plug NotifeyeWeb.Plugs.Authorize, :admin
+  end
+
+  pipeline :require_lead do
+    plug NotifeyeWeb.Plugs.Authorize, :lead
+  end
+
   scope "/", NotifeyeWeb do
     pipe_through :browser
 
@@ -27,7 +35,10 @@ defmodule NotifeyeWeb.Router do
   scope "/api", NotifeyeWeb do
     pipe_through :api
 
-    post "/alerts", AlertController, :create
+    scope "/alerts" do
+      get "/", AlertController, :index
+      post "/", AlertController, :create
+    end
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
@@ -69,9 +80,25 @@ defmodule NotifeyeWeb.Router do
       live "/users/register", UserLive.Registration, :new
       live "/users/log-in", UserLive.Login, :new
       live "/users/log-in/:token", UserLive.Confirmation, :new
+
+      live "/alerts", AlertLive.Index, :index
+      live "/alerts/new", AlertLive.Form, :new
+      live "/alerts/:id", AlertLive.Show, :show
+      live "/alerts/:id/edit", AlertLive.Form, :edit
     end
 
     post "/users/log-in", UserSessionController, :create
     delete "/users/log-out", UserSessionController, :delete
+  end
+
+  scope "/admin", NotifeyeWeb do
+    pipe_through [:browser]
+
+    live_session :admin,
+      on_mount: [{NotifeyeWeb.UserAuth, :ensure_admin}] do
+      live "/alert-descriptions", AdminLive.AlertDescriptions.Index, :index
+      live "/alert-descriptions/:id", AdminLive.AlertDescriptions.Show, :show
+      live "/alert-descriptions/:id/edit", AdminLive.AlertDescriptions.Edit, :edit
+    end
   end
 end

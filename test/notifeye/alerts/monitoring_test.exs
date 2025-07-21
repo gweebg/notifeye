@@ -19,11 +19,11 @@ defmodule Notifeye.MonitoringTest do
       alert_tags: nil
     }
 
-    test "create_alert/2 with valid data creates a alert" do
+    test "create_alert/2 with valid data creates an alert" do
       valid_attrs = %{
         start: "1747064520000",
         end: "1747067000000",
-        logz_id: "some logz_id",
+        logz_id: 1000,
         alert_title: "some alert_title",
         alert_description: "some alert_description",
         alert_severity: "some alert_severity",
@@ -32,11 +32,11 @@ defmodule Notifeye.MonitoringTest do
       }
 
       scope = user_scope_fixture()
-
       assert {:ok, %Alert{} = alert} = Monitoring.create_alert(scope, valid_attrs)
+
       assert alert.start == ~U[2025-05-12 15:42:00Z]
       assert alert.end == ~U[2025-05-12 16:23:20Z]
-      assert alert.logz_id == "some logz_id"
+      assert alert.logz_id == 1000
       assert alert.alert_title == "some alert_title"
       assert alert.alert_description == "some alert_description"
       assert alert.alert_severity == "some alert_severity"
@@ -48,6 +48,24 @@ defmodule Notifeye.MonitoringTest do
     test "create_alert/2 with invalid data returns error changeset" do
       scope = user_scope_fixture()
       assert {:error, %Ecto.Changeset{}} = Monitoring.create_alert(scope, @invalid_attrs)
+    end
+
+    test "create_alert/2 with valid data normalizes the severity to lowercase" do
+      valid_attrs = %{
+        start: "1747064520000",
+        end: "1747067000000",
+        logz_id: 1000,
+        alert_title: "some alert_title",
+        alert_description: "some alert_description",
+        alert_severity: "High",
+        alert_event_samples: "some alert_event_samples",
+        alert_tags: ["option1", "option2"]
+      }
+
+      scope = user_scope_fixture()
+      assert {:ok, %Alert{} = alert} = Monitoring.create_alert(scope, valid_attrs)
+
+      assert alert.alert_severity == "high"
     end
   end
 end

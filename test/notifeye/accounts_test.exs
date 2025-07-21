@@ -77,6 +77,28 @@ defmodule Notifeye.AccountsTest do
       assert "has already been taken" in errors_on(changeset).email
     end
 
+    test "creates user with expected defaults" do
+      email = unique_user_email()
+      {:ok, user} = Accounts.register_user(valid_user_attributes(email: email))
+
+      assert user.email == email
+      assert user.username == Notifeye.Accounts.User.infer_name_from_email(email)
+      assert user.role == :user
+      assert user.standing == 10
+      assert is_nil(user.lead_id)
+    end
+
+    test "creates user with custom username" do
+      email = unique_user_email()
+      username = "Custom User"
+
+      {:ok, user} =
+        Accounts.register_user(valid_user_attributes(email: email, username: username))
+
+      assert user.email == email
+      assert user.username == username
+    end
+
     test "registers users without password" do
       email = unique_user_email()
       {:ok, user} = Accounts.register_user(valid_user_attributes(email: email))
@@ -394,6 +416,97 @@ defmodule Notifeye.AccountsTest do
       token = Accounts.create_user_api_token(user)
       assert Accounts.fetch_user_by_api_token(token) == {:ok, user}
       assert Accounts.fetch_user_by_api_token("invalid") == :error
+    end
+  end
+
+  describe "update_user_role/3" do
+    test "updates user role if user has admin role" do
+      admin_scope = create_user_with_role(:admin)
+      user = user_fixture()
+
+      for target_role <- [:user, :lead, :admin] do
+        assert {:ok, updated_user} = Accounts.update_user_role(admin_scope, user.id, target_role)
+        assert updated_user.role == target_role
+        assert Repo.get!(User, user.id).role == target_role
+      end
+    end
+
+    test "updates user role to :lead or :user if user has lead role" do
+      lead_scope = create_user_with_role(:lead)
+      user = user_fixture()
+
+      for target_role <- [:user, :lead] do
+        assert {:ok, updated_user} = Accounts.update_user_role(lead_scope, user.id, target_role)
+        assert updated_user.role == target_role
+        assert Repo.get!(User, user.id).role == target_role
+      end
+    end
+
+    test "lead cannot promote user to :admin" do
+      lead_scope = create_user_with_role(:lead)
+      user = user_fixture()
+
+      assert {:error, _reason} = Accounts.update_user_role(lead_scope, user.id, :admin)
+    end
+
+    test "user cannot promote user to any role" do
+      lead_scope = create_user_with_role(:user)
+      user = user_fixture()
+
+      for target_role <- [:user, :lead, :admin] do
+        assert {:error, _reason} = Accounts.update_user_role(lead_scope, user.id, target_role)
+      end
+    end
+
+    test "promoting to a non-existing role is not possible" do
+      lead_scope = create_user_with_role(:admin)
+      user = user_fixture()
+
+      assert {:error, _reason} = Accounts.update_user_role(lead_scope, user.id, :invalid_role)
+    end
+  end
+
+  describe "update_user_lead/2" do
+    test "updates lead_id for user with valid lead_id" do
+      lead = user_fixture_with_role(%{}, :lead)
+      user_scope = user_scope_fixture()
+
+      assert {:ok, updated_user} = Accounts.update_user_lead(user_scope, lead.id)
+      assert updated_user.lead_id == lead.id
+      assert Repo.get!(User, user_scope.user.id).lead_id == lead.id
+      assert updated_user.lead == lead
+    end
+
+    test "returns error if lead_id does not correspond to a lead user" do
+      non_lead_user = user_fixture_with_role(%{}, :user)
+      user_scope = user_scope_fixture()
+
+      assert {:error, changeset} = Accounts.update_user_lead(user_scope, non_lead_user.id)
+      assert %{lead_id: ["must be a valid lead user"]} = errors_on(changeset)
+      assert Repo.get!(User, user_scope.user.id).lead_id == nil
+    end
+  end
+
+  describe "update_user_lead/3" do
+    test "updates lead_id if is admin user" do
+      lead = user_fixture_with_role(%{}, :lead)
+      user_scope = create_user_with_role(:admin)
+      target_user = user_fixture()
+
+      assert {:ok, updated_user} = Accounts.update_user_lead(user_scope, target_user.id, lead.id)
+      assert updated_user.lead_id == lead.id
+      assert Repo.get!(User, target_user.id).lead_id == lead.id
+      assert updated_user.lead == lead
+    end
+
+    test "returns error if user is not admin" do
+      lead = user_fixture_with_role(%{}, :lead)
+      user_scope = user_scope_fixture()
+      target_user = user_fixture()
+
+      assert {:error, reason} = Accounts.update_user_lead(user_scope, target_user.id, lead.id)
+      assert reason == "you do not have permission to change the lead for this user"
+      assert Repo.get!(User, target_user.id).lead_id == nil
     end
   end
 end

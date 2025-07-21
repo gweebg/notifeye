@@ -5,6 +5,7 @@ defmodule Notifeye.AccountsFixtures do
   """
 
   import Ecto.Query
+  alias Notifeye.Repo
 
   alias Notifeye.Accounts
   alias Notifeye.Accounts.Scope
@@ -49,6 +50,38 @@ defmodule Notifeye.AccountsFixtures do
     Scope.for_user(user)
   end
 
+  def user_fixture_with_role(attrs \\ %{}, role \\ :user) do
+    user =
+      unconfirmed_user_fixture(attrs)
+      |> Ecto.Changeset.change(role: role)
+      |> Repo.update!()
+
+    token =
+      extract_user_token(fn url ->
+        Accounts.deliver_login_instructions(user, url)
+      end)
+
+    {:ok, user, _expired_tokens} = Accounts.login_user_by_magic_link(token)
+
+    user
+  end
+
+  def user_fixture_with_severity(attrs \\ %{}, standing) do
+    user =
+      unconfirmed_user_fixture(attrs)
+      |> Ecto.Changeset.change(standing: standing)
+      |> Repo.update!()
+
+    token =
+      extract_user_token(fn url ->
+        Accounts.deliver_login_instructions(user, url)
+      end)
+
+    {:ok, user, _expired_tokens} = Accounts.login_user_by_magic_link(token)
+
+    user
+  end
+
   def set_password(user) do
     {:ok, user, _expired_tokens} =
       Accounts.update_user_password(user, %{password: valid_user_password()})
@@ -84,5 +117,10 @@ defmodule Notifeye.AccountsFixtures do
       from(ut in Accounts.UserToken, where: ut.token == ^token),
       set: [inserted_at: dt, authenticated_at: dt]
     )
+  end
+
+  def create_user_with_role(role) do
+    user_fixture_with_role(%{}, role)
+    |> user_scope_fixture()
   end
 end

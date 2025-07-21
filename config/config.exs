@@ -7,6 +7,15 @@
 # General application configuration
 import Config
 
+config :notifeye, Oban,
+  engine: Oban.Engines.Basic,
+  notifier: Oban.Notifiers.Postgres,
+  queues: [
+    processing: 10,
+    notifier: [limit: 10, dispatch_cooldown: 100]
+  ],
+  repo: Notifeye.Repo
+
 config :notifeye, :scopes,
   user: [
     default: true,
@@ -74,6 +83,8 @@ config :logger, :default_formatter,
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
+
+config :flop, repo: Notifeye.Repo
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
