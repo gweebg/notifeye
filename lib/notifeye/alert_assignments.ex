@@ -8,7 +8,6 @@ defmodule Notifeye.AlertAssignments do
   alias Notifeye.Accounts
   alias Notifeye.Accounts.Scope
   alias Notifeye.Accounts.User
-  alias Notifeye.AlertAssignments
   alias Notifeye.AlertAssignments.AlertAssignment
   alias Notifeye.Monitoring
 
@@ -195,25 +194,34 @@ defmodule Notifeye.AlertAssignments do
   defp assignment_key(index), do: "assignment_#{index}"
 
   @doc """
-  Acknowledges an alert assignment based on its `id`. An alert acknowledgment always
-  results in setting the `status` of the alert to `:closed`, however, it doesn't always
-  exibit the same proceadure.
+  Acknowledges an alert assignment for a given user.
 
-  An assignment is successfully closed without repercusions if:
+  When acknowledging an assignment, two things can happen:
+  1. The user acknowledges the assignment and has its `standing` restored;
+  2. The user acknowledges the assignment but doesn't has its `standing` restored.
 
-  * It isn't a regular occurence;
-  * It was acknowledged within 24 hours of the assignment.
+  To have one's `standing` restored, the following conditions must verify:
+  * The assignment is acknwoledged within 24 hours of the incident;
+  * The assignment isn't recurrent.
 
-  If the above conditions are met, the points are restored to the user and the
-  assignment is closed.
+  An assignment is considered recurrent, if there are more than or 3 related
+  assignments within 10 days.
 
-  {:ok, current_standing, eligible_for_restore} - ok
-  {:error, reason} - something went wrong
+  At the end, after acknowledging an assignment, its `status` is set to `:closed`.
+
+  ## Parameters
+
+  * `%Scope{}` - Scope for the current logged in user.
+  * `%AlertAssignment{}` - The `%AlertAssignment{}` in question.
+
+  ## Returns
+
+  * `{:ok, final_standing, had_restore}` - If the operation is successfull.
+  * `{:error, reason}` - If the operation fails.
+
   """
-  def acknowledge_assignment(%Scope{} = scope, assignment_id) do
-    assignment =
-      AlertAssignments.get_alert_assignment!(assignment_id, [:alert, :alert_description])
-
+  def acknowledge_assignment(%Scope{} = scope, %AlertAssignment{status: :open} = assignment) do
+    # this is intended, validation must be made in a liveview mount
     true = scope.user.id == assignment.user_id
 
     delta_hours = DateTime.diff(DateTime.utc_now(), assignment.inserted_at, :hour)
@@ -228,16 +236,23 @@ defmodule Notifeye.AlertAssignments do
     end
   end
 
+  def acknowledge_assignment(
+        %Scope{} = _scope,
+        %AlertAssignment{status: status} = _assignment
+      ) do
+    {:error, "assignment cannot be acknowledged, expected status :open but got #{status}"}
+  end
+
   defp eligible_for_restore?(scope, assignment, delta_hours) do
     delta_hours < 24 and not recurrent?(scope, assignment.alert_description_id)
   end
 
   defp restore_and_close_assignment(%Scope{user: user}, assignment) do
     amount =
-      assignment.alert.severity
+      assignment.alert.alert_severity
       |> Monitoring.calculate_standing_amount_by_severity()
 
-    standing = Accounts.calculate_new_standing(user, amount, :decrease)
+    standing = Accounts.calculate_new_standing(user, amount, :increase)
 
     Multi.new()
     |> Multi.update(
@@ -255,6 +270,13 @@ defmodule Notifeye.AlertAssignments do
     end
   end
 
+  @doc """
+  Returns whether an assignment is considered as recurrent or not.
+
+  By default, one is recurrent if it has happened for the same alert description
+  at least 3 times, within 10 days. However this behaviour is configurable via `limit_days`
+  and `threshold`.
+  """
   def recurrent?(
         %Scope{user: %User{id: user_id}},
         description_id,
