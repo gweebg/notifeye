@@ -5,7 +5,7 @@ defmodule Notifeye.AlertAssignments.AlertAssignment do
 
   import Ecto.Changeset
 
-  @fields ~w(match status user_id alert_description_id)a
+  @fields ~w(match status user_id alert_description_id alert_id)a
   @required_fields ~w(match user_id alert_description_id)a
 
   @status ~w(unassigned open waiting closed)a
@@ -13,9 +13,10 @@ defmodule Notifeye.AlertAssignments.AlertAssignment do
   @primary_key {:id, :binary_id, autogenerate: true}
   schema "alert_assignments" do
     field :match, :string
-    field :status, Ecto.Enum, values: @status, default: :unassigned
+    field :status, Ecto.Enum, values: @status, default: :open
 
     belongs_to :user, Notifeye.Accounts.User
+    belongs_to :alert, Notifeye.Monitoring.Alert, type: :binary_id
     belongs_to :alert_description, Notifeye.AlertDescriptions.AlertDescription
 
     timestamps(type: :utc_datetime)

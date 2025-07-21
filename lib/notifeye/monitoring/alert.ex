@@ -25,6 +25,7 @@ defmodule Notifeye.Monitoring.Alert do
     field :end, UnixTimestamp
 
     belongs_to :user, Notifeye.Accounts.User, type: :id
+    has_many :alert_assignments, Notifeye.AlertAssignments.AlertAssignment
 
     timestamps(type: :utc_datetime)
   end
@@ -34,6 +35,14 @@ defmodule Notifeye.Monitoring.Alert do
     alert
     |> cast(attrs, @fields)
     |> validate_required(@required_fields)
+    |> normalize_severity()
     |> put_change(:user_id, user_scope.user.id)
+  end
+
+  defp normalize_severity(changeset) do
+    case get_change(changeset, :alert_severity) do
+      nil -> changeset
+      severity -> put_change(changeset, :alert_severity, String.downcase(severity))
+    end
   end
 end
