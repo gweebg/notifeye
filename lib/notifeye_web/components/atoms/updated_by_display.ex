@@ -21,12 +21,12 @@ defmodule NotifeyeWeb.Components.Atoms.UpdatedByDisplay do
   attr :no_user_text, :string, default: "No user"
   attr :no_user_class, :string, default: "text-base-content/50 text-sm"
   attr :show_avatar, :boolean, default: true
-  attr :avatar_class, :string, default: "h-10 w-10 rounded-full"
+  attr :avatar_class, :string, default: "h-6 w-6 rounded-full"
 
   def updated_by_display(assigns) do
     ~H"""
     <%= if @user do %>
-      <div class={["tooltip ml-5", @class]}>
+      <div class={["tooltip ml-6", @class]}>
         <div class="tooltip-content">
           {@user.email}
         </div>

@@ -85,7 +85,19 @@ defmodule NotifeyeWeb.Router do
       live "/alerts/new", AlertLive.Form, :new
       live "/alerts/:id", AlertLive.Show, :show
       live "/alerts/:id/edit", AlertLive.Form, :edit
+
+      live "/assignments/:id/acknowledge", AssignmentsLive.Acknowledge, :show
     end
+
+    # live_session :assignments_resouce,
+    #   on_mount: [
+    #     {NotifeyeWeb.UserAuth, :mount_current_scope},
+    #     {
+    #       NotifeyeWeb.LiveHooks.AuthorizeResource,
+    #       {:authorize_owner, &AlertAssignments.get_alert_assignment/1}
+    #     }
+    #   ] do
+    # end
 
     post "/users/log-in", UserSessionController, :create
     delete "/users/log-out", UserSessionController, :delete
@@ -96,9 +108,9 @@ defmodule NotifeyeWeb.Router do
 
     live_session :admin,
       on_mount: [{NotifeyeWeb.UserAuth, :ensure_admin}] do
-      live "/alert-descriptions", AdminLive.AlertDescriptions.Index, :index
-      live "/alert-descriptions/:id", AdminLive.AlertDescriptions.Show, :show
-      live "/alert-descriptions/:id/edit", AdminLive.AlertDescriptions.Edit, :edit
+      live "/descriptions", AdminLive.AlertDescriptions.Index, :index
+      live "/descriptions/:id", AdminLive.AlertDescriptions.Show, :show
+      live "/descriptions/:id/edit", AdminLive.AlertDescriptions.Edit, :edit
     end
   end
 end

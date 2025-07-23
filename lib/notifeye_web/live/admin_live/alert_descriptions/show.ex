@@ -17,7 +17,7 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Show do
         socket =
           socket
           |> put_flash(:error, "Alert description not found")
-          |> push_navigate(to: ~p"/admin/alert-descriptions")
+          |> push_navigate(to: ~p"/admin/descriptions")
 
         {:noreply, socket}
 

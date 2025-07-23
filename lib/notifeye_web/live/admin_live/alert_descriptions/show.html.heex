@@ -4,12 +4,12 @@
     <:subtitle>Detailed view of alert description and related events</:subtitle>
     <:actions>
       <.link
-        navigate={~p"/admin/alert-descriptions/#{@alert_description.id}/edit"}
+        navigate={~p"/admin/descriptions/#{@alert_description.id}/edit"}
         class="btn btn-primary"
       >
         <.icon name="hero-pencil" class="w-4 h-4" /> Edit
       </.link>
-      <.link navigate={~p"/admin/alert-descriptions"} class="btn btn-outline">
+      <.link navigate={~p"/admin/descriptions"} class="btn btn-outline">
         <.icon name="hero-arrow-left" class="w-4 h-4" /> Back to List
       </.link>
     </:actions>

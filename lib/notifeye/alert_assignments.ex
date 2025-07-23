@@ -53,6 +53,26 @@ defmodule Notifeye.AlertAssignments do
     |> Repo.preload(preloads)
   end
 
+  def get_alert_assignment(id) do
+    AlertAssignment
+    |> Repo.get(id)
+    |> Repo.preload([:user, :alert, :alert_description])
+  end
+
+  def get_alert_assignment(%Scope{user: %User{id: user_id}}, id) do
+    AlertAssignment
+    |> where([a], a.user_id == ^user_id and a.id == ^id)
+    |> limit(1)
+    |> Repo.one()
+    |> case do
+      %AlertAssignment{} = as ->
+        Repo.preload(as, [:user, :alert, :alert_description])
+
+      nil ->
+        nil
+    end
+  end
+
   @doc """
   Creates a alert_assignment.
 

@@ -1,0 +1,338 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <.header>
+    <p class="text-2xl mb-2">Acknowledge Alert Assignment</p>
+    <:subtitle>
+      This page allows you to acknowledge an alert assignment. By acknowledging within 24 hours, you may be eligible for point restoration depending on whether this is a recurrent issue.
+    </:subtitle>
+  </.header>
+
+  <div class="max-w-4xl mx-auto space-y-4">
+    <%!-- Assignment Metadata --%>
+
+    <div class="flex flex-col md:flex-row gap-4 w-full">
+      <%!-- Assignment Status --%>
+      <div class="card shadow-sm bg-base-100 flex-1">
+        <div class="card-body p-4 text-center flex flex-col justify-center items-center gap-2">
+          <div class={[
+            "badge badge-lg mb-2",
+            case @assignment.status do
+              :open -> "badge-info"
+              :closed -> "badge-success"
+              :waiting -> "badge-warning"
+              _ -> "badge-neutral"
+            end
+          ]}>
+            {String.capitalize(to_string(@assignment.status))}
+          </div>
+          <h4 class={[
+            "font-semibold text-sm",
+            case @assignment.status do
+              :open -> "text-info"
+              :closed -> "text-success"
+              :waiting -> "text-warning"
+              _ -> "text-base-content"
+            end
+          ]}>
+            Assignment Status
+          </h4>
+          <p class="text-xs opacity-70">
+            At {Calendar.strftime(@assignment.updated_at, "%Y-%m-%d %H:%M UTC")}
+          </p>
+        </div>
+      </div>
+
+      <%!-- Time Remaining --%>
+      <%= if @assignment.status == :open do %>
+        <div class="card shadow-sm bg-base-100 flex-1">
+          <div class="card-body p-4 text-center flex flex-col justify-center items-center gap-2">
+            <div
+              id="countdown"
+              class="text-lg font-bold text-primary mb-2"
+              phx-hook="Countdown"
+              data-seconds={@time_left}
+            >
+              <span class="loading loading-spinner loading-md"></span>
+            </div>
+            <h4 class="font-semibold text-sm text-primary">Time Remaining</h4>
+            <p class="text-xs opacity-70">
+              24hr acknowledgment window
+            </p>
+          </div>
+        </div>
+      <% end %>
+
+      <%!-- Point Recovery --%>
+      <div class="card shadow-sm flex-1">
+        <div class="card-body p-4 text-center flex flex-col justify-center items-center gap-2">
+          <div class="flex justify-center mb-2">
+            <%= if @can_recover_points do %>
+              <svg class="h-6 w-6 text-success" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            <% else %>
+              <svg class="h-6 w-6 text-error" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            <% end %>
+          </div>
+          <h4 class={[
+            "font-semibold text-sm",
+            if(@can_recover_points, do: "text-success", else: "text-error")
+          ]}>
+            Point Recovery
+          </h4>
+          <p class="text-xs opacity-70">
+            <%= if @can_recover_points do %>
+              {@potential_points} point(s) available
+            <% else %>
+              Not eligible
+            <% end %>
+          </p>
+        </div>
+      </div>
+
+      <%!-- Recurrence Status --%>
+      <div class="card shadow-sm flex-1">
+        <div class="card-body p-4 text-center flex flex-col justify-center items-center gap-2">
+          <div class="flex justify-center mb-2">
+            <svg
+              class={[
+                "h-6 w-6",
+                if(@is_recurrent, do: "text-warning", else: "text-info")
+              ]}
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </div>
+          <h4 class={[
+            "font-semibold text-sm",
+            if(@is_recurrent, do: "text-warning", else: "text-info")
+          ]}>
+            <%= if @is_recurrent do %>
+              Recurrent Issue
+            <% else %>
+              Non-Recurrent
+            <% end %>
+          </h4>
+          <p class="text-xs opacity-70">
+            <%= if @is_recurrent do %>
+              3+ times in 10 days
+            <% else %>
+              First in 10 days
+            <% end %>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <%!-- Alert Details --%>
+    <div class="card bg-base-100 border border-base-300">
+      <div class="card-body">
+        <%!-- Alert Header --%>
+        <h3 class="card-title mb-4">
+          Alert Details
+          <.link navigate={~p"/"}>
+            <.icon name="hero-arrow-top-right-on-square mb-1" class="w-4 h-4" />
+          </.link>
+        </h3>
+
+        <div class="flex flex-col lg:flex-row gap-6">
+          <div class="flex-1 space-y-4">
+            <%!-- Alert ID --%>
+            <div class="space-y-2">
+              <label class="label">
+                <span class="label-text font-medium">Alert ID</span>
+              </label>
+              <p class="text-sm">{@assignment.alert.logz_id}</p>
+            </div>
+            <%!-- Alert Title --%>
+            <div class="space-y-2">
+              <label class="label">
+                <span class="label-text font-medium">Alert Title</span>
+              </label>
+              <p class="text-base-content">{@assignment.alert.alert_title}</p>
+            </div>
+
+            <%!-- Alert Severity --%>
+            <div class="flex flex-col gap-2">
+              <label class="label">
+                <span class="label-text font-medium">Severity</span>
+              </label>
+              <div class={[
+                "badge",
+                case @assignment.alert.alert_severity do
+                  "high" -> "badge-error"
+                  "medium" -> "badge-warning"
+                  "low" -> "badge-success"
+                  _ -> "badge-neutral"
+                end
+              ]}>
+                {String.capitalize(@assignment.alert.alert_severity)}
+              </div>
+            </div>
+          </div>
+
+          <div class="flex-1 space-y-4">
+            <div class="space-y-2">
+              <label class="label">
+                <span class="label-text font-medium">Time Range</span>
+              </label>
+              <p class="text-sm">
+                {Calendar.strftime(@assignment.alert.start, "%Y-%m-%d %H:%M UTC")} to {Calendar.strftime(
+                  @assignment.alert.end,
+                  "%Y-%m-%d %H:%M UTC"
+                )}
+              </p>
+            </div>
+
+            <div class="space-y-2">
+              <label class="label">
+                <span class="label-text font-medium">Tags</span>
+              </label>
+              <div class="flex flex-wrap gap-2">
+                <%= for tag <- @assignment.alert.alert_tags do %>
+                  <div class="badge badge-neutral badge-sm">
+                    {tag}
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 space-y-2">
+          <label class="label">
+            <span class="label-text font-medium">Description</span>
+          </label>
+          <p>
+            {@assignment.alert.alert_description}
+          </p>
+        </div>
+
+        <%= if @assignment.alert.alert_event_samples do %>
+          <div class="mt-4 space-y-2">
+            <label class="label">
+              <span class="label-text font-medium">Event Samples</span>
+            </label>
+            <div class="card bg-base-200 text-sm p-4">
+              <pre class="whitespace-pre-wrap"><code>{@assignment.alert.alert_event_samples}</code></pre>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <%!-- Acknowledgment Form --%>
+    <%= if @assignment_closed do %>
+      <div class="card bg-base-100 border border-base-300">
+        <div class="card-body">
+          <h3 class="card-title text-success">Assignment Already Acknowledged</h3>
+          <p class="text-base-content/80">
+            This assignment has been closed and can no longer be acknowledged.
+          </p>
+          <div class="card-actions justify-end">
+            <.link navigate={~p"/"} class="btn btn-primary">
+              Back to Assignments
+            </.link>
+          </div>
+        </div>
+      </div>
+    <% else %>
+      <form
+        phx-submit="acknowledge"
+        phx-change="validate"
+        class="card bg-base-100 border border-base-300"
+      >
+        <div class="card-body space-y-2">
+          <h3 class="card-title">Acknowledge Assignment</h3>
+
+          <div class="flex flex-col gap-2">
+            <div class="card bg-base-200 flex flex-row gap-4 items-center p-2">
+              <.icon name="hero-information-circle" class="text-primary w-6 h-6" />
+              <p class="font-mono text-sm">
+                {@required_phrase}
+              </p>
+            </div>
+
+            <div class="space-y-2">
+              <label for="acknowledgment_phrase" class="label">
+                <span class="label-text font-medium">Type the acknowledgment phrase:</span>
+              </label>
+              <textarea
+                id="acknowledgment_phrase"
+                name="acknowledgment_phrase"
+                value={@acknowledgment_phrase}
+                phx-hook="NoPaste"
+                class={[
+                  "textarea textarea-bordered w-full h-24 resize-none",
+                  if(@acknowledgment_phrase != "" and @acknowledgment_phrase != @required_phrase,
+                    do: "textarea-error",
+                    else:
+                      if(@acknowledgment_phrase == @required_phrase,
+                        do: "textarea-success",
+                        else: ""
+                      )
+                  )
+                ]}
+                placeholder="Type the exact phrase here..."
+                required
+                autocomplete="off"
+                spellcheck="false"
+              ></textarea>
+              <%= if @acknowledgment_phrase != "" and @acknowledgment_phrase != @required_phrase do %>
+                <div class="label">
+                  <span class="label-text-alt text-error">
+                    Phrase doesn't match. Please type exactly as shown above.
+                  </span>
+                </div>
+              <% end %>
+              <%= if @acknowledgment_phrase == @required_phrase do %>
+                <div class="label">
+                  <span class="label-text-alt text-success">✓ Phrase matches!</span>
+                </div>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="card-actions justify-between items-center">
+            <p class="text-sm text-base-content/70">
+              By acknowledging, you confirm that you have reviewed and understood this alert assignment.
+            </p>
+
+            <button
+              type="submit"
+              disabled={@submitting || @acknowledgment_phrase != @required_phrase}
+              class={[
+                "btn",
+                if(@submitting || @acknowledgment_phrase != @required_phrase,
+                  do: "btn-disabled",
+                  else: "btn-primary"
+                )
+              ]}
+            >
+              <%= if @submitting do %>
+                <span class="loading loading-spinner loading-sm"></span> Submitting...
+              <% else %>
+                Acknowledge Assignment
+              <% end %>
+            </button>
+          </div>
+        </div>
+      </form>
+    <% end %>
+  </div>
+</Layouts.app>

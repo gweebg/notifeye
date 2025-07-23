@@ -277,7 +277,7 @@ defmodule NotifeyeWeb.UserAuth do
     end
   end
 
-  defp mount_current_scope(socket, session) do
+  def mount_current_scope(socket, session) do
     Phoenix.Component.assign_new(socket, :current_scope, fn ->
       {user, _} =
         if user_token = session["user_token"] do
