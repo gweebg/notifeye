@@ -53,7 +53,7 @@
     </div>
 
     <%!-- Filters Card --%>
-    <div class="w-full card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
+    <div class="w-full card bg-base-100 shadow-sm overflow-hidden">
       <div class="card-body pb-4">
         <.form
           :let={f}
@@ -139,7 +139,7 @@
       </div>
     </div>
 
-    <div class="flex flex-col justify-between min-h-[50vh] card bg-base-100 shadow-sm border border-base-200 overflow-x-auto">
+    <div class="flex flex-col justify-between min-h-[50vh] card bg-base-100 shadow-sm overflow-x-auto">
       <div class="table table-zebra w-full">
         <Flop.Phoenix.table
           items={@streams.alert_descriptions}
@@ -208,7 +208,7 @@
         </Flop.Phoenix.table>
       </div>
       <%!-- Pagination Component --%>
-      <div class="border-t border-base-200 px-4 py-4 flex justify-center">
+      <div class="border-t border-base-100 px-4 py-4 flex justify-center">
         <Flop.Phoenix.pagination
           meta={@meta}
           path={~p"/admin/descriptions"}

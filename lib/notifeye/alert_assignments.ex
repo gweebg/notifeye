@@ -110,6 +110,19 @@ defmodule Notifeye.AlertAssignments do
   end
 
   @doc """
+  Acknowledges an alert assignment struct.
+
+  Makes us of `AlertAssignment.acknowledge_changeset/2` to automatically
+  update the state to `closed` and fill the respective `metadata` passed 
+  via `attrs`.
+  """
+  def update_acknowledge_assignment(%AlertAssignment{} = alert_assignment, attrs) do
+    alert_assignment
+    |> AlertAssignment.acknowledge_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
   Deletes a alert_assignment.
 
   ## Examples
@@ -185,7 +198,9 @@ defmodule Notifeye.AlertAssignments do
     |> Enum.with_index()
     |> Enum.reduce(Multi.new(), fn {user_match, index}, multi ->
       {params, status} = build_assignment_params(user_match, description_id, alert_id)
-      changeset = AlertAssignment.changeset(%AlertAssignment{status: status}, params)
+
+      changeset =
+        AlertAssignment.changeset(%AlertAssignment{status: status}, params)
 
       Multi.insert(multi, assignment_key(index), changeset)
     end)
@@ -196,11 +211,15 @@ defmodule Notifeye.AlertAssignments do
     {user_id, is_admin} = resolve_user_id(user_match)
     status = if is_admin, do: :unassigned, else: :open
 
+    # determine if assignment is recurrent
+    is_recurrent = recurrent?(user_id, description_id)
+
     {%{
        match: user_match,
        user_id: user_id,
        alert_id: alert_id,
-       alert_description_id: description_id
+       alert_description_id: description_id,
+       metadata: %{recurrent: is_recurrent}
      }, status}
   end
 
@@ -241,19 +260,18 @@ defmodule Notifeye.AlertAssignments do
 
   """
   def acknowledge_assignment(%Scope{} = scope, %AlertAssignment{status: :open} = assignment) do
-    # this is intended, validation must be made in a liveview mount
-    true = scope.user.id == assignment.user_id
+    validate_user!(scope, assignment)
 
-    delta_hours = DateTime.diff(DateTime.utc_now(), assignment.inserted_at, :hour)
+    standing_penalty =
+      assignment.alert.alert_severity
+      |> Monitoring.calculate_standing_amount_by_severity()
 
-    if eligible_for_restore?(scope, assignment, delta_hours) do
-      restore_and_close_assignment(scope, assignment)
-    else
-      case update_alert_assignment(assignment, %{status: :closed}) do
-        {:ok, _updated} -> {:ok, scope.user.standing, false}
-        {:error, reason} -> {:error, :failed_to_close, reason}
-      end
-    end
+    close_assignment(
+      scope,
+      assignment,
+      standing_penalty,
+      eligible_for_restore?(scope, assignment)
+    )
   end
 
   def acknowledge_assignment(
@@ -263,31 +281,60 @@ defmodule Notifeye.AlertAssignments do
     {:error, "assignment cannot be acknowledged, expected status :open but got #{status}"}
   end
 
-  defp eligible_for_restore?(scope, assignment, delta_hours) do
-    delta_hours < 24 and not recurrent?(scope, assignment.alert_description_id)
+  defp validate_user!(%Scope{user: user}, %AlertAssignment{user_id: user_id}) do
+    true = user.id == user_id
   end
 
-  defp restore_and_close_assignment(%Scope{user: user}, assignment) do
-    amount =
-      assignment.alert.alert_severity
-      |> Monitoring.calculate_standing_amount_by_severity()
+  defp close_assignment(%Scope{user: %User{} = user}, assignment, standing_penalty, false) do
+    assignment_changes = %{
+      change_action: :decrease,
+      change_amount: standing_penalty
+    }
 
-    standing = Accounts.calculate_new_standing(user, amount, :increase)
+    case update_acknowledge_assignment(assignment, assignment_changes) do
+      {:ok, _updated} -> {:ok, user.standing, false}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp close_assignment(%Scope{user: %User{} = user}, assignment, standing_penalty, true) do
+    restored_standing =
+      Accounts.calculate_new_standing(
+        user,
+        standing_penalty,
+        :increase
+      )
+
+    assignment_change = %{
+      change_action: :increase,
+      change_amount: restored_standing
+    }
 
     Multi.new()
     |> Multi.update(
       :restore_points,
-      Accounts.User.standing_changeset(user, %{standing: standing})
+      Accounts.User.standing_changeset(user, %{standing: restored_standing})
     )
     |> Multi.update(
       :close_assignment,
-      AlertAssignment.changeset(assignment, %{status: :closed})
+      AlertAssignment.acknowledge_changeset(assignment, assignment_change)
     )
     |> Repo.transaction()
     |> case do
-      {:ok, _result} -> {:ok, standing, true}
+      {:ok, _result} -> {:ok, restored_standing, true}
       {:error, _step, reason, _changes_so_far} -> {:error, reason}
     end
+  end
+
+  @doc """
+  Determines whether an assignment is eligible for standing restore.
+
+  Returns true if the assignment is acknowledged within 24 hours of it creations
+  and if it is not a recurrent issue.
+  """
+  def eligible_for_restore?(scope, assignment) do
+    delta_hours = DateTime.diff(DateTime.utc_now(), assignment.inserted_at, :hour)
+    delta_hours < 24 and not recurrent?(scope.user.id, assignment.alert_description_id)
   end
 
   @doc """
@@ -298,7 +345,7 @@ defmodule Notifeye.AlertAssignments do
   and `threshold`.
   """
   def recurrent?(
-        %Scope{user: %User{id: user_id}},
+        user_id,
         description_id,
         limit_days \\ 10,
         threshold \\ 3

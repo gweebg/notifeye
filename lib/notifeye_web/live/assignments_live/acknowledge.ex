@@ -7,37 +7,47 @@ defmodule NotifeyeWeb.AssignmentsLive.Acknowledge do
   alias Notifeye.AlertAssignments.AlertAssignment
   alias Notifeye.Monitoring
 
-  @required_phrase "I acknowledge that I have reviewed this alert and understand the situation."
+  @phrase_list [
+    "I confirm that I have carefully reviewed this alert and fully understand the details of the situation.",
+    "I acknowledge having read and understood this alert, and I am aware of the circumstances it describes.",
+    "I have gone through the contents of this alert and recognize the nature of the situation it refers to.",
+    "I confirm that I have read this alert thoroughly and comprehend the situation as outlined.",
+    "I acknowledge receipt of this alert and affirm that I understand the context and implications of the situation."
+  ]
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, acknowledgment_phrase: "", submitting: false)}
+    {:ok,
+     socket
+     |> assign(
+       acknowledgment_phrase: "",
+       submitting: false
+     )}
   end
 
   @impl true
   def handle_params(%{"id" => id}, _, socket) do
     case AlertAssignments.get_alert_assignment(socket.assigns.current_scope, id) do
       %AlertAssignment{} = assignment ->
-        assignment = preload_assignment_data(assignment)
-
-        is_recurrent =
-          AlertAssignments.recurrent?(
-            socket.assigns.current_scope,
-            assignment.alert_description_id
-          )
-
         time_left = calculate_time_left(assignment)
-        potential_points = calculate_potential_points(assignment)
-        can_recover_points = can_recover_points?(assignment, is_recurrent, time_left)
+
+        can_recover_points =
+          assignment.metadata.recurrent == false &&
+            assignment.status == :open &&
+            time_left > 0
+
+        meta = %{
+          is_recurrent: assignment.metadata.recurrent,
+          recoverable_standing: calculate_potential_points(assignment),
+          can_recover: can_recover_points,
+          time_left: time_left
+        }
 
         socket =
           socket
           |> assign(:assignment, assignment)
-          |> assign(:is_recurrent, is_recurrent)
-          |> assign(:potential_points, potential_points)
-          |> assign(:time_left, time_left)
-          |> assign(:can_recover_points, can_recover_points)
-          |> assign(:required_phrase, @required_phrase)
+          |> assign(:meta, meta)
+          |> assign(:required_phrase, Enum.random(@phrase_list))
           |> assign(:assignment_closed, assignment.status == :closed)
 
         {:noreply, socket}
@@ -54,46 +64,49 @@ defmodule NotifeyeWeb.AssignmentsLive.Acknowledge do
   end
 
   @impl true
-  def handle_event("acknowledge", %{"acknowledgment_phrase" => phrase}, socket) do
-    required_phrase = @required_phrase
-    assignment = socket.assigns.assignment
+  def handle_event("acknowledge", _map, %{assigns: %{assignment: %{status: :closed}}} = socket) do
+    {:noreply, put_flash(socket, :error, "This assignment is already closed")}
+  end
 
-    cond do
-      assignment.status == :closed ->
-        {:noreply, put_flash(socket, :error, "This assignment is already closed")}
+  @impl true
+  def handle_event(
+        "acknowledge",
+        %{"acknowledgment_phrase" => phrase},
+        %{assigns: assigns} = socket
+      ) do
+    trimmed_phrase = String.trim(phrase)
 
-      String.trim(phrase) != required_phrase ->
-        {:noreply, put_flash(socket, :error, "Please enter the exact acknowledgment phrase")}
-
-      true ->
-        socket = assign(socket, submitting: true)
-
-        case AlertAssignments.acknowledge_assignment(socket.assigns.current_scope, assignment) do
-          {:ok, _new_standing, restored} ->
-            message =
-              if restored do
-                "Assignment acknowledged successfully! Points have been restored to your account."
-              else
-                "Assignment acknowledged successfully."
-              end
-
-            {:noreply,
-             socket
-             |> put_flash(:info, message)
-             |> push_navigate(to: ~p"/")}
-
-          {:error, reason} ->
-            {:noreply,
-             socket
-             |> assign(submitting: false)
-             |> put_flash(:error, "Failed to acknowledge assignment: #{inspect(reason)}")}
-        end
+    if trimmed_phrase != assigns.required_phrase do
+      {:noreply, put_flash(socket, :error, "Please enter the exact acknowledgment phrase.")}
+    else
+      acknowledge_assignment(socket)
     end
   end
 
-  defp preload_assignment_data(assignment) do
-    assignment
-    |> Notifeye.Repo.preload([:alert, :alert_description, :user])
+  defp acknowledge_assignment(socket) do
+    socket = assign(socket, submitting: true)
+    %{assignment: assignment, current_scope: scope} = socket.assigns
+
+    case AlertAssignments.acknowledge_assignment(scope, assignment) do
+      {:ok, new_standing, restored} ->
+        message =
+          if restored do
+            "Assignment acknowledged successfully! Your current standing is #{new_standing}."
+          else
+            "Assignment acknowledged successfully."
+          end
+
+        {:noreply,
+         socket
+         |> put_flash(:info, message)
+         |> push_navigate(to: ~p"/")}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> assign(submitting: false)
+         |> put_flash(:error, "Failed to acknowledge assignment: #{inspect(reason)}")}
+    end
   end
 
   defp calculate_potential_points(%{alert: %{alert_severity: severity}}) do
@@ -112,28 +125,7 @@ defmodule NotifeyeWeb.AssignmentsLive.Acknowledge do
     end
   end
 
-  defp can_recover_points?(assignment, is_recurrent, time_left) do
-    assignment.status == :open and not is_recurrent and time_left > 0
-  end
-
-  # afazer:
-  # fix ~p
-  # refactor ack handle_event
-  # refactor heex
-  # automatically set assignment to expired if 24 over (oban)
-  # heex status for :expired
-
-  # defp phrases_match?(input, required) do
-  #   String.trim(input) == String.trim(required)
-  # end
-
-  # defp can_acknowledge?(socket) do
-  #   assignment = socket.assigns.assignment
-  #   phrase = socket.assigns.acknowledgment_phrase
-  #   required_phrase = socket.assigns.required_phrase
-
-  #   assignment.status == :open and
-  #     not socket.assigns.submitting and
-  #     phrases_match?(phrase, required_phrase)
-  # end
+  # todo:
+  # update acknowledge logic to use :expiry_limit as the time
+  # oban job to check expired assignments and set their status to :expired automatically
 end

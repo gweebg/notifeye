@@ -67,7 +67,7 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Edit do
 
     pattern =
       case Map.get(changeset.changes, :pattern) do
-        nil -> socket.assigns.alert_description.pattern
+        nil -> socket.assigns.alert_description.pattern || ""
         value -> value
       end
 
@@ -100,10 +100,11 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Edit do
            socket.assigns.alert_description,
            alert_description_params
          ) do
-      {:ok, _alert_description} ->
+      {:ok, alert_description} ->
         {:noreply,
          socket
-         |> put_flash(:info, "Alert description updated successfully")}
+         |> put_flash(:info, "Alert description updated successfully")
+         |> assign(alert_description: alert_description)}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, :changeset, changeset)}

@@ -6,8 +6,6 @@ defmodule Notifeye.Workers.Processor do
   processing the alert based on its description. If the alert is not registered, it creates a new
   alert description for the operator to fill in. If the alert is registered, it enqueues
   the alert for further processing.
-
-  TODO: Dig into Worker settings, p.e. `limit`.
   """
 
   alias Notifeye.{AlertDescriptions, AlertAssignments, Notifications}

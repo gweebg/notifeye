@@ -17,7 +17,7 @@ Hooks.Countdown = {
             const secs = seconds % 60
 
             this.el.innerHTML =
-                `<span class="block text-2xl">${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}</span>`
+                `<span class="text-2xl">${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}</span>`
 
             seconds--
         }

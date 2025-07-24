@@ -67,6 +67,8 @@ defmodule NotifeyeWeb.Router do
       on_mount: [{NotifeyeWeb.UserAuth, :require_authenticated}] do
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
+
+      live "/assignments/:id/acknowledge", AssignmentsLive.Acknowledge, :show
     end
 
     post "/users/update-password", UserSessionController, :update_password
@@ -85,8 +87,6 @@ defmodule NotifeyeWeb.Router do
       live "/alerts/new", AlertLive.Form, :new
       live "/alerts/:id", AlertLive.Show, :show
       live "/alerts/:id/edit", AlertLive.Form, :edit
-
-      live "/assignments/:id/acknowledge", AssignmentsLive.Acknowledge, :show
     end
 
     # live_session :assignments_resouce,
