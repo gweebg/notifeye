@@ -307,7 +307,7 @@ defmodule Notifeye.AlertAssignments do
 
     assignment_change = %{
       change_action: :increase,
-      change_amount: restored_standing
+      change_amount: standing_penalty
     }
 
     Multi.new()
