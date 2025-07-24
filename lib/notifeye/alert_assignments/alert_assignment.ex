@@ -17,7 +17,7 @@ defmodule Notifeye.AlertAssignments.AlertAssignment do
     field :match, :string
     field :status, Ecto.Enum, values: @status, default: :open
 
-    embeds_one :metadata, AlertAssignment.Metadata
+    embeds_one :metadata, AlertAssignment.Metadata, on_replace: :update
 
     belongs_to :user, Notifeye.Accounts.User
     belongs_to :alert, Notifeye.Monitoring.Alert, type: :binary_id
@@ -38,7 +38,7 @@ defmodule Notifeye.AlertAssignments.AlertAssignment do
     |> cast_embed(:metadata)
   end
 
-  defp ensure_metadata(%Ecto.Changeset{changes: changes} = changeset) do
+  defp ensure_metadata(%Ecto.Changeset{data: %{metadata: nil}, changes: changes} = changeset) do
     if Map.has_key?(changes, :metadata) do
       changeset
     else
@@ -46,6 +46,8 @@ defmodule Notifeye.AlertAssignments.AlertAssignment do
       |> put_embed(:metadata, %{})
     end
   end
+
+  defp ensure_metadata(%Ecto.Changeset{} = changeset), do: changeset
 
   @doc """
   Changeset for only updating the metadata of an assignment. Ignores 

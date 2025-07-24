@@ -125,7 +125,6 @@ defmodule NotifeyeWeb.AssignmentsLive.Acknowledge do
     end
   end
 
-  # todo:
   # update acknowledge logic to use :expiry_limit as the time
   # oban job to check expired assignments and set their status to :expired automatically
 end

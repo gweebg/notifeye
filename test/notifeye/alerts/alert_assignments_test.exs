@@ -195,6 +195,7 @@ defmodule Notifeye.AlertAssignmentsTest do
       }
 
       {:ok, assignment} = AlertAssignments.create_alert_assignment(current_assignment)
+      assignment = assignment |> Repo.preload([:alert])
 
       assert {:ok, current_standing, false} =
                AlertAssignments.acknowledge_assignment(scope, assignment)
