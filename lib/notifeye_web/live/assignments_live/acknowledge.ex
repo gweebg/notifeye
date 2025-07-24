@@ -2,6 +2,7 @@ defmodule NotifeyeWeb.AssignmentsLive.Acknowledge do
   @moduledoc false
 
   use NotifeyeWeb, :live_view
+  use NotifeyeWeb.Components
 
   alias Notifeye.AlertAssignments
   alias Notifeye.AlertAssignments.AlertAssignment
@@ -19,36 +20,18 @@ defmodule NotifeyeWeb.AssignmentsLive.Acknowledge do
   def mount(_params, _session, socket) do
     {:ok,
      socket
-     |> assign(
-       acknowledgment_phrase: "",
-       submitting: false
-     )}
+     |> assign(acknowledgment_phrase: "")}
   end
 
   @impl true
   def handle_params(%{"id" => id}, _, socket) do
     case AlertAssignments.get_alert_assignment(socket.assigns.current_scope, id) do
       %AlertAssignment{} = assignment ->
-        time_left = calculate_time_left(assignment)
-
-        can_recover_points =
-          assignment.metadata.recurrent == false &&
-            assignment.status == :open &&
-            time_left > 0
-
-        meta = %{
-          is_recurrent: assignment.metadata.recurrent,
-          recoverable_standing: calculate_potential_points(assignment),
-          can_recover: can_recover_points,
-          time_left: time_left
-        }
-
         socket =
           socket
           |> assign(:assignment, assignment)
-          |> assign(:meta, meta)
+          |> assign(:meta, build_meta(assignment))
           |> assign(:required_phrase, Enum.random(@phrase_list))
-          |> assign(:assignment_closed, assignment.status == :closed)
 
         {:noreply, socket}
 
@@ -83,12 +66,27 @@ defmodule NotifeyeWeb.AssignmentsLive.Acknowledge do
     end
   end
 
+  defp build_meta(%AlertAssignment{} = assignment) do
+    time_left = calculate_time_left(assignment)
+
+    can_recover_points =
+      assignment.metadata.recurrent == false &&
+        assignment.status == :open &&
+        time_left > 0
+
+    %{
+      is_recurrent: assignment.metadata.recurrent,
+      recoverable_standing: calculate_potential_points(assignment),
+      can_recover: can_recover_points,
+      time_left: time_left
+    }
+  end
+
   defp acknowledge_assignment(socket) do
-    socket = assign(socket, submitting: true)
     %{assignment: assignment, current_scope: scope} = socket.assigns
 
     case AlertAssignments.acknowledge_assignment(scope, assignment) do
-      {:ok, new_standing, restored} ->
+      {:ok, result, new_standing, restored} ->
         message =
           if restored do
             "Assignment acknowledged successfully! Your current standing is #{new_standing}."
@@ -96,15 +94,18 @@ defmodule NotifeyeWeb.AssignmentsLive.Acknowledge do
             "Assignment acknowledged successfully."
           end
 
-        {:noreply,
-         socket
-         |> put_flash(:info, message)
-         |> push_navigate(to: ~p"/")}
+        {
+          :noreply,
+          socket
+          |> put_flash(:info, message)
+          |> assign(:assignment, result)
+          # no need to rebuild :meta, since status=closed doesn't use any
+          # metadata for display
+        }
 
       {:error, reason} ->
         {:noreply,
          socket
-         |> assign(submitting: false)
          |> put_flash(:error, "Failed to acknowledge assignment: #{inspect(reason)}")}
     end
   end
@@ -125,6 +126,13 @@ defmodule NotifeyeWeb.AssignmentsLive.Acknowledge do
     end
   end
 
-  # update acknowledge logic to use :expiry_limit as the time
-  # oban job to check expired assignments and set their status to :expired automatically
+  defp status_color(:open), do: "text-info"
+  defp status_color(:closed), do: "text-success"
+  defp status_color(:expired), do: "text-error"
+  defp status_color(_), do: "text-base-content"
+
+  defp badge_color(:open), do: "badge-info"
+  defp badge_color(:closed), do: "badge-success"
+  defp badge_color(:expired), do: "badge-error"
+  defp badge_color(_), do: ""
 end

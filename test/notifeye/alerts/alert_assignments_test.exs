@@ -126,7 +126,7 @@ defmodule Notifeye.AlertAssignmentsTest do
       scope = Scope.for_user(user)
       assignment = create_assignment_with_alert(scope, "high")
 
-      assert {:ok, new_standing, true} =
+      assert {:ok, _result, new_standing, true} =
                AlertAssignments.acknowledge_assignment(scope, assignment)
 
       # standing should be restored (high severity -> 3 points)
@@ -150,7 +150,7 @@ defmodule Notifeye.AlertAssignmentsTest do
 
       assignment = create_assignment_with_alert(scope, "medium", delta)
 
-      assert {:ok, current_standing, false} =
+      assert {:ok, _result, current_standing, false} =
                AlertAssignments.acknowledge_assignment(scope, assignment)
 
       # standing should be the same
@@ -191,13 +191,14 @@ defmodule Notifeye.AlertAssignmentsTest do
         status: :open,
         user_id: user.id,
         alert_description_id: alert_description.id,
-        alert_id: alert.id
+        alert_id: alert.id,
+        metadata: %{recurrent: true}
       }
 
       {:ok, assignment} = AlertAssignments.create_alert_assignment(current_assignment)
       assignment = assignment |> Repo.preload([:alert])
 
-      assert {:ok, current_standing, false} =
+      assert {:ok, _result, current_standing, false} =
                AlertAssignments.acknowledge_assignment(scope, assignment)
 
       # standing should not be restored due to recurrence

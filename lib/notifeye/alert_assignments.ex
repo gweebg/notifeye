@@ -270,7 +270,7 @@ defmodule Notifeye.AlertAssignments do
       scope,
       assignment,
       standing_penalty,
-      eligible_for_restore?(scope, assignment)
+      eligible_for_restore?(assignment)
     )
   end
 
@@ -292,7 +292,7 @@ defmodule Notifeye.AlertAssignments do
     }
 
     case update_acknowledge_assignment(assignment, assignment_changes) do
-      {:ok, _updated} -> {:ok, user.standing, false}
+      {:ok, %AlertAssignment{} = updated} -> {:ok, updated, user.standing, false}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -321,8 +321,12 @@ defmodule Notifeye.AlertAssignments do
     )
     |> Repo.transaction()
     |> case do
-      {:ok, _result} -> {:ok, restored_standing, true}
-      {:error, _step, reason, _changes_so_far} -> {:error, reason}
+      # `Multi.transaction` returns an assignment map
+      {:ok, %{close_assignment: %AlertAssignment{} = updated}} ->
+        {:ok, updated, restored_standing, true}
+
+      {:error, _step, reason, _changes_so_far} ->
+        {:error, reason}
     end
   end
 
@@ -332,9 +336,9 @@ defmodule Notifeye.AlertAssignments do
   Returns true if the assignment is acknowledged within 24 hours of it creations
   and if it is not a recurrent issue.
   """
-  def eligible_for_restore?(scope, assignment) do
+  def eligible_for_restore?(assignment) do
     delta_hours = DateTime.diff(DateTime.utc_now(), assignment.inserted_at, :hour)
-    delta_hours < 24 and not recurrent?(scope.user.id, assignment.alert_description_id)
+    delta_hours < 24 and not assignment.metadata.recurrent
   end
 
   @doc """

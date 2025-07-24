@@ -18,6 +18,8 @@ defmodule NotifeyeWeb.Components do
       import NotifeyeWeb.Components.Atoms.VerifiedBadge
       import NotifeyeWeb.Components.Atoms.NotificationGroupDisplay
       import NotifeyeWeb.Components.Atoms.UpdatedByDisplay
+
+      import NotifeyeWeb.Components.Cards.StatusCard
     end
   end
 
@@ -29,4 +31,6 @@ defmodule NotifeyeWeb.Components do
     to: NotifeyeWeb.Components.Atoms.NotificationGroupDisplay
 
   defdelegate updated_by_display(assigns), to: NotifeyeWeb.Components.Atoms.UpdatedByDisplay
+
+  defdelegate status_card(assigns), to: NotifeyeWeb.Components.Cards.StatusCard
 end
