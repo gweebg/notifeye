@@ -33,6 +33,7 @@ defmodule Notifeye.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:oban_web, "~> 2.0"},
       {:bcrypt_elixir, "~> 3.0"},
       {:phoenix, "~> 1.8.0-rc.2", override: true},
       {:phoenix_ecto, "~> 4.5"},

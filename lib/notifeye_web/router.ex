@@ -1,6 +1,7 @@
 defmodule NotifeyeWeb.Router do
   use NotifeyeWeb, :router
 
+  import Oban.Web.Router
   import NotifeyeWeb.UserAuth
 
   pipeline :browser do
@@ -55,6 +56,12 @@ defmodule NotifeyeWeb.Router do
 
       live_dashboard "/dashboard", metrics: NotifeyeWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
+    end
+
+    scope "/" do
+      pipe_through :browser
+
+      oban_dashboard("/oban")
     end
   end
 

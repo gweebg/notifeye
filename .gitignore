@@ -42,3 +42,6 @@ npm-debug.log
 /docs/collect
 _old
 .elixir_ls
+.lexical
+.elixir-tools
+/lib/notifeye_web/templates/email/*.html
