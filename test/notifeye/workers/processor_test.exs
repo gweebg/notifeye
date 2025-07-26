@@ -184,7 +184,7 @@ defmodule Notifeye.Workers.ProcessorTest do
         worker: Notifier,
         args: %{
           user_id: group_user1.id,
-          alert_description_id: alert_description.id,
+          group_id: notification_group.id,
           assignment_id: assignment.id
         }
       )
@@ -193,7 +193,7 @@ defmodule Notifeye.Workers.ProcessorTest do
         worker: Notifier,
         args: %{
           user_id: group_user2.id,
-          alert_description_id: alert_description.id,
+          group_id: notification_group.id,
           assignment_id: assignment.id
         }
       )
@@ -226,7 +226,7 @@ defmodule Notifeye.Workers.ProcessorTest do
       assert Enum.any?(jobs, fn job ->
                job.args == %{
                  "user_id" => group_user1.id,
-                 "alert_description_id" => alert_description.id,
+                 "group_id" => notification_group.id,
                  "assignment_id" => assignment.id
                }
              end)

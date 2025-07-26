@@ -132,7 +132,7 @@ defmodule Notifeye.Workers.Processor do
         %{id: user_id} <- users do
       %{
         user_id: user_id,
-        alert_description_id: description.id,
+        group_id: description.notification_group_id,
         assignment_id: assignment_id
       }
       |> Notifeye.Workers.Notifier.new()

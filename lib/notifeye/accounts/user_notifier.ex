@@ -5,6 +5,60 @@ defmodule Notifeye.Accounts.UserNotifier do
 
   alias Notifeye.Mailer
   alias Notifeye.Accounts.User
+  alias Notifeye.AlertAssignments.AlertAssignment
+  alias Notifeye.AlertDescriptions.AlertDescription
+  alias Notifeye.Notifications.NotificationGroup
+
+  use Phoenix.Swoosh, view: NotifeyeWeb.EmailView
+
+  defp base_email(to: email) do
+    new()
+    |> to(email)
+    |> from({"Notifeye", "noreply@notifeye.com"})
+  end
+
+  # todo: create notifeye_web/templates/emails/assignment_created.html
+  def build_email(
+        %User{} = user,
+        for: {:assignment_created, %AlertAssignment{} = assignment}
+      ) do
+    base_email(to: user.email)
+    |> subject("(##{assignment.alert_description_id}) New alert for you")
+    |> assign(:user, user)
+    |> assign(:assignment, assignment)
+    |> render_body("assignment_created.html")
+  end
+
+  def build_email(
+        %User{} = user,
+        for: {:description_created, %AlertDescription{} = description}
+      ) do
+    description_url = NotifeyeWeb.Endpoint.url() <> "/admin/descriptions/#{description.id}"
+
+    base_email(to: user.email)
+    |> subject("(##{description.id}) A new alert type has been identified")
+    |> assign(:user, user)
+    |> assign(:description, description)
+    |> assign(:description_url, description_url)
+    |> render_body("description_created.html")
+  end
+
+  # todo: create notifeye_web/templates/emails/group_notification.html
+  def build_email(
+        %User{} = user,
+        for: {:group_notification, %NotificationGroup{} = ng, %AlertAssignment{} = as}
+      ) do
+    base_email(to: user.email)
+    |> subject("(##{as.alert_description_id}) A new alert has been identified")
+    |> assign(:user, user)
+    |> assign(:notification_group, ng)
+    |> assign(:assignment, as)
+    |> render_body("group_notification.html")
+  end
+
+  def build_email(%User{} = user, for: _) do
+    base_email(user.email)
+  end
 
   # Delivers the email using the application mailer.
   defp deliver(recipient, subject, body) do
@@ -24,6 +78,12 @@ defmodule Notifeye.Accounts.UserNotifier do
   Deliver instructions to update a user email.
   """
   def deliver_update_email_instructions(user, url) do
+    # base_email(to: user.email)
+    # |> subject("Update your Email")
+    # |> assign(:user, user)
+    # |> assign(:url, url)
+    # |> render_body("update_email_instructions.html")
+
     deliver(user.email, "Update email instructions", """
 
     ==============================

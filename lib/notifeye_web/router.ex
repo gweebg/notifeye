@@ -89,16 +89,6 @@ defmodule NotifeyeWeb.Router do
       live "/alerts/:id/edit", AlertLive.Form, :edit
     end
 
-    # live_session :assignments_resouce,
-    #   on_mount: [
-    #     {NotifeyeWeb.UserAuth, :mount_current_scope},
-    #     {
-    #       NotifeyeWeb.LiveHooks.AuthorizeResource,
-    #       {:authorize_owner, &AlertAssignments.get_alert_assignment/1}
-    #     }
-    #   ] do
-    # end
-
     post "/users/log-in", UserSessionController, :create
     delete "/users/log-out", UserSessionController, :delete
   end
