@@ -9,6 +9,7 @@ defmodule Notifeye.Notifications.Behaviour do
   alias Notifeye.Accounts.User
   alias Notifeye.AlertDescriptions.AlertDescription
   alias Notifeye.AlertAssignments.AlertAssignment
+  alias Notifeye.Notifications.NotificationGroup
 
   @typedoc """
   Types of notifications we will be sending.
@@ -16,7 +17,7 @@ defmodule Notifeye.Notifications.Behaviour do
   @type notification_context ::
           {:description_created, AlertDescription.t()}
           | {:assignment_created, AlertAssignment.t()}
-          | {:group_notification, AlertAssignment.t()}
+          | {:group_notification, NotificationGroup.t(), AlertAssignment.t()}
 
   @doc """
   Sends a notification to a user about an event.

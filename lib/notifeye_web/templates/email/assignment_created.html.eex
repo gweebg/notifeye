@@ -1,0 +1,139 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html dir="ltr" lang="en">
+  <head>
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+    <meta name="x-apple-disable-message-reformatting" />
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #eeeeee">
+    <table
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      style="background-color: #eeeeee; padding: 20px 0"
+    >
+      <tr>
+        <td align="center">
+          <!-- Outer container -->
+          <table
+            width="600"
+            cellpadding="0"
+            cellspacing="0"
+            style="
+              width: 600px;
+              background-color: #ffffff;
+              font-family: Arial, sans-serif;
+              overflow: hidden;
+            "
+          >
+            <!-- Header -->
+            <tr>
+              <td
+                align="center"
+                style="
+                  padding: 30px 20px 10px 20px;
+                  font-size: 20px;
+                  font-weight: bold;
+                  color: #222222;
+                "
+              >
+                Notifeye
+                <p
+                  style="
+                    margin-top: 8px;
+                    font-weight: normal;
+                    font-size: 15px;
+                    color: #555555;
+                  "
+                >
+                  You've been assigned to a new alert
+                </p>
+              </td>
+            </tr>
+
+            <!-- Content -->
+            <tr>
+              <td
+                style="padding: 20px 20px 20px 20px; background-color: #ffffff"
+              >
+                <!-- Greeting -->
+                <p style="margin: 0 0 20px 0; font-size: 15px; color: #333333">
+                  Greetings <strong><%= @user.username %></strong>,
+                </p>
+
+                <!-- Main content -->
+                <p style="margin: 0 0 20px 0; font-size: 15px; color: #333333">
+                  <i>Notifeye</i> has received an alert that was triggered by
+                  some action performed by your account. Please, carefully
+                  review and acknowledge the assignment by pressing the button
+                  below:
+                </p>
+
+                <!-- Centered Button -->
+                <table
+                  cellpadding="0"
+                  cellspacing="0"
+                  border="0"
+                  align="center"
+                  style="margin-bottom: 30px"
+                >
+                  <tr>
+                    <td
+                      align="center"
+                      bgcolor="#1a73e8"
+                      style="border-radius: 6px"
+                    >
+                      <a
+                        href="<%= @assignment_url %>"
+                        target="_blank"
+                        style="
+                          display: inline-block;
+                          padding: 12px 24px;
+                          font-size: 14px;
+                          color: #ffffff;
+                          text-decoration: none;
+                          border-radius: 6px;
+                          font-family: Arial, sans-serif;
+                          font-weight: bold;
+                        "
+                      >
+                        Acknowledge Alert
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin: 0 0 20px 0; font-size: 15px; color: #333333">
+                  You have 24 hours since the assignment to acknowledge the
+                  alert.
+                </p>
+
+                <!-- Goodbye -->
+                <p style="margin: 0; font-size: 15px; color: #333333">
+                  Best regards,<br /><strong>Notifeye Notifier</strong>
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <!-- Footer -->
+      <tr>
+        <td
+          align="center"
+          style="padding: 10px; font-size: 12px; color: #999999"
+        >
+          You are receiving this email because you have an account for
+          <i>Notifeye</i>. <br />
+          You can manage your account
+          <a
+            href="<%= @user_url %>"
+            target="_blank"
+            style="color: #999999; text-decoration: underline"
+            >here</a
+          >.
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

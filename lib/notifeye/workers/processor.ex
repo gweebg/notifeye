@@ -142,7 +142,7 @@ defmodule Notifeye.Workers.Processor do
 
   # notify about a new alert description that needs to be configured
   defp enqueue_new_alert_notification(%AlertDescription{} = description) do
-    %{alert_description_id: description.id}
+    %{description_id: description.id}
     |> Notifeye.Workers.Notifier.new()
     |> Oban.insert()
   end

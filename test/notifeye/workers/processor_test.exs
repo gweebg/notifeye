@@ -80,7 +80,7 @@ defmodule Notifeye.Workers.ProcessorTest do
 
       # and also enqueues a notification for the admin user to review the new
       # alert description
-      assert_enqueued(worker: Notifier, args: %{alert_description_id: logz_id})
+      assert_enqueued(worker: Notifier, args: %{description_id: logz_id})
     end
 
     test "cancels when alert description is disabled" do

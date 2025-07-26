@@ -9,8 +9,8 @@ defmodule Notifeye.Workers.Notifier do
 
   require Logger
 
-  alias Notifeye.Accounts
   alias Notifeye.Notifications.Dispacher
+  alias Notifeye.{Accounts, AlertAssignments, AlertDescriptions, Notifications}
 
   use Oban.Worker,
     queue: :notifier,
@@ -24,19 +24,16 @@ defmodule Notifeye.Workers.Notifier do
   Performs the notifying job.
   """
   @impl Oban.Worker
-  def perform(%Oban.Job{args: %{"alert_description_id" => alert_description_id}}) do
-    admin = Accounts.get_admin_user!()
-    description = Notifeye.AlertDescriptions.get_alert_description!(alert_description_id)
+  def perform(%Oban.Job{args: args}) do
+    # todo: notify lead user under certain circumstances
 
+    {user, operation} = get_context(for: args)
     # results is a map from the provider name (string) to a tuple containing
     # the result of the notification sending operation
     {:ok, results} =
-      Dispacher.notify(
-        admin,
-        {:description_created, description}
-      )
+      Dispacher.notify(user, operation)
 
-    # todo: maybe keep the errors as well?
+    # todo: what to do with the errors?
     failed_providers =
       results
       |> Enum.filter(fn {_provider, result} -> match?({:error, _}, result) end)
@@ -50,8 +47,31 @@ defmodule Notifeye.Workers.Notifier do
     end
   end
 
-  @impl Oban.Worker
-  def perform(%Oban.Job{args: _args}) do
-    :ok
+  # follows context types defined in `Notifeye.Notifications.Behaviour`
+  defp get_context(for: %{"description_id" => alert_description_id}) do
+    {
+      Accounts.get_admin_user!(),
+      {:description_created, AlertDescriptions.get_alert_description!(alert_description_id)}
+    }
+  end
+
+  defp get_context(
+         for: %{"user_id" => user_id, "group_id" => group_id, "assignment_id" => assignment_id}
+       ) do
+    user = Accounts.get_user!(user_id)
+    assignment = AlertAssignments.get_alert_assignment!(assignment_id, [:alert])
+    group = Notifications.get_notification_group!(group_id)
+
+    {user, {:group_notification, group, assignment}}
+  end
+
+  defp get_context(for: %{"assignment_id" => assignment_id}) do
+    assignment =
+      AlertAssignments.get_alert_assignment!(
+        assignment_id,
+        [:user, :alert]
+      )
+
+    {assignment.user, {:assignment_created, assignment}}
   end
 end

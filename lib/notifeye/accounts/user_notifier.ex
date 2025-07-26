@@ -17,15 +17,20 @@ defmodule Notifeye.Accounts.UserNotifier do
     |> from({"Notifeye", "noreply@notifeye.com"})
   end
 
-  # todo: create notifeye_web/templates/emails/assignment_created.html
   def build_email(
         %User{} = user,
         for: {:assignment_created, %AlertAssignment{} = assignment}
       ) do
+    base_url = NotifeyeWeb.Endpoint.url()
+    user_url = base_url <> "/users/settings"
+    assignment_url = base_url <> "/assignments/#{assignment.id}/acknowledge"
+
     base_email(to: user.email)
-    |> subject("(##{assignment.alert_description_id}) New alert for you")
+    |> subject("You've been assigned to a new alert")
     |> assign(:user, user)
     |> assign(:assignment, assignment)
+    |> assign(:user_url, user_url)
+    |> assign(:assignment_url, assignment_url)
     |> render_body("assignment_created.html")
   end
 
@@ -33,7 +38,9 @@ defmodule Notifeye.Accounts.UserNotifier do
         %User{} = user,
         for: {:description_created, %AlertDescription{} = description}
       ) do
-    description_url = NotifeyeWeb.Endpoint.url() <> "/admin/descriptions/#{description.id}"
+    description_url =
+      NotifeyeWeb.Endpoint.url() <>
+        "/admin/descriptions/#{description.id}"
 
     base_email(to: user.email)
     |> subject("(##{description.id}) A new alert type has been identified")

@@ -7,15 +7,13 @@ defmodule Notifeye.Notifications.Providers.Email do
 
   alias Notifeye.Accounts.User
   alias Notifeye.Accounts.UserNotifier
-  alias Notifeye.AlertDescriptions.AlertDescription
 
   alias Notifeye.Mailer
 
+  @contexts [:description_created, :assignment_created, :group_notification]
+
   @impl true
-  def send_notification(
-        %User{} = user,
-        {:description_created, %AlertDescription{}} = context
-      ) do
+  def send_notification(%User{} = user, context) do
     if can_notify?(user) do
       user
       |> UserNotifier.build_email(for: context)
@@ -35,5 +33,5 @@ defmodule Notifeye.Notifications.Providers.Email do
   def provider_name(), do: "email"
 
   @impl true
-  def supported_contexts(), do: [:description_created, :assignment_created, :group_notification]
+  def supported_contexts(), do: @contexts
 end
