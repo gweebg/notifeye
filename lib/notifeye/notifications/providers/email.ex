@@ -19,7 +19,7 @@ defmodule Notifeye.Notifications.Providers.Email do
       |> UserNotifier.build_email(for: context)
       |> Mailer.deliver()
     else
-      {:skip, "email is not configured for #{user.username}"}
+      {:skip, "#{provider_name()} is not configured for #{user.username}"}
     end
   end
 

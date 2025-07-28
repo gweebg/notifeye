@@ -8,9 +8,9 @@ defmodule Notifeye.Notifications.Dispacher do
   """
 
   alias Notifeye.Accounts.User
-  alias Notifeye.Notifications.Providers.Email
+  alias Notifeye.Notifications.Providers.{Email, RocketChat}
 
-  @providers [Email]
+  @providers [Email, RocketChat]
 
   def notify(%User{} = user, context) do
     applicable_providers = get_applicable_providers(user, context)
