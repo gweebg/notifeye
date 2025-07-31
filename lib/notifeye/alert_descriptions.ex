@@ -232,6 +232,7 @@ defmodule Notifeye.AlertDescriptions do
       |> Repo.one()
 
     %{
+      count: total_count,
       verified_count: verified_count,
       verified_percentage: verified_percentage,
       enabled_count: enabled_count,
