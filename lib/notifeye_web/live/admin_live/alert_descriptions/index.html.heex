@@ -1,6 +1,7 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
+<div class="max-w-7xl mx-auto space-y-4">
   <.header>
-    <p class="text-2xl mb-2">Alert Descriptions</p>
+    <p class="text-2xl">Alert Descriptions</p>
     <:subtitle>
       Manage and view all alert descriptions in the system. <br /> Alert descriptions are
       automatically generated upon the receiving of a new alert.
@@ -14,7 +15,7 @@
 
   <div class="flex flex-col gap-4">
     <%!-- Statistics Row --%>
-    <div class="flex flex-col md:flex-row gap-4">
+    <div class="flex flex-col md:flex-row gap-4 justify-evenly">
       <div class="stat bg-base-100 border border-base-200 rounded-lg shadow-sm">
         <div class="stat-figure text-primary">
           <.icon name="hero-document-text" class="w-8 h-8" />
@@ -152,7 +153,7 @@
       </div>
     </div>
 
-    <div class="flex flex-col justify-between min-h-[50vh] card bg-base-100 shadow-sm overflow-x-auto">
+    <div class="flex flex-col justify-between min-h-[650px] card bg-base-100 shadow-sm overflow-x-auto">
       <div class="table table-zebra w-full">
         <Flop.Phoenix.table
           items={@streams.alert_descriptions}
@@ -221,7 +222,7 @@
         </Flop.Phoenix.table>
       </div>
       <%!-- Pagination Component --%>
-      <div class="border-t border-base-100 px-4 py-4 flex justify-center">
+      <div class="border-t border-base-100 pb-5 flex justify-center">
         <Flop.Phoenix.pagination
           meta={@meta}
           path={~p"/admin/descriptions"}
@@ -240,5 +241,6 @@
         </Flop.Phoenix.pagination>
       </div>
     </div>
+  </div>
   </div>
 </Layouts.app>
