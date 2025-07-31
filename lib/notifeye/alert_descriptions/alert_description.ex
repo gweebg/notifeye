@@ -10,9 +10,24 @@ defmodule Notifeye.AlertDescriptions.AlertDescription do
   @states ~w(disabled enabled grouponly)a
 
   @derive {Flop.Schema,
-           filterable: [:state, :verified, :pattern, :notification_group_id, :edited_by],
-           sortable: [:updated_at, :id],
-           default_order: %{order_by: [:updated_at], order_directions: [:desc]}}
+           filterable: [
+             :state,
+             :verified,
+             :pattern,
+             :notification_group_id,
+             :edited_by,
+             :id_search
+           ],
+           sortable: [:updated_at, :id, :state, :verified],
+           default_order: %{order_by: [:updated_at], order_directions: [:desc]},
+           adapter_opts: [
+             custom_fields: [
+               id_search: [
+                 filter: {Notifeye.AlertDescriptions, :filter_by_id_like, []},
+                 bindings: [:alert_description]
+               ]
+             ]
+           ]}
 
   @primary_key {:id, :integer, autogenerate: false}
   @foreign_key_type :binary_id

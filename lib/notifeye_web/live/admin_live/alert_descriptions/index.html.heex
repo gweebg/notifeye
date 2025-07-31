@@ -124,6 +124,19 @@
 
             <div class="form-control w-full">
               <label class="label">
+                <span class="label-text font-medium">ID</span>
+              </label>
+              <.input
+                field={f[:id_search]}
+                type="text"
+                placeholder="Search by id..."
+                class="input input-bordered input-sm"
+                phx-debounce="250"
+              />
+            </div>
+
+            <div class="form-control w-full">
+              <label class="label">
                 <span class="label-text font-medium">Items per page</span>
               </label>
               <.input
@@ -149,7 +162,7 @@
           opts={[container: true, table_attrs: [class: "w-full"]]}
         >
           <:col :let={{_id, alert_description}} label="ID" field={:id}>
-            <div class="badge badge-outline">
+            <div class="badge badge-soft">
               {alert_description.id}
             </div>
           </:col>

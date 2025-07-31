@@ -240,6 +240,15 @@ defmodule Notifeye.AlertDescriptions do
   end
 
   @doc """
+  Custom query for Flop to use when filtering by id.
+  It casts the integer value as a string and uses the `LIKE` operator
+  to match the value.
+  """
+  def filter_by_id_like(query, %Flop.Filter{value: value}, _opts) do
+    from(ad in query, where: like(fragment("CAST(? AS TEXT)", ad.id), ^"%#{value}%"))
+  end
+
+  @doc """
   Subscribes to alert description events.
   """
   def subscribe(topic)
