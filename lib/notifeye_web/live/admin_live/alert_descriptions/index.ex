@@ -28,47 +28,36 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Index do
     {:ok, socket}
   end
 
-  @impl Phoenix.LiveView
+  @impl true
   def handle_params(params, _url, socket) do
     page_size =
       params
       |> Map.get("page_size", "10")
-      |> String.to_integer()
 
     {:ok, {alert_descriptions, meta}} =
-      AlertDescriptions.list_alert_descriptions_paginated(params, page_size, [
-        :user,
-        :notification_group
-      ])
+      AlertDescriptions.list_alert_descriptions(params,
+        page_size: page_size,
+        preload: [:user, :notification_group],
+        no_ignored: true
+      )
 
     {:noreply,
      socket
      |> assign(:meta, meta)
-     |> assign(:current_page_size, Integer.to_string(page_size))
+     |> assign(:current_page_size, page_size)
+     |> assign(:current_params, params)
      |> stream(:alert_descriptions, alert_descriptions, reset: true)}
   end
 
   @impl true
-  def handle_info({:new_description, alert_description}, socket) do
-    alert_description = Notifeye.Repo.preload(alert_description, [:user, :notification_group])
-
-    {:noreply,
-     socket
-     |> assign(:stats, calculate_stats())
-     |> stream_insert(:alert_descriptions, alert_description, at: 0)}
+  def handle_info({:new_description, _alert_description}, socket) do
+    {:noreply, refresh(socket)}
   end
 
   @impl true
-  def handle_info({:updated_description, alert_description}, socket) do
-    # recalculate stats and re-insert the description
-    {:noreply,
-     socket
-     |> assign(:stats, calculate_stats())
-     |> stream_insert(:alert_descriptions, alert_description)}
+  def handle_info({:updated_description, _alert_description}, socket) do
+    {:noreply, refresh(socket)}
   end
-
-  # : re-fetch data if one is removed, else the table page will
-  # not be correct
 
   @impl true
   def handle_event("update-filter", %{"filters" => filters}, socket) do
@@ -99,8 +88,24 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Index do
 
   @impl true
   def handle_event("export", _params, socket) do
-    # implement export functionalitty to a json file
+    # todo: implement export functionalitty to a json file
     {:noreply, put_flash(socket, :info, "Export functionality coming soon")}
+  end
+
+  defp refresh(socket) do
+    params = socket.assigns.current_params || %{}
+
+    {:ok, {alert_descriptions, meta}} =
+      AlertDescriptions.list_alert_descriptions(params,
+        page_size: socket.assigns.current_page_size,
+        preload: [:user, :notification_group],
+        no_ignored: true
+      )
+
+    socket
+    |> assign(:stats, calculate_stats())
+    |> assign(:meta, meta)
+    |> stream(:alert_descriptions, alert_descriptions, reset: true)
   end
 
   defp build_filter_param({{key, value}, index}) do

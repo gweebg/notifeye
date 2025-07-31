@@ -20,42 +20,15 @@ defmodule Notifeye.AlertDescriptions do
 
   def list_alert_descriptions(), do: AlertDescription |> Repo.all()
 
-  def list_alert_descriptions(preloads) when is_list(preloads) do
-    AlertDescription
-    |> Repo.all()
-    |> Repo.preload(preloads)
-  end
+  def list_alert_descriptions(flop, opts \\ []) do
+    preloads = Keyword.get(opts, :preload, [])
+    page_size = Keyword.get(opts, :page_size)
 
-  def list_alert_descriptions(flop, preloads \\ []) do
-    AlertDescription
-    |> Flop.validate_and_run(flop, for: AlertDescription)
-    |> case do
-      {:ok, {posts, meta}} ->
-        {:ok, {posts |> Repo.preload(preloads), meta}}
+    flop = if page_size, do: Map.put(flop, "page_size", page_size), else: flop
 
-      error ->
-        error
-    end
-  end
-
-  @doc """
-  Returns the list of alert_descriptions in a paginated way.
-
-  ## Examples
-  """
-  def list_alert_descriptions_paginated(flop, page_size \\ 10, preloads \\ []) do
-    flop =
-      flop
-      |> Map.put("page_size", page_size)
-
-    AlertDescription
-    |> Flop.validate_and_run(flop, for: AlertDescription)
-    |> case do
-      {:ok, {posts, meta}} ->
-        {:ok, {posts |> Repo.preload(preloads), meta}}
-
-      error ->
-        error
+    with {:ok, {records, meta}} <-
+           Flop.validate_and_run(AlertDescription, flop, for: AlertDescription) do
+      {:ok, {Repo.preload(records, preloads), meta}}
     end
   end
 
