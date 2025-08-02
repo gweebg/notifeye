@@ -482,7 +482,7 @@ defmodule Notifeye.AccountsTest do
       user_scope = user_scope_fixture()
 
       assert {:error, changeset} = Accounts.update_user_lead(user_scope, non_lead_user.id)
-      assert %{lead_id: ["must be a valid lead user"]} = errors_on(changeset)
+      assert %{lead_id: ["must be a valid lead user or self-referencing"]} = errors_on(changeset)
       assert Repo.get!(User, user_scope.user.id).lead_id == nil
     end
   end

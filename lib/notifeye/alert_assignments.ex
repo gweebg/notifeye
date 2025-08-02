@@ -113,7 +113,7 @@ defmodule Notifeye.AlertAssignments do
   Acknowledges an alert assignment struct.
 
   Makes us of `AlertAssignment.acknowledge_changeset/2` to automatically
-  update the state to `closed` and fill the respective `metadata` passed 
+  update the state to `closed` and fill the respective `metadata` passed
   via `attrs`.
   """
   def update_acknowledge_assignment(%AlertAssignment{} = alert_assignment, attrs) do
@@ -205,6 +205,18 @@ defmodule Notifeye.AlertAssignments do
       Multi.insert(multi, assignment_key(index), changeset)
     end)
     |> Repo.transaction()
+    |> case do
+      {:ok, assignments_map} ->
+        preloaded_assignments =
+          assignments_map
+          |> Map.values()
+          |> Enum.map(fn as -> Repo.preload(as, [:user, :alert]) end)
+
+        {:ok, preloaded_assignments}
+
+      error ->
+        error
+    end
   end
 
   defp build_assignment_params(user_match, description_id, alert_id) do

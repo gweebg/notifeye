@@ -62,7 +62,13 @@ defmodule Notifeye.AlertDescriptions do
       nil
 
   """
-  def get_alert_description(id), do: Repo.get(AlertDescription, id)
+  def get_alert_description(id, opts \\ []) do
+    preload = Keyword.get(opts, :preload, [])
+
+    with %AlertDescription{} = description <- Repo.get(AlertDescription, id) do
+      Repo.preload(description, preload)
+    end
+  end
 
   @doc """
   Creates a alert_description.

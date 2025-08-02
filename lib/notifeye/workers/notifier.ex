@@ -25,24 +25,25 @@ defmodule Notifeye.Workers.Notifier do
   """
   @impl Oban.Worker
   def perform(%Oban.Job{args: args}) do
-    # todo: notify lead user under certain circumstances
-
     {user, operation} = get_context(for: args)
+
     # results is a map from the provider name (string) to a tuple containing
     # the result of the notification sending operation
+    # %{provider_name => {:ok|:error, whatever}}
     {:ok, results} =
       Dispacher.notify(user, operation)
 
     # todo: what to do with the errors?
     failed_providers =
       results
-      |> Enum.filter(fn {_provider, result} -> match?({:error, _}, result) end)
-      |> Enum.map(fn {provider, _result} -> provider end)
+      |> Map.filter(fn {_provider, result} -> match?({:error, _}, result) end)
+      |> Map.keys()
 
     # if all providers fail, we try again, else we complete the job
     if length(failed_providers) == length(Map.keys(results)) do
       {:error, "all providers failed to send notification: #{inspect(failed_providers)}"}
     else
+      # at least one provider successfully notified the user
       {:ok, failed_providers}
     end
   end
@@ -63,6 +64,18 @@ defmodule Notifeye.Workers.Notifier do
     group = Notifications.get_notification_group!(group_id)
 
     {user, {:group_notification, group, assignment}}
+  end
+
+  defp get_context(for: %{"lead_id" => lead_id, "assignment_id" => assignment_id}) do
+    assignment =
+      AlertAssignments.get_alert_assignment!(
+        assignment_id,
+        [:user, :alert]
+      )
+
+    lead = Accounts.get_user!(lead_id)
+
+    {lead, {:lead_notification, assignment}}
   end
 
   defp get_context(for: %{"assignment_id" => assignment_id}) do

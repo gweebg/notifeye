@@ -12,6 +12,10 @@ defmodule Notifeye.Notifications.Dispacher do
 
   @providers [Email, RocketChat]
 
+  # todo: notification provider should use the provider
+  # todo: and notification preferences of the alert description
+  # todo: associated with the assignment
+
   def notify(%User{} = user, context) do
     applicable_providers = get_applicable_providers(user, context)
 

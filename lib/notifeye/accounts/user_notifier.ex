@@ -64,7 +64,7 @@ defmodule Notifeye.Accounts.UserNotifier do
   end
 
   def build_email(%User{} = user, for: _) do
-    base_email(user.email)
+    base_email(to: user.email)
   end
 
   # Delivers the email using the application mailer.

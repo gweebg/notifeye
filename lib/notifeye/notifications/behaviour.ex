@@ -17,6 +17,7 @@ defmodule Notifeye.Notifications.Behaviour do
   @type notification_context ::
           {:description_created, AlertDescription.t()}
           | {:assignment_created, AlertAssignment.t()}
+          | {:lead_notification, AlertAssignment.t()}
           | {:group_notification, NotificationGroup.t(), AlertAssignment.t()}
 
   @doc """

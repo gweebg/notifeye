@@ -10,7 +10,7 @@ defmodule Notifeye.Notifications.Providers.Email do
 
   alias Notifeye.Mailer
 
-  @contexts [:description_created, :assignment_created, :group_notification]
+  @contexts [:description_created, :assignment_created, :group_notification, :lead_notification]
 
   @impl true
   def send_notification(%User{} = user, context) do

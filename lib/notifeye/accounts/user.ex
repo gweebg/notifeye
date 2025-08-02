@@ -213,16 +213,16 @@ defmodule Notifeye.Accounts.User do
   def lead_changeset(user, attrs) do
     user
     |> cast(attrs, [:lead_id])
-    |> validate_required([:lead_id])
     |> validate_lead_id()
     |> foreign_key_constraint(:lead_id)
   end
 
   defp validate_lead_id(changeset) do
+    user_id = get_field(changeset, :id)
     lead_id = get_field(changeset, :lead_id)
 
-    if lead_id && !lead_user?(lead_id) do
-      add_error(changeset, :lead_id, "must be a valid lead user")
+    if lead_id && (!lead_user?(lead_id) || user_id == lead_id) do
+      add_error(changeset, :lead_id, "must be a valid lead user or self-referencing")
     else
       changeset
     end
@@ -230,6 +230,6 @@ defmodule Notifeye.Accounts.User do
 
   defp lead_user?(user_id) do
     user = Accounts.get_user!(user_id)
-    user.role == :lead
+    user.role in ~w(admin lead)a
   end
 end

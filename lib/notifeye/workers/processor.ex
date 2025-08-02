@@ -17,6 +17,9 @@ defmodule Notifeye.Workers.Processor do
     max_attempts: 3,
     tags: ["alert"]
 
+  @lead_threshold 5
+  @severity_threshold "high"
+
   defmodule Context do
     @moduledoc """
     This is  a simple struct to keep track of the arguments passed onto the
@@ -60,6 +63,11 @@ defmodule Notifeye.Workers.Processor do
     end
   end
 
+  @impl true
+  def perform(_job) do
+    {:cancel, "unknown argument type for processor worker"}
+  end
+
   defp create_description(logz_id) do
     with {:ok, %AlertDescription{} = description} <-
            AlertDescriptions.create_alert_description(%{id: logz_id}) do
@@ -90,9 +98,7 @@ defmodule Notifeye.Workers.Processor do
     # create_alert_assignments_bulk/2 is atomic and only succeeds if all assignments are created
     # if at least one error occurs, no assignments are created and the tx are rolled back
     case AlertAssignments.create_alert_assignments_bulk(users, description.id, context.alert_id) do
-      {:ok, assignments_map} ->
-        assignments = Map.values(assignments_map)
-
+      {:ok, assignments} ->
         # if desc. is enabled, notify the assigned user(s)
         if description.state == :enabled do
           enqueue_assignment_notifications(assignments)
@@ -115,10 +121,28 @@ defmodule Notifeye.Workers.Processor do
   defp enqueue_assignment_notifications(assignments) when is_list(assignments) do
     assignments
     |> Enum.each(fn %AlertAssignment{} = assignment ->
+      # serverity = high & (lead != nil | standing < 5)
+      maybe_notify_lead(assignment)
+
       %{assignment_id: assignment.id}
       |> Notifeye.Workers.Notifier.new()
       |> Oban.insert()
     end)
+  end
+
+  defp maybe_notify_lead(%AlertAssignment{} = assignment) do
+    user = assignment.user
+
+    if user.lead_id != nil &&
+         (user.standing < @lead_threshold ||
+            assignment.alert.alert_severity == @severity_threshold) do
+      %{
+        lead_id: user.lead_id,
+        assignment_id: assignment.id
+      }
+      |> Notifeye.Workers.Notifier.new()
+      |> Oban.insert()
+    end
   end
 
   # notify all users in the notification group about the alert
