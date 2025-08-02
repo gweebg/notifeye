@@ -166,9 +166,28 @@ defmodule Notifeye.AlertAssignments do
     from(
       a in AlertAssignment,
       where: a.alert_description_id == ^alert_description_id,
-      order_by: [asc: a.id]
+      order_by: [asc: a.id],
+      preload: [:user]
     )
     |> Repo.all()
+  end
+
+  def list_assignments_since(description_id, opts \\ []) do
+    interval = Keyword.get(opts, :interval, 48 * 60 * 60)
+    limit = Keyword.get(opts, :limit, 10)
+
+    AlertAssignment
+    |> where([a], a.alert_description_id == ^description_id)
+    |> where([alert], alert.inserted_at >= ago(^interval, "second"))
+    |> limit(^limit)
+    |> preload([:user])
+    |> Repo.all()
+  end
+
+  def total_count(for: description_id) do
+    AlertAssignment
+    |> where([a], a.alert_description_id == ^description_id)
+    |> Repo.aggregate(:count, :id)
   end
 
   @doc """

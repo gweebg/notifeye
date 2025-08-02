@@ -24,8 +24,8 @@ defmodule NotifeyeWeb.AssignmentsLive.Acknowledge do
   end
 
   @impl true
-  def handle_params(%{"id" => id}, _, socket) do
-    case AlertAssignments.get_alert_assignment(socket.assigns.current_scope, id) do
+  def handle_params(%{"id" => _id}, _, socket) do
+    case socket.assigns.resource do
       %AlertAssignment{} = assignment ->
         socket =
           socket
@@ -37,7 +37,7 @@ defmodule NotifeyeWeb.AssignmentsLive.Acknowledge do
 
       nil ->
         {:noreply,
-         socket |> put_flash(:error, "The assignment doesn't exist.") |> push_navigate(~p"/")}
+         socket |> put_flash(:error, "The assignment doesn't exist.") |> push_navigate(to: ~p"/")}
     end
   end
 

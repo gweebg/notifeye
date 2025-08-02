@@ -17,13 +17,15 @@ defmodule NotifeyeWeb.Components.Atoms.StateBadge do
   attr :state, :atom, required: true
   attr :class, :string, default: "badge"
   attr :color_func, :any, default: &__MODULE__.default_state_color/1
+  attr :text_func, :any, default: &__MODULE__.state_display_name/1
 
   def state_badge(assigns) do
     assigns = assign(assigns, :color_class, assigns.color_func.(assigns.state))
+    assigns = assign(assigns, :text_func, assigns.text_func)
 
     ~H"""
     <div class={[@class, @color_class]}>
-      {state_display_name(@state)}
+      {@text_func.(assigns.state)}
     </div>
     """
   end
@@ -33,8 +35,8 @@ defmodule NotifeyeWeb.Components.Atoms.StateBadge do
   def default_state_color(:grouponly), do: "badge-info"
   def default_state_color(_), do: "badge-error"
 
-  defp state_display_name(:enabled), do: "Enabled"
-  defp state_display_name(:disabled), do: "Disabled"
-  defp state_display_name(:grouponly), do: "Group Only"
-  defp state_display_name(state), do: String.capitalize(to_string(state))
+  def state_display_name(:enabled), do: "Enabled"
+  def state_display_name(:disabled), do: "Disabled"
+  def state_display_name(:grouponly), do: "Group Only"
+  def state_display_name(state), do: String.capitalize(to_string(state))
 end

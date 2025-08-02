@@ -45,6 +45,48 @@ defmodule Notifeye.Monitoring do
   end
 
   @doc """
+  Lists all alerts created since a specific timestamp.
+
+  This function retrieves alerts that were created after the provided timestamp,
+  allowing for incremental fetching of new alerts.
+
+  ## Parameters
+
+  - `since` - A timestamp (DateTime or Unix timestamp) representing the earliest
+    creation time for alerts to be included in the results
+
+  ## Returns
+
+  - `{:ok, alerts}` - A list of alert structs created since the specified timestamp
+  - `{:error, reason}` - An error tuple if the operation fails
+
+  ## Examples
+
+      iex> list_alerts_since(~U[2024-01-01 00:00:00Z])
+      {:ok, [%Alert{}, %Alert{}]}
+
+      iex> list_alerts_since(1704067200)
+      {:ok, []}
+
+  """
+  def list_alerts_since(description_id, opts \\ []) do
+    interval = Keyword.get(opts, :interval, 48 * 60 * 60)
+    limit = Keyword.get(opts, :limit, 10)
+
+    Alert
+    |> where([alert], alert.logz_id == ^description_id)
+    |> where([alert], alert.inserted_at >= ago(^interval, "second"))
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  def total_count(for: description_id) do
+    Alert
+    |> where([a], a.logz_id == ^description_id)
+    |> Repo.aggregate(:count, :id)
+  end
+
+  @doc """
   Gets a single alert.
 
   Raises `Ecto.NoResultsError` if the Alert does not exist.

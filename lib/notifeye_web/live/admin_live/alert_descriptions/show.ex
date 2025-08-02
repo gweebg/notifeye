@@ -7,6 +7,8 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Show do
   alias Notifeye.AlertAssignments
   alias Notifeye.Monitoring
 
+  use NotifeyeWeb.Components
+
   # todo: review this code
   # todo: fix ui
 
@@ -27,14 +29,17 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Show do
         {:noreply, socket}
 
       alert_description ->
-        # Load related data
-        alert_assignments = load_alert_assignments(id)
-        alerts = load_related_alerts(id)
+        alert_assignments = AlertAssignments.list_assignments_since(id)
+        total_assignments = AlertAssignments.total_count(for: id)
+        alerts = Monitoring.list_alerts_since(id)
+        total_alerts = Monitoring.total_count(for: id)
 
         socket =
           socket
           |> assign(:alert_description, alert_description)
           |> assign(:alert_assignments, alert_assignments)
+          |> assign(:total_assignments, total_assignments)
+          |> assign(:total_alerts, total_alerts)
           |> assign(:alerts, alerts)
 
         {:noreply, socket}
@@ -68,21 +73,6 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Show do
 
             {:noreply, socket}
         end
-    end
-  end
-
-  # Helper functions to load related data
-  defp load_alert_assignments(alert_description_id) do
-    AlertAssignments.list_alert_assignments_for_alert_description(alert_description_id)
-  end
-
-  defp load_related_alerts(alert_description_id) do
-    # Load alerts where the logz_id matches the alert_description.id
-    try do
-      alert = Monitoring.get_alert_for_description!(alert_description_id)
-      [alert]
-    rescue
-      Ecto.NoResultsError -> []
     end
   end
 end

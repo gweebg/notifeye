@@ -3,33 +3,28 @@
     <.header>
       <p class="text-2xl">Alert Description #{@alert_description.id}</p>
       <:subtitle>
-        Update the alert description settings and test your regex pattern.
+        Overall view of this alert description.
       </:subtitle>
       <:actions>
-        <.link
-          navigate={~p"/admin/descriptions/#{@alert_description.id}/edit"}
-          class="btn btn-primary"
-        >
-          <.icon name="hero-pencil" class="w-4 h-4" /> Edit Description
-        </.link>
+        <button class="btn btn-primary" onclick="history.back()">
+          <.icon name="hero-arrow-left" class="w-4 h-4" /> Back
+        </button>
       </:actions>
     </.header>
-    
-<!-- Main Content -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      
-<!-- Left Column - Main Details -->
-      <div class="lg:col-span-2 space-y-6">
-        
-<!-- Overview Card -->
-        <div class="card bg-base-100 shadow-lg border border-base-200">
+
+    <%!-- Main Content --%>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <%!-- Left Column - Main Details --%>
+      <div class="lg:col-span-2 space-y-4">
+        <%!-- Overview Card --%>
+        <div class="card bg-base-100 shadow-sm border border-base-200">
           <div class="card-body">
             <div class="flex items-center justify-between mb-6">
               <h2 class="card-title text-xl">
                 <.icon name="hero-document-text" class="w-6 h-6" /> Overview
               </h2>
-              <div class="badge badge-outline font-mono text-sm">
-                ID: {@alert_description.id}
+              <div class="badge badge-neutral">
+                #{@alert_description.id}
               </div>
             </div>
 
@@ -39,7 +34,7 @@
                 <span class="label-text font-semibold">Pattern</span>
               </label>
               <div class="bg-base-200 overflow-y-auto">
-                <pre class="px-4 py-3"><code class="text-sm text-black">{if @alert_description.pattern do
+                <pre class="px-4 py-3"><code class="text-sm text-base-content">{if @alert_description.pattern do
                       @alert_description.pattern
                     else
                       "No pattern defined"
@@ -116,177 +111,169 @@
             </div>
           </div>
         </div>
-        
-<!-- Related Alerts Section -->
-        <div class="card bg-base-100 shadow-lg border border-base-200">
+
+        <%!-- Related Alerts Section --%>
+        <div class="card bg-base-100 shadow-sm border border-base-200">
           <div class="card-body">
             <div class="flex items-center justify-between mb-6">
               <h2 class="card-title text-xl">
-                <.icon name="hero-exclamation-triangle" class="w-6 h-6 text-warning" />
-                Related Alerts
+                <.icon name="hero-exclamation-triangle" class="w-6 h-6" /> Recent Alerts
               </h2>
-              <div class="badge badge-neutral badge-lg">
-                {length(@alerts)} alerts
-              </div>
+              <.link navigate={~p"/alerts"} class="btn btn-square btn-ghost">
+                <.icon name="hero-arrow-top-right-on-square" class="w-4 h-4" />
+              </.link>
             </div>
 
             <div :if={Enum.empty?(@alerts)} class="text-center py-12">
               <.icon name="hero-inbox" class="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p class="text-gray-500 text-lg">No alerts found</p>
+              <p class="text-gray-500 text-lg">No recent alerts</p>
               <p class="text-gray-400 text-sm">
-                There are no alerts related to this description.
+                There are no alerts for this description in the last 48 hours.
               </p>
             </div>
 
-            <div :if={not Enum.empty?(@alerts)} class="overflow-x-auto">
-              <table class="table table-zebra w-full">
-                <thead>
-                  <tr class="bg-base-200">
-                    <th class="font-semibold">Logz ID</th>
-                    <th class="font-semibold">Alert Title</th>
-                    <th class="font-semibold">Severity</th>
-                    <th class="font-semibold">Duration</th>
-                    <th class="font-semibold text-center">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr :for={alert <- @alerts} class="hover">
-                    <td class="font-mono text-sm">{alert.logz_id}</td>
-                    <td class="max-w-xs">
-                      <div class="truncate font-medium">{alert.alert_title}</div>
-                    </td>
-                    <td>
-                      <div class={[
-                        "badge",
-                        case alert.alert_severity do
-                          "HIGH" -> "badge-error"
-                          "MEDIUM" -> "badge-warning"
-                          "LOW" -> "badge-info"
-                          _ -> "badge-outline"
-                        end
-                      ]}>
-                        {alert.alert_severity}
-                      </div>
-                    </td>
-                    <td class="text-sm">
-                      <div class="space-y-1">
-                        <div>
-                          <span class="text-gray-500">Start:</span>
-                          {if alert.start,
-                            do: Calendar.strftime(alert.start, "%m/%d %H:%M"),
-                            else: "N/A"}
+            <div :if={not Enum.empty?(@alerts)} class="space-y-4">
+              <div class="overflow-x-auto max-h-96 overflow-y-auto border border-base-200 rounded-lg">
+                <table class="table table-zebra w-full">
+                  <thead class="sticky top-0 bg-base-200 z-10">
+                    <tr>
+                      <th class="font-semibold">Alert Title</th>
+                      <th class="font-semibold">Severity</th>
+                      <th class="font-semibold">When</th>
+                      <th class="font-semibold text-center">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr :for={alert <- @alerts} class="hover">
+                      <td class="max-w-xs">
+                        <div class="truncate font-medium">{alert.alert_title}</div>
+                      </td>
+                      <td>
+                        <div class={[
+                          "badge",
+                          case alert.alert_severity do
+                            "high" -> "badge-error"
+                            "medium" -> "badge-warning"
+                            "low" -> "badge-info"
+                            _ -> "badge-outline"
+                          end
+                        ]}>
+                          {String.capitalize(alert.alert_severity)}
                         </div>
-                        <div>
-                          <span class="text-gray-500">End:</span>
-                          {if alert.end,
-                            do: Calendar.strftime(alert.end, "%m/%d %H:%M"),
-                            else: "Ongoing"}
+                      </td>
+                      <td class="text-sm">
+                        <div class="space-y-1">
+                          <span class="text-sm">
+                            {Calendar.strftime(
+                              alert.start,
+                              "%B %d, %Y at %H:%M UTC"
+                            )}
+                          </span>
                         </div>
-                      </div>
-                    </td>
-                    <td class="text-center">
-                      <.link navigate={~p"/alerts/#{alert.id}"} class="btn btn-ghost btn-sm">
-                        <.icon name="hero-eye" class="w-4 h-4" />
-                      </.link>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                      </td>
+                      <td class="text-center">
+                        <.link navigate={~p"/alerts/#{alert.id}"} class="btn btn-ghost btn-sm">
+                          <.icon name="hero-eye" class="w-4 h-4" />
+                        </.link>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      
-<!-- Right Column - Sidebar -->
-      <div class="space-y-6">
-        
-<!-- Quick Stats -->
-        <div class="card bg-base-100 shadow-lg border border-base-200">
+
+      <%!-- Right Column - Sidebar --%>
+      <div class="space-y-4">
+        <%!-- Quick Stats --%>
+        <div class="card bg-base-100 shadow-sm border border-base-200">
           <div class="card-body">
             <h3 class="card-title text-lg mb-4">
-              <.icon name="hero-chart-bar" class="w-5 h-5 text-primary" /> Quick Stats
+              <.icon name="hero-chart-bar" class="w-5 h-5" /> Quick Stats
             </h3>
 
-            <div class="space-y-4">
-              <div class="stat bg-base-50 rounded-lg p-4">
-                <div class="stat-title text-xs">Total Alerts</div>
-                <div class="stat-value text-2xl text-primary">{length(@alerts)}</div>
-              </div>
+            <div class="flex flex-col gap-4">
+              <section>
+                <p class="stat-title text-xs">Total Alerts</p>
+                <p class="stat-value text-2xl text-primary">{@total_alerts}</p>
+              </section>
 
-              <div class="stat bg-base-50 rounded-lg p-4">
-                <div class="stat-title text-xs">Assignments</div>
-                <div class="stat-value text-2xl text-secondary">
-                  {length(@alert_assignments)}
-                </div>
-              </div>
+              <section>
+                <p class="stat-title text-xs">Total Assignments</p>
+                <p class="stat-value text-2xl text-secondary">{@total_assignments}</p>
+              </section>
 
-              <div class="stat bg-base-50 rounded-lg p-4">
-                <div class="stat-title text-xs">Status</div>
-                <div class="stat-value text-lg flex items-center gap-2">
-                  <div class={[
-                    "badge badge-sm",
-                    case @alert_description.state do
-                      :enabled -> "badge-success"
-                      :disabled -> "badge-error"
-                      :grouponly -> "badge-warning"
-                    end
-                  ]}>
-                    {String.capitalize(to_string(@alert_description.state))}
-                  </div>
-                  <div class={[
-                    "badge badge-sm",
-                    if @alert_description.verified do
-                      "badge-success"
-                    else
-                      "badge-outline"
-                    end
-                  ]}>
-                    {if @alert_description.verified, do: "Verified", else: "Unverified"}
-                  </div>
+              <section>
+                <p class="stat-title text-xs">Status</p>
+                <div class="flex flex-row gap-2 mt-1">
+                  <.state_badge state={@alert_description.state} />
+                  <.state_badge
+                    state={@alert_description.state}
+                    color_func={
+                      fn _state ->
+                        if @alert_description.verified, do: "badge-success", else: "badge-warning"
+                      end
+                    }
+                    text_func={
+                      fn _state ->
+                        if @alert_description.verified, do: "Verified", else: "Unverified"
+                      end
+                    }
+                  />
                 </div>
-              </div>
+              </section>
             </div>
           </div>
         </div>
-        
-<!-- Alert Assignments -->
-        <div class="card bg-base-100 shadow-lg border border-base-200">
+
+        <%!-- Alert Assignments --%>
+        <div class="card bg-base-100 shadow-sm">
           <div class="card-body">
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex flex-row items-center justify-between">
               <h3 class="card-title text-lg">
-                <.icon name="hero-users" class="w-5 h-5 text-secondary" /> Assignments
+                <.icon name="hero-clock" class="w-5 h-5" /> Recent Assignments
               </h3>
-              <div class="badge badge-secondary badge-outline">
-                {length(@alert_assignments)}
-              </div>
+              <.link navigate={~p"/alerts"} class="btn btn-square btn-ghost">
+                <.icon name="hero-arrow-top-right-on-square" class="w-4 h-4" />
+              </.link>
             </div>
 
             <div :if={Enum.empty?(@alert_assignments)} class="text-center py-8">
               <.icon name="hero-user-plus" class="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p class="text-gray-500">No assignments</p>
-              <p class="text-gray-400 text-sm">No users assigned to this alert</p>
+              <p class="text-gray-500">No recent assignments</p>
+              <p class="text-gray-400 text-sm">
+                No users assigned to this alert in the last 48 hours.
+              </p>
             </div>
 
-            <div :if={not Enum.empty?(@alert_assignments)} class="space-y-3">
-              <div
-                :for={assignment <- @alert_assignments}
-                class="border border-base-200 rounded-lg p-3 hover:bg-base-50 transition-colors"
-              >
-                <div class="flex items-center justify-between">
-                  <div>
-                    <div class="font-medium text-sm">User {assignment.user_id}</div>
-                  </div>
-                  <div class="text-xs text-gray-500">
-                    {Calendar.strftime(assignment.inserted_at, "%m/%d")}
-                  </div>
+            <div :if={not Enum.empty?(@alert_assignments)} class="space-y-4">
+              <div class="max-h-64 overflow-y-auto space-y-2 rounded-lg p-3">
+                <div
+                  :for={assignment <- @alert_assignments}
+                  class="border border-base-200 rounded-lg p-3 hover:bg-base-200 hover:cursor-pointer transition-colors"
+                >
+                  <.link navigate={~p"/assignments/#{assignment.id}/acknowledge"}>
+                    <div class="flex items-center justify-between gap-2">
+                      <div class="flex-1 min-w-0">
+                        <div class="font-medium text-sm overflow-hidden truncate">
+                          {assignment.user.username}
+                        </div>
+                      </div>
+                      <div class="text-xs text-gray-500 flex-shrink-0">
+                        {Calendar.strftime(assignment.inserted_at, "%m/%d")}
+                      </div>
+                    </div>
+                  </.link>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        
-<!-- Actions -->
-        <div class="card bg-base-100 shadow-lg border border-base-200">
+
+        <%!-- Actions --%>
+        <div class="card bg-base-100 shadow-sm border border-base-200">
           <div class="card-body">
             <h3 class="card-title text-lg mb-4">
               <.icon name="hero-cog-6-tooth" class="w-5 h-5 text-accent" /> Actions

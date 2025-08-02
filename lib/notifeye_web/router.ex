@@ -74,7 +74,14 @@ defmodule NotifeyeWeb.Router do
       on_mount: [{NotifeyeWeb.UserAuth, :require_authenticated}] do
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
+    end
 
+    live_session :acknowledge,
+      on_mount: [
+        {NotifeyeWeb.UserAuth, :require_authenticated},
+        {NotifeyeWeb.LiveHooks.AuthorizeResource,
+         {:authorize_resource, &Notifeye.AlertAssignments.get_alert_assignment/1}}
+      ] do
       live "/assignments/:id/acknowledge", AssignmentsLive.Acknowledge, :show
     end
 
