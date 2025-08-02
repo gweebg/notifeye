@@ -77,6 +77,7 @@
                     {"Disabled", "disabled"},
                     {"Group Only", "grouponly"}
                   ]}
+                  value={@filters["state"]}
                   class="select select-bordered select-sm"
                 />
               </div>
@@ -93,6 +94,7 @@
                     {"Verified", "true"},
                     {"Unverified", "false"}
                   ]}
+                  value={@filters["verified"]}
                   class="select select-bordered select-sm"
                 />
               </div>
@@ -105,6 +107,7 @@
                   field={f[:notification_group_id]}
                   type="select"
                   prompt="All groups"
+                  value={@filters["notification_group_id"]}
                   options={Enum.map(@notification_groups, &{&1.name, &1.id})}
                   class="select select-bordered select-sm"
                 />
@@ -119,6 +122,7 @@
                   type="text"
                   placeholder="Search pattern..."
                   class="input input-bordered input-sm"
+                  value={@filters["pattern"]}
                   phx-debounce="250"
                 />
               </div>
@@ -132,6 +136,7 @@
                   type="text"
                   placeholder="Search by id..."
                   class="input input-bordered input-sm"
+                  value={@filters["id_search"]}
                   phx-debounce="250"
                 />
               </div>
@@ -142,7 +147,7 @@
                 </label>
                 <.input
                   field={f[:page_size]}
-                  value={@current_page_size}
+                  value={@filters["page_size"]}
                   type="select"
                   options={page_size_options()}
                   class="select select-bordered select-sm"

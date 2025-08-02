@@ -210,7 +210,7 @@ defmodule Notifeye.AlertAssignments do
         preloaded_assignments =
           assignments_map
           |> Map.values()
-          |> Enum.map(fn as -> Repo.preload(as, [:user, :alert]) end)
+          |> Enum.map(fn a -> Repo.preload(a, [:user, :alert]) end)
 
         {:ok, preloaded_assignments}
 
