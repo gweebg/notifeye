@@ -28,8 +28,8 @@
           </div>
         </div>
       </dialog>
-      
-<!-- Centered Form -->
+
+      <%!-- Centered Form --%>
       <.form
         :let={form}
         for={@changeset}
@@ -38,26 +38,22 @@
         phx-submit="save"
       >
         <div class="space-y-4">
-          <div class="card bg-base-100 shadow-sm border border-base-200 flex flex-row w-full gap-4 p-4">
-            <!-- State Field -->
-            <div class="form-control w-full">
-              <label class="label flex flex-col items-start gap-2 mb-2">
-                <span class="label-text font-medium">State</span>
-                <span class="label-text-alt text-base-content/60">
-                  Controls whether this alert description is active and how it processes alerts.
-                </span>
-              </label>
+          <div class="card bg-base-100 shadow-sm border border-base-200 flex flex-col md:flex-row w-full gap-4 p-4">
+            <%!-- State Field --%>
+            <div class="form-control w-full flex flex-col">
+              <label class="label-text font-medium">State</label>
+              <span class="text-sm text-base-content/60">
+                Controls whether this alert description is active and how it processes alerts.
+              </span>
               <.input field={form[:state]} type="select" options={state_options()} />
             </div>
-            
-<!-- Notification Group Field -->
-            <div class="form-control w-full">
-              <label class="label flex flex-col items-start gap-2 mb-2">
-                <span class="label-text font-medium">Notification Group</span>
-                <span class="label-text-alt text-base-content/60">
-                  Select the notification group that will receive alerts matching this description.
-                </span>
-              </label>
+
+            <%!-- Notification Group Field --%>
+            <div class="form-control w-full flex flex-col">
+              <label class="label-text font-medium">Notification Group</label>
+              <span class="text-sm text-base-content/60">
+                Select the notification group that will receive alerts matching this description.
+              </span>
               <.input
                 field={form[:notification_group_id]}
                 type="select"
@@ -69,18 +65,18 @@
           </div>
 
           <div class="card bg-base-100 shadow-sm border border-base-200 flex flex-col w-full gap-4 p-4">
-            
-<!-- Pattern Field Section -->
+            <%!-- Pattern Field Section --%>
             <div class="form-control flex flex-col gap-2">
-              <label class="label flex flex-col gap-2 items-start">
-                <span class="label-text font-medium">Description Pattern (Regex)</span>
-                <span class="label-text-alt text-base-content/60">
+              <div class="form-control w-full flex flex-col">
+                <label class="label-text font-medium">Description Pattern (Regex)</label>
+                <span class="text-sm text-base-content/60">
                   The pattern must include at least one named capture
-                  group called "user" and the expression can be tested bellow against a real case of event samples.
+                  group called "user" and the expression can be
+                  tested bellow against a real case of event samples.
                 </span>
-              </label>
-              
-<!-- Pattern Input with Test Buttons -->
+              </div>
+
+              <%!-- Pattern Input with Test Buttons --%>
               <div class="flex flex-row gap-2">
                 <div class="w-full">
                   <.input
@@ -89,62 +85,50 @@
                     phx-debounce="500"
                   />
                 </div>
-                <button
-                  type="button"
-                  class="btn btn-primary mt-1"
-                  phx-click="do_test"
-                  phx-disable-with="Testing..."
-                >
+                <button type="button" class="btn btn-primary mt-1" phx-click="do_test">
                   <.icon name="hero-play" class="w-4 h-4" /> Test
                 </button>
-                <button type="button" class="btn btn-outline mt-1" phx-click="clear_test">
-                  <.icon name="hero-x-mark" class="w-4 h-4" /> Clear
+                <button type="button" class="btn mt-1" phx-click="clear_test">
+                  <.icon name="hero-backspace" class="w-4 h-4" />
                 </button>
               </div>
-              
-<!-- Sample Alert Display -->
+
+              <%!-- Sample Alert Display --%>
               <div class="p-4 bg-base-200 rounded-lg">
                 <div class="flex w-fit gap-2">
-                  <p class="font-semibold mb-2 text-sm">Sample Alert</p>
+                  <p class="font-semibold mb-2 text-sm">Sample Alert Samples</p>
                   <span class="text-base-content/60 text-xs font-regular pb-4">
                     <.link navigate={~p"/"}>
                       <.icon name="hero-arrow-top-right-on-square" class="w-4 h-4" />
                     </.link>
                   </span>
                 </div>
-                <div class="mb-3">
-                  <div class="text-sm font-medium text-base-content/80">
-                    <strong>Title</strong>: {@sample_alert.alert_title || "No title"}
-                  </div>
-                </div>
                 <div>
-                  <div class="text-sm font-bold text-base-content/80 mb-2">Event Samples:</div>
-                  <div class="bg-base-100 text-accent p-3 rounded font-mono text-xs max-h-32 overflow-y-auto border">
+                  <div class="bg-neutral text-neutral-content p-3 rounded font-mono text-xs max-h-32 overflow-y-auto border">
                     {@sample_alert.alert_event_samples}
                   </div>
                 </div>
               </div>
-              
-<!-- Test Results (above input) -->
+
+              <%!-- Test Results (above input) --%>
               <%= cond do %>
                 <% @test_result == "" -> %>
-                  <div class="bg-base-100 border border-base-300 p-3 rounded text-center">
-                    <p class="text-sm text-base-content/60">
-                      Results will show up here.
-                    </p>
+                  <div role="alert" class="alert">
+                    <.icon name="hero-information-circle" class="w-5 h-5" />
+                    <span>Results will show up here.</span>
                   </div>
                 <% match?(matches when is_list(matches), @test_result) -> %>
-                  <div class="bg-base-100 border border-success p-3 rounded">
-                    <div class="flex items-center gap-2 mb-2">
+                  <div class="alert alert-success alert-soft flex flex-col items-start">
+                    <div class="flex gap-2">
                       <.icon name="hero-check-circle" class="w-5 h-5 text-success" />
-                      <span class="font-semibold text-base-content">
+                      <span class="font-semibold text-success">
                         Test Passed ({"#{length(@test_result)} #{if length(@test_result) == 1, do: "match", else: "matches"})"}
                       </span>
                     </div>
-                    <div class="space-y-2">
+                    <div class="flex flex-col md:flex-row gap-2">
                       <%= for match <- @test_result do %>
-                        <div class="bg-success border border-success p-2 rounded">
-                          <div class="font-mono text-sm break-all text-success-content">
+                        <div class="badge badge-success badge-lg">
+                          <div class="text-sm break-all text-success-content">
                             {inspect(match, pretty: true)}
                           </div>
                         </div>
@@ -152,31 +136,31 @@
                     </div>
                   </div>
                 <% match?(nil, @test_result) -> %>
-                  <div class="bg-base-100 border border-warning p-3 rounded">
-                    <div class="flex items-center gap-2">
+                  <div class="alert alert-soft alert-warning flex flex-col items-start">
+                    <div class="flex gap-2">
                       <.icon name="hero-exclamation-triangle" class="w-5 h-5 text-warning" />
-                      <span class="font-semibold text-base-content">No Matches Found</span>
+                      <span class="font-semibold text-warning">No Matches Found</span>
                     </div>
-                    <p class="text-sm text-base-content mt-1">
+                    <p class="text-sm text-neutral">
                       Pattern is valid but doesn't match any event samples.
                     </p>
                   </div>
                 <% match?({:error, {_reason, _pos}}, @test_result) -> %>
                   <% {:error, {reason, pos}} = @test_result %>
-                  <div class="bg-base-100 border border-error p-3 rounded">
-                    <div class="flex items-center gap-2">
+                  <div class="alert alert-soft alert-error flex flex-col items-start">
+                    <div class="flex gap-2">
                       <.icon name="hero-x-circle" class="w-5 h-5 text-error" />
-                      <span class="font-semibold text-base-content">Test Failed</span>
+                      <span class="font-semibold text-error">Test Failed</span>
                     </div>
-                    <p class="text-sm text-base-content mt-1">
+                    <p class="text-sm text-neutral">
                       {"Regex error: #{List.to_string(reason)} at position #{pos}"}
                     </p>
                   </div>
               <% end %>
             </div>
           </div>
-          
-<!-- Form Actions -->
+
+          <%!-- Form Actions --%>
           <div class="flex justify-end gap-3">
             <button type="button" class="btn btn-outline" onclick="history.back()">
               Cancel

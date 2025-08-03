@@ -9,9 +9,6 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Show do
 
   use NotifeyeWeb.Components
 
-  # todo: review this code
-  # todo: fix ui
-
   @impl true
   def mount(_params, _session, socket) do
     {:ok, socket}
@@ -19,28 +16,15 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Show do
 
   @impl true
   def handle_params(%{"id" => id}, _, socket) do
-    case AlertDescriptions.get_alert_description(id, preload: [:user, :notification_group]) do
+    case AlertDescriptions.get_alert_description(id) do
       nil ->
-        socket =
-          socket
-          |> put_flash(:error, "Alert description not found")
-          |> push_navigate(to: ~p"/admin/descriptions")
-
-        {:noreply, socket}
+        {:noreply, handle_not_found(socket)}
 
       alert_description ->
-        alert_assignments = AlertAssignments.list_assignments_since(id)
-        total_assignments = AlertAssignments.total_count(for: id)
-        alerts = Monitoring.list_alerts_since(id)
-        total_alerts = Monitoring.total_count(for: id)
-
         socket =
           socket
           |> assign(:alert_description, alert_description)
-          |> assign(:alert_assignments, alert_assignments)
-          |> assign(:total_assignments, total_assignments)
-          |> assign(:total_alerts, total_alerts)
-          |> assign(:alerts, alerts)
+          |> load_related_data(id)
 
         {:noreply, socket}
     end
@@ -48,31 +32,51 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Show do
 
   @impl true
   def handle_event("delete_description", %{"id" => id}, socket) do
-    case AlertDescriptions.get_alert_description(id) do
-      nil ->
-        socket =
-          socket
-          |> put_flash(:error, "Alert description not found")
+    with {:ok, alert_description} <- fetch_alert_description(id),
+         {:ok, _deleted} <- AlertDescriptions.delete_alert_description(alert_description) do
+      {:noreply, handle_successful_deletion(socket)}
+    else
+      {:error, :not_found} ->
+        {:noreply, put_flash(socket, :error, "Alert description not found")}
 
-        {:noreply, socket}
-
-      alert_description ->
-        case AlertDescriptions.delete_alert_description(alert_description) do
-          {:ok, _deleted_description} ->
-            socket =
-              socket
-              |> put_flash(:info, "Alert description deleted successfully")
-              |> push_navigate(to: ~p"/admin/descriptions")
-
-            {:noreply, socket}
-
-          {:error, _changeset} ->
-            socket =
-              socket
-              |> put_flash(:error, "Failed to delete alert description")
-
-            {:noreply, socket}
-        end
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Failed to delete alert description")}
     end
   end
+
+  defp handle_not_found(socket) do
+    socket
+    |> put_flash(:error, "Alert description not found")
+    |> push_navigate(to: ~p"/admin/descriptions")
+  end
+
+  defp load_related_data(socket, description_id) do
+    alert_assignments = AlertAssignments.list_assignments_since(description_id)
+    total_assignments = AlertAssignments.total_count(for: description_id)
+    alerts = Monitoring.list_alerts_since(description_id)
+    total_alerts = Monitoring.total_count(for: description_id)
+
+    socket
+    |> assign(:alert_assignments, alert_assignments)
+    |> assign(:total_assignments, total_assignments)
+    |> assign(:alerts, alerts)
+    |> assign(:total_alerts, total_alerts)
+  end
+
+  defp fetch_alert_description(id) do
+    case AlertDescriptions.get_alert_description(id) do
+      nil -> {:error, :not_found}
+      alert_description -> {:ok, alert_description}
+    end
+  end
+
+  defp handle_successful_deletion(socket) do
+    socket
+    |> put_flash(:info, "Alert description deleted successfully")
+    |> push_navigate(to: ~p"/admin/descriptions")
+  end
+
+  defp assignment_indicator_class(:open), do: "bg-info"
+  defp assignment_indicator_class(:closed), do: "bg-success"
+  defp assignment_indicator_class(_), do: "bg-warning"
 end

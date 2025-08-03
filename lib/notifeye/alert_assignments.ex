@@ -53,24 +53,14 @@ defmodule Notifeye.AlertAssignments do
     |> Repo.preload(preloads)
   end
 
+  @doc """
+  Returns an alert assignment by its id, fully preloaded with its associated
+  `user`, `alert` and `alert_description`.
+  """
   def get_alert_assignment(id) do
     AlertAssignment
     |> Repo.get(id)
     |> Repo.preload([:user, :alert, :alert_description])
-  end
-
-  def get_alert_assignment(%Scope{user: %User{id: user_id}}, id) do
-    AlertAssignment
-    |> where([a], a.user_id == ^user_id and a.id == ^id)
-    |> limit(1)
-    |> Repo.one()
-    |> case do
-      %AlertAssignment{} = as ->
-        Repo.preload(as, [:user, :alert, :alert_description])
-
-      nil ->
-        nil
-    end
   end
 
   @doc """
@@ -172,6 +162,21 @@ defmodule Notifeye.AlertAssignments do
     |> Repo.all()
   end
 
+  @doc """
+  Returns a list of alert assignments for a given alert description that were inserted
+  within the past `interval` seconds.
+
+  ## Parameters
+
+  - `description_id` (`integer`): The ID of the alert description to filter assignments by.
+  - `opts` (`Keyword` list, optional):
+    - `:interval` (`integer`, default: `172800`): Time interval in seconds to look back from the current time. Defaults to 48 hours (`48 * 60 * 60`).
+    - `:limit` (`integer`, default: `10`): Maximum number of records to return.
+
+  ## Preloads
+
+  This function preloads the `:user` association for each assignment.
+  """
   def list_assignments_since(description_id, opts \\ []) do
     interval = Keyword.get(opts, :interval, 48 * 60 * 60)
     limit = Keyword.get(opts, :limit, 10)
@@ -184,10 +189,23 @@ defmodule Notifeye.AlertAssignments do
     |> Repo.all()
   end
 
-  def total_count(for: description_id) do
-    AlertAssignment
-    |> where([a], a.alert_description_id == ^description_id)
-    |> Repo.aggregate(:count, :id)
+  @doc """
+  Returns the total number of alert assignments.
+
+  ## Options
+
+    - `:for` — (optional) filters the count by `alert_description_id`.
+  """
+  def total_count(opts \\ []) do
+    query = AlertAssignment
+
+    query =
+      case Keyword.get(opts, :for) do
+        nil -> query
+        description_id -> where(query, [a], a.alert_description_id == ^description_id)
+      end
+
+    Repo.aggregate(query, :count, :id)
   end
 
   @doc """

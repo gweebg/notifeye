@@ -119,8 +119,8 @@
               <h2 class="card-title text-xl">
                 <.icon name="hero-exclamation-triangle" class="w-6 h-6" /> Recent Alerts
               </h2>
-              <.link navigate={~p"/alerts"} class="btn btn-square btn-ghost">
-                <.icon name="hero-arrow-top-right-on-square" class="w-4 h-4" />
+              <.link navigate={~p"/alerts"} class="hover:cursor-pointer">
+                <.icon name="hero-arrow-top-right-on-square" class="w-5 h-5" />
               </.link>
             </div>
 
@@ -235,9 +235,20 @@
               <h3 class="card-title text-lg">
                 <.icon name="hero-clock" class="w-5 h-5" /> Recent Assignments
               </h3>
-              <.link navigate={~p"/alerts"} class="btn btn-square btn-ghost">
-                <.icon name="hero-arrow-top-right-on-square" class="w-4 h-4" />
-              </.link>
+              <div class="flex flex-row gap-2 items-center">
+                <div class="tooltip text-sm hover:cursor-pointer">
+                  <div class="tooltip-content text-start">
+                    Results from the last 48 hours, limited to 10. <br />
+                    Blue indicator displays an "open" status. <br />
+                    Green indicator displays an "closed" status. <br />
+                    Orange indicator displays an "expired" status.
+                  </div>
+                  <.icon name="hero-question-mark-circle" class="w-5 h-5" />
+                </div>
+                <.link navigate={~p"/alerts"} class="hover:cursor-pointer">
+                  <.icon name="hero-arrow-top-right-on-square" class="w-5 h-5" />
+                </.link>
+              </div>
             </div>
 
             <div :if={Enum.empty?(@alert_assignments)} class="text-center py-8">
@@ -248,21 +259,23 @@
               </p>
             </div>
 
-            <div :if={not Enum.empty?(@alert_assignments)} class="space-y-4">
-              <div class="max-h-64 overflow-y-auto space-y-2 rounded-lg p-3">
+            <div :if={not Enum.empty?(@alert_assignments)} class="flex flex-col gap-2">
+              <div class="max-h-64 overflow-y-auto space-y-2 rounded-lg">
                 <div
                   :for={assignment <- @alert_assignments}
-                  class="border border-base-200 rounded-lg p-3 hover:bg-base-200 hover:cursor-pointer transition-colors"
+                  class="bg-base-200 rounded-lg p-3 hover:bg-base-300 hover:cursor-pointer transition-colors"
                 >
                   <.link navigate={~p"/assignments/#{assignment.id}/acknowledge"}>
                     <div class="flex items-center justify-between gap-2">
                       <div class="flex-1 min-w-0">
-                        <div class="font-medium text-sm overflow-hidden truncate">
+                        <div class="font-medium text-sm overflow-hidden truncate flex flex-row items-center gap-2">
+                          <div class={"w-2 h-2 #{assignment_indicator_class(assignment.status)} rounded-full"}>
+                          </div>
                           {assignment.user.username}
                         </div>
                       </div>
                       <div class="text-xs text-gray-500 flex-shrink-0">
-                        {Calendar.strftime(assignment.inserted_at, "%m/%d")}
+                        {Timex.format!(assignment.inserted_at, "{relative}", :relative)}
                       </div>
                     </div>
                   </.link>
@@ -276,7 +289,7 @@
         <div class="card bg-base-100 shadow-sm border border-base-200">
           <div class="card-body">
             <h3 class="card-title text-lg mb-4">
-              <.icon name="hero-cog-6-tooth" class="w-5 h-5 text-accent" /> Actions
+              <.icon name="hero-cog-6-tooth" class="w-5 h-5" /> Actions
             </h3>
 
             <div class="space-y-3">
