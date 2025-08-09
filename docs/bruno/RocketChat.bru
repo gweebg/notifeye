@@ -1,0 +1,38 @@
+meta {
+  name: RocketChat
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://localhost:3000/hooks/6887c4bc81241c67cf8af394/kMuBogjncNqLgudbdpAfkNWdBPiHdBKCHQev3ouyEDLYWsK7
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "channel": "@gweebg",
+    "text": "",
+    "attachments": [
+      {
+        "title": "New Alert Identified",
+        "text": "A new alert type has been identified by *Notifeye*. This led to the creation of the [Alert Description #10219](https://google.com) that requires further configuration so that future alerts of this type can be processed accordingly.",
+        "color": "#764FA5",
+        "actions": [
+          {
+            "type": "button",
+            "text": "Open in Browser",
+            "url": "https://www.google.com",
+            "buttonType": "primary"
+          }
+        ]
+      }
+    ]
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,26 @@
+meta {
+  name: Receive Alert (No Auth)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{url}}/alerts
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "alert": {
+      "logz_id": "definition-id",
+      "alert_title": "OOM Kill",
+      "alert_description": "Process killeed due to OOM",
+      "alert_severity": "5",
+      "alert_tags": ["tag1", "tag2", "tag3"],
+      "alert_event_samples": "Hello",
+      "start": "2025-05-03T15:48:23Z",
+      "end": "2025-05-03T15:48:23Z"
+    }
+  }
+}

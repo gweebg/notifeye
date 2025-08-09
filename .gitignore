@@ -40,8 +40,15 @@ npm-debug.log
 
 # Documentation
 /docs/collect
-_old
+
+# LSP's
 .elixir_ls
 .lexical
 .elixir-tools
+
+# Templates
 /lib/notifeye_web/templates/email/*.html
+
+# Others
+*-llms.*
+docker-compose-rocket.yml
