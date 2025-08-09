@@ -16,7 +16,7 @@ defmodule Notifeye.Rules do
     |> where([r], r.alert_description_id == ^alert_description_id)
     |> where([r], r.active == true)
     |> limit(1)
-    |> Repo.one!()
+    |> Repo.one()
   end
 
   def list_rules(alert_description_id) do
@@ -27,12 +27,18 @@ defmodule Notifeye.Rules do
   end
 
   def create_rule(attrs \\ %{}) do
+    # drop :active field, as we only allow its setting via dedicated function
+    attrs = Map.delete(attrs, :active)
+
     %Rule{}
     |> Rule.changeset(attrs)
     |> Repo.insert()
   end
 
   def update_rule(%Rule{} = rule, attrs) do
+    # drop :active field, as we only allow its setting via dedicated function
+    attrs = Map.delete(attrs, :active)
+
     rule
     |> Rule.changeset(attrs)
     |> Repo.update()
@@ -52,15 +58,21 @@ defmodule Notifeye.Rules do
     Multi.new()
     |> Multi.update_all(
       :deactivate_others,
-      fn _ ->
-        Rule
-        |> where([r], r.alert_description_id == ^rule.alert_description_id)
-        |> where([r], r.active == true)
-      end,
+      Rule
+      |> where([r], r.alert_description_id == ^rule.alert_description_id)
+      |> where([r], r.active == true),
       set: [active: false]
     )
-    |> Multi.update(:activate_current, rule, %{active: true})
+    |> Multi.update(:activate_current, change_rule(rule, %{active: true}))
     |> Repo.transaction()
+  end
+
+  def disable_rule(%Rule{active: false} = rule), do: rule
+
+  def disable_rule(%Rule{active: true} = rule) do
+    rule
+    |> change_rule(%{active: false})
+    |> Repo.update()
   end
 
   def increment_rule_hit_count(%Rule{} = rule) do

@@ -11,7 +11,7 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.Rule do
   alias Notifeye.AlertDescriptions.AlertDescription
   alias Notifeye.AlertDescriptions.AlertDescription.{RuleBlock, RuleClause}
 
-  @optional_fields ~w(action_value)a
+  @optional_fields ~w(action_value active count)a
   @required_fields ~w(name action alert_description_id)a
 
   @actions ~w(notify nothing)a
@@ -19,7 +19,7 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.Rule do
 
   schema "alert_description_rules" do
     field :name, :string
-    field :active, :boolean, default: true
+    field :active, :boolean, default: false
     field :count, :integer, default: 0
     field :action, Ecto.Enum, values: @actions
     field :action_value, :string
@@ -37,7 +37,6 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.Rule do
     |> validate_length(:name, max: 150)
     |> validate_action()
     |> cast_embed(:rule_blocks, required: true)
-    |> validate_rule_blocks()
   end
 
   @doc """
@@ -173,15 +172,6 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.Rule do
             "contains invalid notification methods: #{Enum.join(invalid_methods, ", ")}"
           )
         end
-    end
-  end
-
-  defp validate_rule_blocks(changeset) do
-    rule_blocks = get_field(changeset, :rule_blocks) || []
-
-    case rule_blocks do
-      [] -> add_error(changeset, :rule_blocks, "must have at least one rule block")
-      _ -> changeset
     end
   end
 
