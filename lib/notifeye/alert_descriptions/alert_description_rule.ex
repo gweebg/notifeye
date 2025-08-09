@@ -9,7 +9,7 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.Rule do
 
   alias Notifeye.Notifications.Dispatcher
   alias Notifeye.AlertDescriptions.AlertDescription
-  alias Notifeye.AlertDescriptions.AlertDescription.RuleBlock
+  alias Notifeye.AlertDescriptions.AlertDescription.{RuleBlock, RuleClause}
 
   @optional_fields ~w(action_value)a
   @required_fields ~w(name action alert_description_id)a
@@ -38,6 +38,104 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.Rule do
     |> validate_action()
     |> cast_embed(:rule_blocks, required: true)
     |> validate_rule_blocks()
+  end
+
+  @doc """
+  Changeset for building/editing rules without strict validation.
+  Used during form interactions before final submission.
+  """
+  def building_changeset(rule, attrs) do
+    rule
+    |> cast(attrs, @optional_fields ++ @required_fields)
+    |> validate_length(:name, max: 150)
+    |> cast_embed(:rule_blocks, with: &RuleBlock.building_changeset/2)
+  end
+
+  @doc """
+  Creates a new rule with default empty block and clause structure.
+  """
+  def new_with_defaults(rule) do
+    default_block = %RuleBlock{clauses: [%RuleClause{}]}
+
+    rule
+    |> building_changeset(%{})
+    |> put_embed(:rule_blocks, [default_block])
+  end
+
+  @doc """
+  Adds an empty rule block to an existing rule changeset.
+  Returns the updated changeset.
+  """
+  def add_block(%Ecto.Changeset{} = changeset) do
+    rule_blocks = get_field(changeset, :rule_blocks) || []
+    empty_block = %RuleBlock{clauses: [%RuleClause{}]}
+    updated_blocks = rule_blocks ++ [empty_block]
+
+    put_embed(changeset, :rule_blocks, updated_blocks)
+  end
+
+  @doc """
+  Adds an empty rule clause to a specific rule block.
+  Returns the updated changeset.
+  """
+  def add_clause(%Ecto.Changeset{} = changeset, block_index) do
+    rule_blocks = get_field(changeset, :rule_blocks) || []
+
+    case Enum.at(rule_blocks, block_index) do
+      nil ->
+        changeset
+
+      block ->
+        clauses = Map.get(block, :clauses, [])
+        updated_clauses = clauses ++ [%RuleClause{}]
+        updated_block = Map.put(block, :clauses, updated_clauses)
+        updated_blocks = List.replace_at(rule_blocks, block_index, updated_block)
+
+        put_embed(changeset, :rule_blocks, updated_blocks)
+    end
+  end
+
+  @doc """
+  Removes a rule block at the specified index.
+  Returns the updated changeset.
+  """
+  def remove_block(%Ecto.Changeset{} = changeset, block_index) do
+    rule_blocks = get_field(changeset, :rule_blocks) || []
+
+    # Ensure we don't remove the last block
+    if length(rule_blocks) > 1 do
+      updated_blocks = List.delete_at(rule_blocks, block_index)
+      put_embed(changeset, :rule_blocks, updated_blocks)
+    else
+      changeset
+    end
+  end
+
+  @doc """
+  Removes a rule clause at the specified block and clause indices.
+  Returns the updated changeset.
+  """
+  def remove_clause(%Ecto.Changeset{} = changeset, block_index, clause_index) do
+    rule_blocks = get_field(changeset, :rule_blocks) || []
+
+    case Enum.at(rule_blocks, block_index) do
+      nil ->
+        changeset
+
+      block ->
+        clauses = Map.get(block, :clauses, [])
+
+        # Ensure we don't remove the last clause from a block
+        if length(clauses) > 1 do
+          updated_clauses = List.delete_at(clauses, clause_index)
+          updated_block = Map.put(block, :clauses, updated_clauses)
+          updated_blocks = List.replace_at(rule_blocks, block_index, updated_block)
+
+          put_embed(changeset, :rule_blocks, updated_blocks)
+        else
+          changeset
+        end
+    end
   end
 
   defp validate_action(changeset) do

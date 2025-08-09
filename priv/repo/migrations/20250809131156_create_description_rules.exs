@@ -12,6 +12,8 @@ defmodule Notifeye.Repo.Migrations.CreateDescriptionRules do
 
       add :alert_description_id, references(:alert_descriptions, on_delete: :delete_all),
         null: false
+
+      timestamps(type: :utc_datetime)
     end
 
     create index(:alert_description_rules, [:alert_description_id])

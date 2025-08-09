@@ -22,6 +22,12 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.RuleBlock do
     |> validate_rules()
   end
 
+  def building_changeset(rule_block, attrs) do
+    rule_block
+    |> cast(attrs, [])
+    |> cast_embed(:clauses, with: &RuleClause.building_changeset/2)
+  end
+
   defp validate_rules(changeset) do
     rules = get_field(changeset, :clauses) || []
 

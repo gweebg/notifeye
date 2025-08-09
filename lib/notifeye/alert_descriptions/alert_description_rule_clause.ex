@@ -39,6 +39,14 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.RuleClause do
     |> validate_value()
   end
 
+  def building_changeset(rule, attrs) do
+    rule
+    |> cast(attrs, @optional_fields ++ @required_fields)
+    |> validate_inclusion(:field, @valid_fields)
+    |> validate_operator()
+    |> validate_value()
+  end
+
   defp validate_operator(changeset) do
     field = get_field(changeset, :field)
     valid_ops = @field_definitions[field][:operators] || []
