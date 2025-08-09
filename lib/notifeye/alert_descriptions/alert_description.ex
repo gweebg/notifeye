@@ -5,6 +5,8 @@ defmodule Notifeye.AlertDescriptions.AlertDescription do
 
   import Ecto.Changeset
 
+  alias Notifeye.AlertDescriptions.AlertDescription
+
   @required_fields ~w(id state verified)a
   @optional_fields ~w(pattern edited_by notification_group_id)a
   @states ~w(disabled enabled grouponly)a
@@ -40,6 +42,7 @@ defmodule Notifeye.AlertDescriptions.AlertDescription do
     belongs_to :notification_group, Notifeye.Notifications.NotificationGroup
 
     has_many :alert_assignments, Notifeye.AlertAssignments.AlertAssignment, on_replace: :delete
+    has_many :rules, AlertDescription.Rule, on_delete: :delete_all
 
     timestamps(type: :utc_datetime)
   end
