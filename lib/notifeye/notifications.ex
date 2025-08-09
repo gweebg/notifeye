@@ -43,17 +43,24 @@ defmodule Notifeye.Notifications do
       [%NotificationGroup{}, ...]
 
   """
-  def list_notification_groups do
-    Repo.all(NotificationGroup)
+  def list_notification_groups(opts \\ []) do
+    preloads = Keyword.get(opts, :preload, [:users])
+
+    NotificationGroup
+    |> preload(^preloads)
+    |> Repo.all()
   end
 
-  @doc """
-  Returns the list of notification groups with users preloaded.
-  """
-  def list_notification_groups_with_users do
-    NotificationGroup
-    |> preload(:users)
-    |> Repo.all()
+  def list_notification_groups_flop(flop, opts \\ []) do
+    preloads = Keyword.get(opts, :preload, [:users])
+    page_size = Keyword.get(opts, :page_size)
+
+    flop = if page_size, do: Map.put(flop, "page_size", page_size), else: flop
+
+    with {:ok, {records, meta}} <-
+           Flop.validate_and_run(NotificationGroup, flop, for: NotificationGroup) do
+      {:ok, {Repo.preload(records, preloads), meta}}
+    end
   end
 
   @doc """

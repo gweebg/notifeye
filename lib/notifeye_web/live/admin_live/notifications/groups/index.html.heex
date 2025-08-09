@@ -1,0 +1,238 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <%!-- Help Dialog --%>
+  <dialog :if={@show_help} open class="modal overflow-hidden" id="help_dialog">
+    <div class="modal-box space-y-2">
+      <h3 class="font-medium text-xl text-info">
+        <.icon name="hero-information-circle" class="w-6 h-6" /> About Notification Groups
+      </h3>
+      <section class="flex flex-col gap-2">
+        <p>
+          <i>Notification Groups</i> allow you to define a set of users that
+          can, and will, be notified besides the targeted, assigned user, of an
+          alert.
+        </p>
+        <p>
+          They include a name and an optional description for easy identification.
+          You can configure an <.link navigate={~p"/admin/descriptions"}>
+            <i class="underline">Alert Description</i>
+          </.link>on its editing page.
+        </p>
+      </section>
+      <div class="modal-action">
+        <button class="btn btn-info btn-soft" phx-click="close_help">
+          Okay!
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <%!-- New Group Modal --%>
+  <dialog :if={@adding} open class="modal overflow-hidden" id="add_group_modal">
+    <div class="modal-box w-full max-w-lg">
+      <h3 class="flex flex-row items-center font-medium text-xl text-primary mb-4 gap-2">
+        <.icon name="hero-plus-circle" class="w-6 h-6" /> Add a New Group
+      </h3>
+
+      <.form
+        for={@form}
+        id="add-group-form"
+        phx-submit="save"
+        phx-change="validate"
+        class="space-y-4"
+      >
+        <%!-- Name Field --%>
+        <div class="form-control w-full">
+          <label class="label text-sm">
+            <span class="label-text font-medium">Name</span>
+          </label>
+          <.input
+            field={@form[:name]}
+            type="text"
+            placeholder="Enter group name..."
+            class="input input-bordered w-full"
+            required
+          />
+        </div>
+
+        <%!-- Description Field --%>
+        <div class="form-control w-full">
+          <label class="label text-sm">
+            <span class="label-text font-medium">Description</span>
+            <span class="label-text-alt text-base-content/50 text-xs">(Optional)</span>
+          </label>
+          <.input
+            field={@form[:description]}
+            type="textarea"
+            placeholder="Enter group description..."
+            class="textarea textarea-bordered w-full"
+            rows="3"
+          />
+        </div>
+
+        <%!-- Users Selection --%>
+        <div class="form-control w-full">
+          <div class="flex flex-row justify-between">
+            <label class="label text-sm">
+              <span class="label-text font-medium">Users</span>
+              <span class="label-text-alt text-base-content/50 text-xs">(Optional)</span>
+            </label>
+
+            <%!-- Search Input --%>
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={@user_search}
+              phx-keyup="search_users"
+              phx-debounce="200"
+              class="input input-bordered input-sm mb-2 w-1/3"
+            />
+          </div>
+
+          <%!-- Selected Users Display --%>
+          <div :if={length(@selected_users) > 0} class="mb-2">
+            <div class="flex flex-wrap gap-1">
+              <div :for={user_id <- @selected_users} class="badge badge-primary gap-1">
+                <% user = Enum.find(@all_users, &(&1.id == user_id)) %>
+                {user.username || user.email}
+                <button
+                  type="button"
+                  phx-click="toggle_user"
+                  phx-value-user_id={user.id}
+                  class="text-primary-content hover:text-error"
+                >
+                  <.icon name="hero-x-mark" class="size-3 cursor-pointer" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <%!-- User List --%>
+          <div class="border border-base-300 rounded-lg max-h-40 overflow-y-auto">
+            <div
+              :for={user <- @filtered_users}
+              class="flex items-center justify-between p-2 hover:bg-base-200 border-b border-base-200 last:border-b-0"
+            >
+              <div class="flex flex-col p-1">
+                <span class="text-sm font-medium">{user.username || user.email}</span>
+                <span :if={user.username} class="text-xs text-base-content/50">{user.email}</span>
+              </div>
+              <input
+                type="checkbox"
+                class="checkbox checkbox-sm"
+                checked={user.id in @selected_users}
+                phx-click="toggle_user"
+                phx-value-user_id={user.id}
+              />
+            </div>
+            <div :if={@filtered_users == []} class="p-4 text-center text-base-content/50">
+              No users found
+            </div>
+          </div>
+        </div>
+
+        <%!-- Modal Actions --%>
+        <div class="modal-action">
+          <button type="button" class="btn btn-outline" phx-click="close_add_modal">
+            Cancel
+          </button>
+          <.button type="submit" variant="primary" phx-disable-with="Creating...">
+            Create Group
+          </.button>
+        </div>
+      </.form>
+    </div>
+  </dialog>
+
+  <%!-- Main Content --%>
+  <div class="max-w-7xl mx-auto space-y-4">
+    <%!-- Header --%>
+    <.header>
+      <div class="flex flex-row gap-1">
+        <p class="text-2xl">
+          Notification Groups
+        </p>
+        <span class="hover:cursor-pointer" phx-click="open_help">
+          <.icon name="hero-question-mark-circle" class="w-5 h-5" />
+        </span>
+      </div>
+      <:subtitle>
+        View and manage notification groups for your alert descriptions.
+      </:subtitle>
+      <:actions>
+        <.button variant="primary" phx-click="open_add_modal">
+          Add New
+        </.button>
+      </:actions>
+    </.header>
+
+    <section class="flex flex-col card bg-base-100 shadow-sm overflow-x-auto w-full">
+      <%!-- Data Table --%>
+      <Flop.Phoenix.table
+        items={@streams.groups}
+        meta={@meta}
+        path={~p"/admin/descriptions/groups"}
+        id="groups_table"
+        opts={[
+          table_attrs: [class: "table table-zebra"]
+        ]}
+      >
+        <:col :let={{_id, group}} label="Name" field={:name}>
+          <div class="">
+            {group.name}
+          </div>
+        </:col>
+
+        <:col :let={{_id, group}} label="Description" field={:description}>
+          <p class="max-w-md truncate">
+            {group.description || "No Description"}
+          </p>
+        </:col>
+
+        <:col :let={{_id, group}} label="Members" field={:users}>
+          <div class="flex flex-wrap gap-1">
+            <span
+              :for={{user, index} <- Enum.with_index(group.users)}
+              :if={index < 2}
+              class="badge badge-soft badge-neutral badge-sm"
+            >
+              {user.username}
+            </span>
+            <div
+              :if={length(group.users) > 2}
+              class="tooltip tooltip-top"
+              data-tip={Enum.map_join(group.users, ", ", & &1.username)}
+            >
+              <span class="badge badge-soft badge-neutral badge-sm cursor-help mb-2">
+                +{length(group.users) - 2}
+              </span>
+            </div>
+          </div>
+        </:col>
+
+        <:col :let={{_id, group}} label="Last Updated" field={:updated_at}>
+          <div class="tooltip text-sm text-gray-500">
+            <div class="tooltip-content">
+              {Timex.format!(group.updated_at, "{YYYY}-{0M}-{0D} {h24}:{m}")}
+            </div>
+            {Timex.format!(group.updated_at, "{relative}", :relative)}
+          </div>
+        </:col>
+
+        <:col :let={{_id, _group}} label="Actions">
+          <div class="flex items-center gap-1 whitespace-nowrap">
+            <div class="tooltip" data-tip="View">
+              <.link navigate={~p"/admin/descriptions"} class="btn btn-ghost btn-sm">
+                <.icon name="hero-eye" class="w-4 h-4" />
+              </.link>
+            </div>
+            <div class="tooltip" data-tip="Edit">
+              <.link navigate={~p"/admin/descriptions"} class="btn btn-ghost btn-sm">
+                <.icon name="hero-pencil" class="w-4 h-4" />
+              </.link>
+            </div>
+          </div>
+        </:col>
+      </Flop.Phoenix.table>
+    </section>
+  </div>
+</Layouts.app>

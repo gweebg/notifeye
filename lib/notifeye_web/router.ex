@@ -113,6 +113,7 @@ defmodule NotifeyeWeb.Router do
     live_session :admin,
       on_mount: [{NotifeyeWeb.UserAuth, :ensure_admin}] do
       live "/descriptions", AdminLive.AlertDescriptions.Index, :index
+      live "/descriptions/groups", AdminLive.Notifications.Groups.Index, :index
       live "/descriptions/:id", AdminLive.AlertDescriptions.Show, :show
       live "/descriptions/:id/edit", AdminLive.AlertDescriptions.Edit, :edit
     end

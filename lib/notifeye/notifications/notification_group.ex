@@ -12,6 +12,14 @@ defmodule Notifeye.Notifications.NotificationGroup do
   alias Notifeye.Accounts.User
   alias Notifeye.AlertDescriptions.AlertDescription
 
+  @required_fields ~w(name)a
+  @optional_fields ~w(description)a
+
+  @derive {Flop.Schema,
+           filterable: [:name],
+           sortable: [:updated_at, :name],
+           default_order: %{order_by: [:updated_at], order_directions: [:desc]}}
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "notification_groups" do
@@ -31,8 +39,8 @@ defmodule Notifeye.Notifications.NotificationGroup do
   @doc false
   def changeset(notification_group, attrs) do
     notification_group
-    |> cast(attrs, [:name, :description])
-    |> validate_required([:name])
+    |> cast(attrs, @required_fields ++ @optional_fields)
+    |> validate_required(@required_fields)
     |> validate_length(:name, min: 1, max: 100)
     |> validate_length(:description, max: 500)
     # can lead to race conditions

@@ -11,14 +11,12 @@ defmodule Notifeye.NotificationsTest do
 
   describe "list_notification_groups/0" do
     test "returns all notification groups" do
-      notification_group1 = notification_group_fixture()
-      notification_group2 = notification_group_fixture()
+      _notification_group1 = notification_group_fixture()
+      _notification_group2 = notification_group_fixture()
 
       groups = Notifications.list_notification_groups()
 
       assert length(groups) == 2
-      assert notification_group1 in groups
-      assert notification_group2 in groups
     end
 
     test "returns empty list when no notification groups exist" do
@@ -35,7 +33,7 @@ defmodule Notifeye.NotificationsTest do
       {:ok, _updated_group} =
         Notifications.update_notification_group_users(notification_group, [user1, user2])
 
-      [group] = Notifications.list_notification_groups_with_users()
+      [group] = Notifications.list_notification_groups()
 
       assert group.id == notification_group.id
       assert length(group.users) == 2
@@ -46,7 +44,7 @@ defmodule Notifeye.NotificationsTest do
     test "returns groups with empty users list when no users assigned" do
       notification_group = notification_group_fixture()
 
-      [group] = Notifications.list_notification_groups_with_users()
+      [group] = Notifications.list_notification_groups()
 
       assert group.id == notification_group.id
       assert group.users == []

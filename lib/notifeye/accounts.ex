@@ -496,4 +496,31 @@ defmodule Notifeye.Accounts do
       _ -> current
     end
   end
+
+  @doc """
+  Filter users based on their username or email.
+  """
+  def filter_users(users, ""), do: users
+
+  def filter_users(users, search_term) do
+    search_term = String.downcase(search_term)
+
+    Enum.filter(users, fn user ->
+      username_match =
+        user.username && String.contains?(String.downcase(user.username), search_term)
+
+      email_match = String.contains?(String.downcase(user.email), search_term)
+      username_match || email_match
+    end)
+  end
+
+  @doc """
+  """
+  # Helper function to list all users
+  def list_users_to_filter do
+    User
+    |> order_by([u], [u.username, u.email])
+    |> select([u], %{id: u.id, username: u.username, email: u.email})
+    |> Repo.all()
+  end
 end
