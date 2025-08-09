@@ -9,7 +9,7 @@ defmodule Notifeye.Workers.Notifier do
 
   require Logger
 
-  alias Notifeye.Notifications.Dispacher
+  alias Notifeye.Notifications.Dispatcher
   alias Notifeye.{Accounts, AlertAssignments, AlertDescriptions, Notifications}
 
   use Oban.Worker,
@@ -31,7 +31,7 @@ defmodule Notifeye.Workers.Notifier do
     # the result of the notification sending operation
     # %{provider_name => {:ok|:error, whatever}}
     {:ok, results} =
-      Dispacher.notify(user, operation)
+      Dispatcher.notify(user, operation)
 
     # todo: what to do with the errors?
     failed_providers =

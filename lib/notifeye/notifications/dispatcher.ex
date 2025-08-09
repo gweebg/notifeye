@@ -1,4 +1,4 @@
-defmodule Notifeye.Notifications.Dispacher do
+defmodule Notifeye.Notifications.Dispatcher do
   @moduledoc """
   Handles the dispatch of notifications to users through configured providers.
 
@@ -49,5 +49,10 @@ defmodule Notifeye.Notifications.Dispacher do
   # the message type is always the first element of the tuple
   defp get_context_type(context) when is_tuple(context), do: elem(context, 0)
 
-  def available_providers, do: @providers
+  def available_providers do
+    @providers
+    |> Enum.map(fn provider ->
+      provider.provider_name()
+    end)
+  end
 end
