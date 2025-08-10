@@ -6,7 +6,7 @@ defmodule Notifeye.Rules do
   alias Notifeye.Repo
   alias Ecto.Multi
 
-  alias Notifeye.AlertDescriptions.AlertDescription.Rule
+  alias Notifeye.AlertDescriptions.AlertDescription.{Rule, RuleBlock, RuleClause}
 
   def get_rule(id), do: Repo.get(Rule, id)
   def get_rule!(id), do: Repo.get!(Rule, id)
@@ -86,5 +86,106 @@ defmodule Notifeye.Rules do
 
   def change_rule_building(%Rule{} = rule, attrs \\ %{}) do
     Rule.building_changeset(rule, attrs)
+  end
+
+  @doc """
+  Apply the active rule of an `%AlertDescription{}` to an `%Alert{}`.
+
+  Upon receiving an alert, if the corresponding description exists and there's
+  a rule enabled, we apply the rule, checking whether the notification should
+  be sent via the methods specified on the active rule.
+
+  The `%Rule{}` structure itself already specifies the logic connectors between
+  clauses. Each `%RuleBlock{}` is OR'ed together, and each `%RuleClause{}` of a
+  `%RuleBlock{}` is AND'ed together. This results in a boolean value indicating
+  whether the rule matched the alert or not.
+
+  Returns `true` if the alert satisfies the conditions of the rule, `false`
+  otherwise.
+  """
+  def check(alert_description_id, alert) do
+    alert_description_id
+    |> get_active_rule()
+    |> apply_rule(alert)
+  end
+
+  defp apply_rule(nil, _alert), do: false
+
+  defp apply_rule(%Rule{} = rule, alert) do
+    # any?/2 OR's stuff
+    Enum.any?(rule.rule_blocks, &apply_block(&1, alert))
+  end
+
+  defp apply_block(%RuleBlock{clauses: clauses}, alert) do
+    # all?/2 AND's stuff
+    Enum.all?(clauses, &apply_clause(&1, alert))
+  end
+
+  defp apply_clause(%RuleClause{field: field, operator: op, value: value}, alert) do
+    alert_value = RuleClause.alert_field_mapping(alert, field)
+    evaluate_condition(alert_value, op, value)
+    alert_value
+  end
+
+  defp evaluate_condition(field, operator, expected_value) do
+    case to_func(operator) do
+      nil -> false
+      fun -> fun.(field, expected_value)
+    end
+  end
+
+  defp to_func("is"), do: &(&1 == &2)
+  defp to_func("is_not"), do: &(&1 != &2)
+  defp to_func("contains"), do: fn a, b -> is_binary(a) and String.contains?(a, b) end
+  defp to_func("does_not_contains"), do: not to_func("contains")
+  defp to_func("matches"), do: &regex_match?(&1, &2)
+  defp to_func("does_not_match"), do: not (&regex_match?(&1, &2))
+  defp to_func("starts_with"), do: fn a, b -> is_binary(a) and String.starts_with?(a, b) end
+  defp to_func("ends_with"), do: fn a, b -> is_binary(a) and String.ends_with?(a, b) end
+  defp to_func("include"), do: fn a, b -> is_list(a) and b in a end
+  defp to_func("exclude"), do: not to_func("include")
+  defp to_func("before_datetime"), do: &compare_datetime(&1, &2, :before)
+  defp to_func("after_datetime"), do: &compare_datetime(&1, &2, :after)
+  defp to_func("before_time"), do: &compare_time(&1, &2, :before)
+  defp to_func("after_time"), do: &compare_time(&1, &2, :after)
+  defp to_func(_), do: nil
+
+  defp regex_match?(value, pattern) when is_binary(value) and is_binary(pattern) do
+    case Regex.compile(pattern, "i") do
+      {:ok, re} -> String.match?(value, re)
+      {:error, _} -> false
+    end
+  end
+
+  defp regex_match?(_, _), do: false
+
+  defp compare_datetime(nil, _, _), do: false
+
+  defp compare_datetime(a_dt, expected, cmp) do
+    case DateTime.from_iso8601(expected) do
+      {:ok, b_dt, _} ->
+        case cmp do
+          :before -> DateTime.compare(a_dt, b_dt) == :lt
+          :after -> DateTime.compare(a_dt, b_dt) == :gt
+        end
+
+      _ ->
+        false
+    end
+  end
+
+  defp compare_time(nil, _, _), do: false
+
+  defp compare_time(%Time{} = a, expected, cmp) when is_binary(expected) do
+    case Time.from_iso8601(expected) do
+      {:ok, b} ->
+        case cmp do
+          :before -> Time.compare(a, b) == :lt
+          :after -> Time.compare(a, b) == :gt
+        end
+
+      _ ->
+        false
+    end
   end
 end

@@ -12,14 +12,18 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.RuleClause do
 
   @severities ~w(low medium high)
 
+  @string_operators ~w(is is_not contains does_not_contain matches does_not_match starts_with ends_with)
+  @time_operators ~w(after_time before_time is is_not)
+  @datetime_operators ~w(after_time before_time is is_not)
+
   @field_definitions %{
-    "alert_title" => %{operators: ~w(matches is is_not)},
-    "alert_description" => %{operators: ~w(matches is is_not)},
+    "alert_title" => %{operators: @string_operators},
+    "alert_description" => %{operators: @string_operators},
     "alert_severity" => %{operators: ~w(is is_not), values: @severities},
-    "alert_tags" => %{operators: ~w(include doesnt_include)},
-    "start" => %{operators: ~w(after before equal), format: :time},
-    "end" => %{operators: ~w(after before equal), format: :time},
-    "inserted_at" => %{operators: ~w(after before equal), format: :datetime}
+    "alert_tags" => %{operators: ~w(include exclude)},
+    "start" => %{operators: @time_operators, format: :time},
+    "end" => %{operators: @time_operators, format: :time},
+    "inserted_at" => %{operators: @datetime_operators, format: :datetime}
   }
 
   @valid_fields Map.keys(@field_definitions)
@@ -95,6 +99,19 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.RuleClause do
           {:ok, _, _} -> changeset
           _ -> add_error(changeset, field, error_msg)
         end
+    end
+  end
+
+  def alert_field_mapping(alert, field) do
+    case field do
+      "alert_title" -> alert.title
+      "alert_description" -> alert.description
+      "alert_severity" -> alert.severity
+      "alert_tags" -> alert.tags
+      "start" -> alert.start
+      "end" -> alert.end
+      "inserted_at" -> alert.inserted_at
+      _ -> nil
     end
   end
 
