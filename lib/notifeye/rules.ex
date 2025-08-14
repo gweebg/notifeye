@@ -7,6 +7,7 @@ defmodule Notifeye.Rules do
   alias Ecto.Multi
 
   alias Notifeye.AlertDescriptions.AlertDescription.{Rule, RuleBlock, RuleClause}
+  alias Notifeye.AlertDescriptions.Rule.Fields
 
   def get_rule(id), do: Repo.get(Rule, id)
   def get_rule!(id), do: Repo.get!(Rule, id)
@@ -102,6 +103,8 @@ defmodule Notifeye.Rules do
 
   Returns `true` if the alert satisfies the conditions of the rule, `false`
   otherwise.
+
+  todo: enable rules on processor
   """
   def check(alert_description_id, alert) do
     alert_description_id
@@ -122,70 +125,15 @@ defmodule Notifeye.Rules do
   end
 
   defp apply_clause(%RuleClause{field: field, operator: op, value: value}, alert) do
-    alert_value = RuleClause.alert_field_mapping(alert, field)
+    alert_value = Fields.alert_field_mapping(alert, field)
     evaluate_condition(alert_value, op, value)
     alert_value
   end
 
   defp evaluate_condition(field, operator, expected_value) do
-    case to_func(operator) do
+    case Fields.op_to_func(operator) do
       nil -> false
       fun -> fun.(field, expected_value)
-    end
-  end
-
-  defp to_func("is"), do: &(&1 == &2)
-  defp to_func("is_not"), do: &(&1 != &2)
-  defp to_func("contains"), do: fn a, b -> is_binary(a) and String.contains?(a, b) end
-  defp to_func("does_not_contains"), do: not to_func("contains")
-  defp to_func("matches"), do: &regex_match?(&1, &2)
-  defp to_func("does_not_match"), do: not (&regex_match?(&1, &2))
-  defp to_func("starts_with"), do: fn a, b -> is_binary(a) and String.starts_with?(a, b) end
-  defp to_func("ends_with"), do: fn a, b -> is_binary(a) and String.ends_with?(a, b) end
-  defp to_func("include"), do: fn a, b -> is_list(a) and b in a end
-  defp to_func("exclude"), do: not to_func("include")
-  defp to_func("before_datetime"), do: &compare_datetime(&1, &2, :before)
-  defp to_func("after_datetime"), do: &compare_datetime(&1, &2, :after)
-  defp to_func("before_time"), do: &compare_time(&1, &2, :before)
-  defp to_func("after_time"), do: &compare_time(&1, &2, :after)
-  defp to_func(_), do: nil
-
-  defp regex_match?(value, pattern) when is_binary(value) and is_binary(pattern) do
-    case Regex.compile(pattern, "i") do
-      {:ok, re} -> String.match?(value, re)
-      {:error, _} -> false
-    end
-  end
-
-  defp regex_match?(_, _), do: false
-
-  defp compare_datetime(nil, _, _), do: false
-
-  defp compare_datetime(a_dt, expected, cmp) do
-    case DateTime.from_iso8601(expected) do
-      {:ok, b_dt, _} ->
-        case cmp do
-          :before -> DateTime.compare(a_dt, b_dt) == :lt
-          :after -> DateTime.compare(a_dt, b_dt) == :gt
-        end
-
-      _ ->
-        false
-    end
-  end
-
-  defp compare_time(nil, _, _), do: false
-
-  defp compare_time(%Time{} = a, expected, cmp) when is_binary(expected) do
-    case Time.from_iso8601(expected) do
-      {:ok, b} ->
-        case cmp do
-          :before -> Time.compare(a, b) == :lt
-          :after -> Time.compare(a, b) == :gt
-        end
-
-      _ ->
-        false
     end
   end
 end
