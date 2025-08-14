@@ -15,7 +15,6 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.Rule do
   @required_fields ~w(name action alert_description_id)a
 
   @actions ~w(notify nothing)a
-  @notification_methods Dispatcher.available_providers()
 
   schema "alert_description_rules" do
     field :name, :string
@@ -161,7 +160,8 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.Rule do
           |> String.split(",")
           |> Enum.map(&String.trim/1)
 
-        invalid_methods = methods -- @notification_methods
+        available_methods = Dispatcher.available_providers()
+        invalid_methods = methods -- available_methods
 
         if invalid_methods == [] do
           changeset

@@ -8,16 +8,10 @@ defmodule Notifeye.Notifications.Dispatcher do
   """
 
   alias Notifeye.Accounts.User
-  alias Notifeye.Notifications.Providers.{Email, RocketChat}
-
-  @providers [Email, RocketChat]
-
-  # todo: notification provider should use the provider
-  # todo: and notification preferences of the alert description
-  # todo: associated with the assignment
+  alias Notifeye.Notifications.ProviderSelector
 
   def notify(%User{} = user, context) do
-    applicable_providers = get_applicable_providers(user, context)
+    applicable_providers = ProviderSelector.select(user, context)
 
     results =
       applicable_providers
@@ -30,29 +24,7 @@ defmodule Notifeye.Notifications.Dispatcher do
     {:ok, results}
   end
 
-  defp get_applicable_providers(%User{} = user, context) do
-    context_type = get_context_type(context)
-
-    @providers
-    |> Enum.filter(fn provider ->
-      provider_handles?(provider, user, context_type)
-    end)
-  end
-
-  defp provider_handles?(provider, user, context_type) do
-    # check is user can be notified via this provider
-    # or if the provider supports this message type
-    provider.can_notify?(user) and
-      context_type in provider.supported_contexts()
-  end
-
-  # the message type is always the first element of the tuple
-  defp get_context_type(context) when is_tuple(context), do: elem(context, 0)
-
   def available_providers do
-    @providers
-    |> Enum.map(fn provider ->
-      provider.provider_name()
-    end)
+    ProviderSelector.available_providers()
   end
 end

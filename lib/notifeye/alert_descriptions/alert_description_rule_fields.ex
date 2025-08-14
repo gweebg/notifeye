@@ -30,10 +30,10 @@ defmodule Notifeye.AlertDescriptions.Rule.Fields do
 
   def alert_field_mapping(alert, field) do
     case field do
-      "alert_title" -> alert.title
-      "alert_description" -> alert.description
-      "alert_severity" -> alert.severity
-      "alert_tags" -> alert.tags
+      "alert_title" -> alert.alert_title
+      "alert_description" -> alert.alert_description
+      "alert_severity" -> alert.alert_severity
+      "alert_tags" -> alert.alert_tags
       "start" -> alert.start
       "end" -> alert.end
       "inserted_at" -> alert.inserted_at

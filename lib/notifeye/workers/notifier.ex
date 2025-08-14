@@ -60,7 +60,10 @@ defmodule Notifeye.Workers.Notifier do
          for: %{"user_id" => user_id, "group_id" => group_id, "assignment_id" => assignment_id}
        ) do
     user = Accounts.get_user!(user_id)
-    assignment = AlertAssignments.get_alert_assignment!(assignment_id, [:alert])
+
+    assignment =
+      AlertAssignments.get_alert_assignment!(assignment_id, [:alert, :user, :alert_description])
+
     group = Notifications.get_notification_group!(group_id)
 
     {user, {:group_notification, group, assignment}}
@@ -70,11 +73,10 @@ defmodule Notifeye.Workers.Notifier do
     assignment =
       AlertAssignments.get_alert_assignment!(
         assignment_id,
-        [:user, :alert]
+        [:alert, :user, :alert_description]
       )
 
     lead = Accounts.get_user!(lead_id)
-
     {lead, {:lead_notification, assignment}}
   end
 
@@ -82,7 +84,7 @@ defmodule Notifeye.Workers.Notifier do
     assignment =
       AlertAssignments.get_alert_assignment!(
         assignment_id,
-        [:user, :alert]
+        [:alert, :user, :alert_description]
       )
 
     {assignment.user, {:assignment_created, assignment}}
