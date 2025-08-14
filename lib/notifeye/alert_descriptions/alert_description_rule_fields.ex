@@ -44,13 +44,16 @@ defmodule Notifeye.AlertDescriptions.Rule.Fields do
   def op_to_func("is"), do: &(&1 == &2)
   def op_to_func("is_not"), do: &(&1 != &2)
   def op_to_func("contains"), do: fn a, b -> is_binary(a) and String.contains?(a, b) end
-  def op_to_func("does_not_contains"), do: not op_to_func("contains")
+
+  def op_to_func("does_not_contains"),
+    do: fn a, b -> is_binary(a) and not String.contains?(a, b) end
+
   def op_to_func("matches"), do: &regex_match?(&1, &2)
   def op_to_func("does_not_match"), do: not (&regex_match?(&1, &2))
   def op_to_func("starts_with"), do: fn a, b -> is_binary(a) and String.starts_with?(a, b) end
   def op_to_func("ends_with"), do: fn a, b -> is_binary(a) and String.ends_with?(a, b) end
   def op_to_func("include"), do: fn a, b -> is_list(a) and b in a end
-  def op_to_func("exclude"), do: not op_to_func("include")
+  def op_to_func("exclude"), do: fn a, b -> is_list(a) and b not in a end
   def op_to_func("before_datetime"), do: &compare_datetime(&1, &2, :before)
   def op_to_func("after_datetime"), do: &compare_datetime(&1, &2, :after)
   def op_to_func("before_time"), do: &compare_time(&1, &2, :before)

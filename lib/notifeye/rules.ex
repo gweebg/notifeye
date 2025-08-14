@@ -127,7 +127,6 @@ defmodule Notifeye.Rules do
   defp apply_clause(%RuleClause{field: field, operator: op, value: value}, alert) do
     alert_value = Fields.alert_field_mapping(alert, field)
     evaluate_condition(alert_value, op, value)
-    alert_value
   end
 
   defp evaluate_condition(field, operator, expected_value) do
