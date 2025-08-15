@@ -83,13 +83,19 @@ defmodule Notifeye.AlertDescriptions.Rule.Fields do
 
   defp compare_time(nil, _, _), do: false
 
-  defp compare_time(%Time{} = a, expected, cmp) when is_binary(expected) do
-    case Time.from_iso8601(expected) do
-      {:ok, b} ->
-        compare_values(Time.compare(a, b), cmp)
+  defp compare_time(a, expected, cmp) when is_binary(expected) do
+    a =
+      case a do
+        %DateTime{} -> DateTime.to_time(a)
+        %Time{} -> a
+        _ -> nil
+      end
 
-      _ ->
-        false
+    with %Time{} = a <- a,
+         {:ok, b} <- Time.from_iso8601(expected) do
+      compare_values(Time.compare(a, b), cmp)
+    else
+      _ -> false
     end
   end
 

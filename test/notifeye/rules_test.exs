@@ -209,7 +209,7 @@ defmodule Notifeye.RulesApplyTest do
       assert Rules.check(alert_description.id, alert) == false
     end
 
-    test "multiple blocks with multiple clauses - complex OR/AND logic" do
+    test "checks for a multi-block multi-clause rule" do
       alert_description = alert_description_fixture()
 
       _rule =
@@ -264,6 +264,52 @@ defmodule Notifeye.RulesApplyTest do
         })
 
       assert Rules.check(alert_description.id, alert4) == false
+    end
+
+    test "checks datetime and time operators agains a complex rule" do
+      alert_description = alert_description_fixture()
+
+      _rule =
+        rule_fixture(%{
+          alert_description_id: alert_description.id,
+          active: true,
+          rule_blocks: [
+            %{
+              clauses: [
+                %{field: "start", operator: "after_time", value: "09:00:00"},
+                %{field: "end", operator: "before_time", value: "10:00:00"}
+              ]
+            }
+          ]
+        })
+
+      # should pass first block
+      alert1 =
+        alert_fixture(
+          user_scope_fixture(),
+          %{
+            # 09:30:00
+            start: "1754818200000",
+            # 09:55:15
+            end: "1754819715000"
+          }
+        )
+
+      assert Rules.check(alert_description.id, alert1) == true
+
+      # should fail first block
+      alert2 =
+        alert_fixture(
+          user_scope_fixture(),
+          %{
+            # 12:55:00
+            start: "1754830515000",
+            # 13:00:00
+            end: "1754834400000"
+          }
+        )
+
+      assert Rules.check(alert_description.id, alert2) == false
     end
   end
 end
