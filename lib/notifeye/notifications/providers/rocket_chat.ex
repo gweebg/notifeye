@@ -15,22 +15,21 @@ defmodule Notifeye.Notifications.Providers.RocketChat do
   def send_notification(%User{} = user, context) do
     cond do
       is_nil(@webhook_url) ->
-        {:skip,
-         "#{provider_name()} provider is missing ROCKET_CHAT_NOTIFICATION_HOOK env. variable"}
+        {:skip, "#{provider_name()} provider is missing ROCKET_CHAT_NOTIFICATION_HOOK variable"}
 
       not can_notify?(user) ->
-        {:skip, "#{provider_name()} provider not configured for user #{user.email}"}
+        {:skip, "#{provider_name()} is disabled for user #{user.email}"}
 
       true ->
-        "gweebg"
+        user.notification_preferences.rocket_chat.username
         |> new_body(context)
         |> post_message(url: @webhook_url)
     end
   end
 
-  # todo: use user's configs for rocket.chat
   @impl true
-  def can_notify?(%User{email: _email}), do: true
+  def can_notify?(%User{notification_preferences: notification_preferences}),
+    do: notification_preferences.rocket_chat.enabled
 
   @impl true
   def provider_name(), do: "rocket_chat"

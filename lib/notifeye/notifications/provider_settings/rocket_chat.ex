@@ -17,7 +17,7 @@ defmodule Notifeye.Notifications.ProviderSettings.RocketChat do
 
   def changeset(settings, attrs) do
     settings
-    |> cast(attrs, [:enabled, :email_address])
+    |> cast(attrs, [:enabled, :username])
     |> validate_length(:username, max: 128)
   end
 end

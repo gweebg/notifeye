@@ -23,11 +23,9 @@ defmodule Notifeye.Notifications.Providers.Email do
     end
   end
 
-  # todo: later on, update this function to fetch data from the
-  # todo: user's preferences, i.e. if it has emails disabled
   @impl true
-  def can_notify?(%User{email: email}) when is_binary(email) and email != "", do: true
-  def can_notify?(_user), do: false
+  def can_notify?(%User{notification_preferences: notification_preferences}),
+    do: notification_preferences.email.enabled
 
   @impl true
   def provider_name(), do: "email"

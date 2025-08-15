@@ -11,9 +11,9 @@ defmodule Notifeye.Accounts.UserNotifier do
 
   use Phoenix.Swoosh, view: NotifeyeWeb.EmailView
 
-  defp base_email(to: email) do
+  defp base_email(to: %User{} = user) do
     new()
-    |> to(email)
+    |> to(user.notification_preferences.email.email_address)
     |> from({"Notifeye", "noreply@notifeye.com"})
   end
 
@@ -25,7 +25,7 @@ defmodule Notifeye.Accounts.UserNotifier do
     user_url = base_url <> "/users/settings"
     assignment_url = base_url <> "/assignments/#{assignment.id}/acknowledge"
 
-    base_email(to: user.email)
+    base_email(to: user)
     |> subject("You've been assigned to a new alert")
     |> assign(:user, user)
     |> assign(:assignment, assignment)
@@ -42,7 +42,7 @@ defmodule Notifeye.Accounts.UserNotifier do
       NotifeyeWeb.Endpoint.url() <>
         "/admin/descriptions/#{description.id}"
 
-    base_email(to: user.email)
+    base_email(to: user)
     |> subject("(##{description.id}) A new alert type has been identified")
     |> assign(:user, user)
     |> assign(:description, description)
@@ -55,7 +55,7 @@ defmodule Notifeye.Accounts.UserNotifier do
         %User{} = user,
         for: {:group_notification, %NotificationGroup{} = ng, %AlertAssignment{} = as}
       ) do
-    base_email(to: user.email)
+    base_email(to: user)
     |> subject("(##{as.alert_description_id}) A new alert has been identified")
     |> assign(:user, user)
     |> assign(:notification_group, ng)
