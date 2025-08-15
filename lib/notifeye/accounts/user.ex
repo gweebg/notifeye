@@ -6,6 +6,7 @@ defmodule Notifeye.Accounts.User do
   import Ecto.Changeset
 
   alias Notifeye.Accounts
+  alias Notifeye.Notifications
 
   @roles ~w(user admin lead)a
 
@@ -20,6 +21,9 @@ defmodule Notifeye.Accounts.User do
     field :standing, :integer, default: 10
     field :role, Ecto.Enum, values: @roles, default: :user
     field :aliases, {:array, :string}, default: []
+
+    embeds_one :notification_preferences, Accounts.UserNotificationPreferences,
+      on_replace: :update
 
     belongs_to :lead, __MODULE__
 
@@ -37,7 +41,55 @@ defmodule Notifeye.Accounts.User do
   end
 
   @doc """
-  A user changeset for registering or changing the email.
+  A user changeset for registering.
+
+  It requires the email to change otherwise an error is added.
+
+  It infers the user's username via the email if not specified. It creates
+  the default notification preferences (`email`, `rocket_chat`) using the values
+  of `email` and `username`.
+
+  ## Options
+
+    * `:validate_email` - Set to false if you don't want to validate the
+      uniqueness of the email, useful when displaying live validations.
+      Defaults to `true`.
+
+    * `:infer_username` - Set to false if you don't want to infer the username
+      from the current email address, useful when updating the email.
+      Defaults to `false`.
+  """
+  def registration_changeset(user, attrs, opts \\ []) do
+    user
+    |> email_changeset(attrs, opts)
+    |> default_notification_preferences()
+  end
+
+  defp default_notification_preferences(changeset) do
+    email = get_field(changeset, :email)
+    username = get_field(changeset, :username)
+
+    preferences = %Accounts.UserNotificationPreferences{
+      email: %Notifications.ProviderSettings.Email{
+        enabled: true,
+        email_address: email
+      },
+      rocket_chat: %Notifications.ProviderSettings.RocketChat{
+        enabled: true,
+        # :infer_username=true
+        username: username
+      }
+    }
+
+    # should never return other than nil
+    case get_field(changeset, :notification_preferences) do
+      nil -> put_embed(changeset, :notification_preferences, preferences)
+      _ -> changeset
+    end
+  end
+
+  @doc """
+  A user changeset for changing the email.
 
   It requires the email to change otherwise an error is added.
 
@@ -51,13 +103,21 @@ defmodule Notifeye.Accounts.User do
     user
     |> cast(attrs, [:email, :username])
     |> validate_email(opts)
-    |> maybe_put_username()
+    |> maybe_put_username(opts)
   end
 
-  defp maybe_put_username(changeset) do
+  defp maybe_put_username(changeset, opts) do
+    if Keyword.get(opts, :infer_username, false) do
+      infer_name_from_email(changeset)
+    else
+      changeset
+    end
+  end
+
+  def infer_name_from_email(changeset) do
     case {get_field(changeset, :username), get_field(changeset, :email)} do
       {nil, email} when is_binary(email) ->
-        username = infer_name_from_email(email)
+        username = build_username_from_email(email)
         put_change(changeset, :username, username)
 
       _ ->
@@ -65,7 +125,7 @@ defmodule Notifeye.Accounts.User do
     end
   end
 
-  def infer_name_from_email(email) do
+  def build_username_from_email(email) do
     email
     |> String.split("@")
     |> hd()
@@ -138,10 +198,11 @@ defmodule Notifeye.Accounts.User do
     changeset
     |> validate_required([:password])
     |> validate_length(:password, min: 12, max: 72)
-    # Examples of additional password validation:
     # |> validate_format(:password, ~r/[a-z]/, message: "at least one lower case character")
     # |> validate_format(:password, ~r/[A-Z]/, message: "at least one upper case character")
-    # |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/, message: "at least one digit or punctuation character")
+    # |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/,
+    #   message: "at least one digit or punctuation character"
+    # )
     |> maybe_hash_password(opts)
   end
 
@@ -231,5 +292,14 @@ defmodule Notifeye.Accounts.User do
   defp lead_user?(user_id) do
     user = Accounts.get_user!(user_id)
     user.role in ~w(admin lead)a
+  end
+
+  @doc """
+  User changeset for updating notification preferences.
+  """
+  def notification_preferences_changeset(user, attrs) do
+    user
+    |> cast(attrs, [])
+    |> cast_embed(:notification_preferences)
   end
 end

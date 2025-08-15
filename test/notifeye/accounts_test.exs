@@ -77,12 +77,12 @@ defmodule Notifeye.AccountsTest do
       assert "has already been taken" in errors_on(changeset).email
     end
 
-    test "creates user with expected defaults" do
+    test "infers the username from the email, if not provided" do
       email = unique_user_email()
       {:ok, user} = Accounts.register_user(valid_user_attributes(email: email))
 
       assert user.email == email
-      assert user.username == Notifeye.Accounts.User.infer_name_from_email(email)
+      assert user.username == Notifeye.Accounts.User.build_username_from_email(email)
       assert user.role == :user
       assert user.standing == 10
       assert is_nil(user.lead_id)
@@ -97,6 +97,18 @@ defmodule Notifeye.AccountsTest do
 
       assert user.email == email
       assert user.username == username
+    end
+
+    test "creates user with default notification preferences" do
+      email = unique_user_email()
+      {:ok, user} = Accounts.register_user(%{email: email})
+
+      refute is_nil(user.notification_preferences)
+      refute is_nil(user.notification_preferences.email)
+      refute is_nil(user.notification_preferences.rocket_chat)
+
+      assert user.notification_preferences.email.email_address == user.email
+      assert user.notification_preferences.rocket_chat.username == user.username
     end
 
     test "registers users without password" do
@@ -264,6 +276,69 @@ defmodule Notifeye.AccountsTest do
         })
 
       refute Repo.get_by(UserToken, user_id: user.id)
+    end
+  end
+
+  describe "change_user_notification_preferences/2" do
+    setup do
+      %{user: user_fixture()}
+    end
+
+    test "returns a user changeset", %{user: user} do
+      assert %Ecto.Changeset{} = Accounts.change_user_notification_preferences(user, %{})
+    end
+
+    test "returns a valid changeset with valid data", %{user: user} do
+      assert %Ecto.Changeset{} =
+               changeset =
+               Accounts.change_user_notification_preferences(user, %{
+                 "notification_preferences" => %{
+                   "email" => %{"enabled" => true, "email_address" => "valid@example.com"}
+                 }
+               })
+
+      assert changeset.valid?
+    end
+
+    test "returns an invalid changeset with invalid data", %{user: user} do
+      assert %Ecto.Changeset{} =
+               changeset =
+               Accounts.change_user_notification_preferences(user, %{
+                 "notification_preferences" => %{
+                   "email" => %{"enabled" => true, "email_address" => "invalid.example.com"}
+                 }
+               })
+
+      assert not changeset.valid?
+    end
+  end
+
+  describe "update_user_notification_preferences/2" do
+    setup do
+      %{user: user_fixture()}
+    end
+
+    test "updates the notification preferences with valid data", %{user: user} do
+      {:ok, user} =
+        Accounts.update_user_notification_preferences(user, %{
+          "notification_preferences" => %{
+            "email" => %{"enabled" => true, "email_address" => "other@example.com"}
+          }
+        })
+
+      changed_user = Accounts.get_user!(user.id)
+
+      assert changed_user.notification_preferences.email.email_address == "other@example.com"
+      assert changed_user.notification_preferences.email.enabled
+    end
+
+    test "does not update preferences with invalid data", %{user: user} do
+      assert {:error, _reason} =
+               Accounts.update_user_notification_preferences(user, %{
+                 "notification_preferences" => %{
+                   "email" => %{"enabled" => true, "email_address" => "example.com"}
+                 }
+               })
     end
   end
 

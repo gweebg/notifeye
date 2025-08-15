@@ -77,7 +77,7 @@ defmodule Notifeye.Accounts do
   """
   def register_user(attrs) do
     %User{}
-    |> User.email_changeset(attrs)
+    |> User.registration_changeset(attrs, infer_username: true)
     |> Repo.insert()
   end
 
@@ -174,6 +174,27 @@ defmodule Notifeye.Accounts do
       {:ok, user, expired_tokens} -> {:ok, user, expired_tokens}
       {:error, :user, changeset, _} -> {:error, changeset}
     end
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for changing the user notification preferences.
+
+  ## Examples
+
+      iex> change_user_notification_preferences(user)
+      %Ecto.Changeset{data: %User{}}
+  """
+  def change_user_notification_preferences(user, attrs) do
+    User.notification_preferences_changeset(user, attrs)
+  end
+
+  @doc """
+  Updates the user notification preferences.
+  """
+  def update_user_notification_preferences(user, attrs) do
+    user
+    |> User.notification_preferences_changeset(attrs)
+    |> Repo.update()
   end
 
   ## Session
