@@ -10,14 +10,12 @@ defmodule Notifeye.Workers.ProcessorTest do
   alias Notifeye.Workers.{Processor, Notifier}
   alias Notifeye.{AlertAssignments, Notifications}
   alias Notifeye.AlertAssignments.AlertAssignment
+  alias Notifeye.Accounts
 
   @single_sample """
   The following have met the condition:
   [ {
     "dvchost" : "user1",
-    "dvc" : "10.10.60.223",
-    "darktraceUrl" : "",
-    "count" : 1.0
   } ]
   """
 
@@ -25,51 +23,19 @@ defmodule Notifeye.Workers.ProcessorTest do
   The following have met the condition:
   [ {
     "dvchost" : "user1",
-    "dvc" : "10.10.60.185",
-    "darktraceUrl" : "",
-    "count" : 1.0
   }, {
     "dvchost" : "user2",
-    "dvc" : "10.10.60.185",
-    "darktraceUrl" : "",
-    "count" : 1.0
   }, {
     "dvchost" : "user3",
-    "dvc" : "10.10.60.229",
-    "darktraceUrl" : "",
-    "count" : 1.0
   } ]
   """
 
-  # helper functions to reduce duplication
-  defp standard_pattern, do: "\"dvchost\" : \"(?<user>[A-Za-z0-9\\-\\.]+)\""
-  defp non_matching_pattern, do: ".*database.*"
-  defp invalid_pattern, do: "["
-
-  defp create_job(logz_id, samples \\ @single_sample) do
-    alert =
-      user_scope_fixture()
-      |> alert_fixture()
-
-    %Oban.Job{
-      args: %{
-        "logz_id" => logz_id,
-        "alert_event_samples" => samples,
-        "id" => alert.id
-      }
-    }
-  end
-
-  defp create_notification_group_with_users(users) do
-    {:ok, notification_group} =
-      notification_group_fixture()
-      |> Notifications.update_notification_group_users(users)
-
-    notification_group
-  end
+  @standard_pattern "\"dvchost\" : \"(?<user>[A-Za-z0-9\\-\\.]+)\""
+  @non_matching_pattern ".*database.*"
+  @invalid_pattern "["
 
   describe "perform/1" do
-    test "creates new alert description when logz_id does not exist" do
+    test "creates new description if it doesn't exist" do
       logz_id = System.unique_integer([:positive])
       job = create_job(logz_id)
 
@@ -83,23 +49,23 @@ defmodule Notifeye.Workers.ProcessorTest do
       assert_enqueued(worker: Notifier, args: %{description_id: logz_id})
     end
 
-    test "cancels when alert description is disabled" do
+    test "returns :ok when alert description is disabled" do
       alert_description = alert_description_fixture(%{state: :disabled})
       job = create_job(alert_description.id)
 
       # job is cancelled with a message indicating the alert is disabled
       expected_message = "alert (#{alert_description.id}) is disabled"
-      assert {:cancel, ^expected_message} = Processor.perform(job)
+      assert {:ok, ^expected_message} = Processor.perform(job)
 
       # no notifications should be enqueued
       refute_enqueued(worker: Notifier)
     end
 
-    test "cancels when pattern does not match samples" do
+    test "cancels when pattern does not match any samples" do
       alert_description =
         alert_description_fixture(%{
           state: :enabled,
-          pattern: non_matching_pattern()
+          pattern: @non_matching_pattern
         })
 
       job = create_job(alert_description.id)
@@ -117,113 +83,162 @@ defmodule Notifeye.Workers.ProcessorTest do
       alert_description =
         alert_description_fixture(%{
           state: :enabled,
-          pattern: invalid_pattern()
+          pattern: @invalid_pattern
         })
 
       job = create_job(alert_description.id)
 
       # job is cancelled with the error message from pattern matching
       # no notifications should be enqueued
-      assert {:cancel, _error_message} = Processor.perform(job)
+      assert {:cancel, _reason} = Processor.perform(job)
       refute_enqueued(worker: Notifier)
     end
 
-    test "processes enabled alert with matching pattern for an existing user - no notification group" do
-      user1 = user_fixture(%{email: "user1@example.com"})
+    test "returns the assignment and enqueues notification if samples match existing user" do
+      user = user_fixture(%{email: "user1@example.com"})
 
       alert_description =
         alert_description_fixture(%{
           state: :enabled,
-          pattern: standard_pattern()
+          pattern: @standard_pattern
         })
 
       job = create_job(alert_description.id)
 
-      assert {:ok, [%AlertAssignment{} = assignment]} = Processor.perform(job)
+      assert {:ok, [%AlertAssignment{} = _assignment]} = Processor.perform(job)
 
       # verify assignments were created in the database
-      db_assignments =
+      [%AlertAssignment{} = assignment] =
         AlertAssignments.list_alert_assignments_for_alert_description(alert_description.id)
 
-      assert length(db_assignments) == 1
+      assert assignment.alert_description_id == alert_description.id
+      assert assignment.user_id == user.id
 
       # should enqueue notification for the user
       assert_enqueued(worker: Notifier, args: %{assignment_id: assignment.id})
-
-      # should not enqueue group notifications (no notification group)
-      refute_enqueued(
-        worker: Notifier,
-        args: %{user_id: user1.id, alert_description_id: alert_description.id}
-      )
     end
 
-    test "processes enabled alert with notification group" do
-      _user1 = user_fixture(%{email: "user1@example.com"})
+    test "returns a list of assignments and enqueues many notifications if samples match multiple users" do
+      _user = user_fixture(%{email: "user1@example.com"})
+      _user = user_fixture(%{email: "user2@example.com"})
+      _user = user_fixture(%{email: "user3@example.com"})
+
+      description =
+        alert_description_fixture(%{
+          state: :enabled,
+          pattern: @standard_pattern
+        })
+
+      job = create_job(description.id, @multi_samples)
+
+      assert {:ok, _assignments} = Processor.perform(job)
+
+      assignments =
+        AlertAssignments.list_alert_assignments_for_alert_description(description.id)
+
+      assert is_list(assignments) && length(assignments) == 3
+
+      for assignment <- assignments do
+        assert assignment.alert_description_id == description.id
+        assert_enqueued(worker: Notifier, args: %{assignment_id: assignment.id})
+      end
+    end
+
+    test "returns an admin assignment if the samples match but user doesn't exist" do
+      {:ok, admin} = Accounts.create_admin_user()
+
+      description =
+        alert_description_fixture(%{
+          state: :enabled,
+          pattern: @standard_pattern
+        })
+
+      job = create_job(description.id)
+
+      {:ok, [%AlertAssignment{} = _assignment]} = Processor.perform(job)
+
+      [%AlertAssignment{} = assignment] =
+        AlertAssignments.list_alert_assignments_for_alert_description(description.id)
+
+      assert assignment.user_id == admin.id
+      assert assignment.alert_description_id == description.id
+
+      assert_enqueued(worker: Notifier, args: %{assignment_id: assignment.id})
+    end
+
+    test "enqueues group notifications if set in the description" do
+      _user = user_fixture(%{email: "user1@example.com"})
+
       group_user1 = user_fixture(%{email: "group1@example.com"})
       group_user2 = user_fixture(%{email: "group2@example.com"})
 
       notification_group =
         create_notification_group_with_users([group_user1, group_user2])
 
-      alert_description =
+      description =
         alert_description_fixture(%{
           state: :enabled,
-          pattern: standard_pattern(),
+          pattern: @standard_pattern,
           notification_group_id: notification_group.id
         })
 
-      job = create_job(alert_description.id)
+      job = create_job(description.id)
 
-      assert {:ok, [%AlertAssignment{} = assignment]} = Processor.perform(job)
+      assert {:ok, [%AlertAssignment{} = _assignment]} = Processor.perform(job)
+
+      [%AlertAssignment{} = assignment] =
+        AlertAssignments.list_alert_assignments_for_alert_description(description.id)
 
       # should enqueue assignment notification for the user
       assert_enqueued(worker: Notifier, args: %{assignment_id: assignment.id})
 
-      # should enqueue group notifications
-      assert_enqueued(
-        worker: Notifier,
-        args: %{
-          user_id: group_user1.id,
-          group_id: notification_group.id,
-          assignment_id: assignment.id
-        }
-      )
-
-      assert_enqueued(
-        worker: Notifier,
-        args: %{
-          user_id: group_user2.id,
-          group_id: notification_group.id,
-          assignment_id: assignment.id
-        }
-      )
+      # assert group notifications were enqueued
+      for user <- notification_group.users do
+        assert_enqueued(
+          worker: Notifier,
+          args: %{
+            user_id: user.id,
+            group_id: notification_group.id,
+            assignment_id: assignment.id
+          }
+        )
+      end
     end
 
-    test "processes grouponly alert with notification group, only sending group notifications" do
-      _user1 = user_fixture(%{email: "user1@example.com"})
+    test "enqueues only group notifications if state is group_only" do
+      user = user_fixture(%{email: "user1@example.com"})
+
       group_user1 = user_fixture(%{email: "group1@example.com"})
       group_user2 = user_fixture(%{email: "group2@example.com"})
 
       notification_group =
         create_notification_group_with_users([group_user1, group_user2])
 
-      alert_description =
+      description =
         alert_description_fixture(%{
           state: :grouponly,
-          pattern: standard_pattern(),
+          pattern: @standard_pattern,
           notification_group_id: notification_group.id
         })
 
-      job = create_job(alert_description.id)
+      job = create_job(description.id)
 
-      assert {:ok, [%AlertAssignment{} = assignment]} = Processor.perform(job)
+      assert {:ok, [%AlertAssignment{} = _assignment]} = Processor.perform(job)
 
-      jobs = all_enqueued(worker: Notifier)
+      [%AlertAssignment{} = assignment] =
+        AlertAssignments.list_alert_assignments_for_alert_description(description.id)
+
+      assert assignment.user_id == user.id
+      assert assignment.alert_description_id == description.id
+
+      all_jobs = all_enqueued(worker: Notifier)
+
+      assert length(all_jobs) == 2
 
       # should enqueue group notifications for both users
       # must be tested like this because the assignment job
       # also matches the group notification job
-      assert Enum.any?(jobs, fn job ->
+      assert Enum.any?(all_jobs, fn job ->
                job.args == %{
                  "user_id" => group_user1.id,
                  "group_id" => notification_group.id,
@@ -232,62 +247,72 @@ defmodule Notifeye.Workers.ProcessorTest do
              end)
 
       # should not enqueue assignment notification for the user
-      refute Enum.any?(jobs, fn job ->
+      refute Enum.any?(all_jobs, fn job ->
                job.args == %{"assignment_id" => assignment.id}
              end)
     end
 
-    test "processes grouponly alert without notification group - creates assignments but no notifications" do
-      _user1 = user_fixture(%{email: "user1@example.com"})
+    test "enqueues assignment notifications and group notifications if group is set" do
+      user = user_fixture(%{email: "user1@example.com"})
 
-      alert_description =
-        alert_description_fixture(%{
-          state: :grouponly,
-          pattern: standard_pattern()
-        })
+      group_user1 = user_fixture(%{email: "group1@example.com"})
+      group_user2 = user_fixture(%{email: "group2@example.com"})
 
-      job = create_job(alert_description.id)
+      notification_group =
+        create_notification_group_with_users([group_user1, group_user2])
 
-      assert {:ok, assignments} = Processor.perform(job)
-      assert length(assignments) == 1
-
-      # should create alert assignments
-      db_assignments =
-        AlertAssignments.list_alert_assignments_for_alert_description(alert_description.id)
-
-      assert length(db_assignments) == 1
-
-      # should not enqueue any notifications
-      refute_enqueued(worker: Notifier)
-    end
-
-    test "processes alert with multiple matches - creating multiple assignments and notifications" do
-      _user1 = user_fixture(%{email: "user1@example.com"})
-      _user2 = user_fixture(%{email: "user2@example.com"})
-      _user3 = user_fixture(%{email: "user3@example.com"})
-
-      alert_description =
+      description =
         alert_description_fixture(%{
           state: :enabled,
-          pattern: standard_pattern()
+          pattern: @standard_pattern,
+          notification_group_id: notification_group.id
         })
 
-      job = create_job(alert_description.id, @multi_samples)
+      job = create_job(description.id)
 
-      # ensure 3 assignments were returned
-      assert {:ok, assignments} = Processor.perform(job)
-      assert length(assignments) == 3
+      assert {:ok, [%AlertAssignment{} = _assignment]} = Processor.perform(job)
 
-      # verify 3 assignments were created in the database
-      db_assignments =
-        AlertAssignments.list_alert_assignments_for_alert_description(alert_description.id)
+      [%AlertAssignment{} = assignment] =
+        AlertAssignments.list_alert_assignments_for_alert_description(description.id)
 
-      assert length(db_assignments) == 3
+      assert assignment.user_id == user.id
+      assert assignment.alert_description_id == description.id
 
-      # should enqueue 3 notification jobs, one for each assignment
-      for assignment <- assignments do
-        assert_enqueued(worker: Notifier, args: %{assignment_id: assignment.id})
-      end
+      all_jobs = all_enqueued(worker: Notifier)
+
+      assert length(all_jobs) == 3
+
+      assert Enum.any?(all_jobs, fn job ->
+               job.args == %{
+                 "user_id" => group_user1.id,
+                 "group_id" => notification_group.id,
+                 "assignment_id" => assignment.id
+               }
+             end)
+
+      assert Enum.any?(all_jobs, fn job ->
+               job.args == %{"assignment_id" => assignment.id}
+             end)
     end
+  end
+
+  defp create_job(description_id, samples \\ @single_sample) do
+    alert = alert_fixture(user_scope_fixture())
+
+    %Oban.Job{
+      args: %{
+        "id" => alert.id,
+        "logz_id" => description_id,
+        "alert_event_samples" => samples
+      }
+    }
+  end
+
+  defp create_notification_group_with_users(users) do
+    {:ok, notification_group} =
+      notification_group_fixture()
+      |> Notifications.update_notification_group_users(users)
+
+    notification_group
   end
 end

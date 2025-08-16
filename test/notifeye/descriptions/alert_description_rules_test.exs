@@ -1,4 +1,4 @@
-defmodule Notifeye.AlertDescriptionsRulesTest do
+defmodule Notifeye.AlertDescriptionRulesTest do
   use Notifeye.DataCase
 
   alias Notifeye.Rules

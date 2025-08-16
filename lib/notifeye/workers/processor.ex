@@ -77,7 +77,7 @@ defmodule Notifeye.Workers.Processor do
   end
 
   defp process_alert(%Context{description: %AlertDescription{state: :disabled} = description}) do
-    {:cancel, "alert (#{description.id}) is disabled"}
+    {:ok, "alert (#{description.id}) is disabled"}
   end
 
   defp process_alert(%Context{description: description} = context) do

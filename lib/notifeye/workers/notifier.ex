@@ -18,7 +18,6 @@ defmodule Notifeye.Workers.Notifier do
     tags: ["notification"]
 
   # todo: explore different backoff alternatives
-  # todo: or even contextual backoff
 
   @doc """
   Performs the notifying job.
