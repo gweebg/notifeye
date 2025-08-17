@@ -1,71 +1,49 @@
 defmodule Notifeye.MonitoringTest do
   use Notifeye.DataCase
 
+  import Notifeye.MonitoringFixtures
+  import Notifeye.AccountsFixtures, only: [user_scope_fixture: 0]
+
   alias Notifeye.Monitoring
+  alias Notifeye.Monitoring.Alert
 
-  describe "alerts" do
-    alias Notifeye.Monitoring.Alert
-
-    import Notifeye.AccountsFixtures, only: [user_scope_fixture: 0]
-
-    @invalid_attrs %{
-      start: nil,
-      end: nil,
-      logz_id: nil,
-      alert_title: nil,
-      alert_description: nil,
-      alert_severity: nil,
-      alert_event_samples: nil,
-      alert_tags: nil
-    }
-
-    test "create_alert/2 with valid data creates an alert" do
-      valid_attrs = %{
-        start: "1747064520000",
-        end: "1747067000000",
-        logz_id: 1000,
-        alert_title: "some alert_title",
-        alert_description: "some alert_description",
-        alert_severity: "some alert_severity",
-        alert_event_samples: "some alert_event_samples",
-        alert_tags: ["option1", "option2"]
-      }
-
+  describe "create_alert/2" do
+    test "with valid data creates an alert" do
+      attrs = valid_alert_attrs()
       scope = user_scope_fixture()
-      assert {:ok, %Alert{} = alert} = Monitoring.create_alert(scope, valid_attrs)
 
+      assert {:ok, %Alert{} = alert} = Monitoring.create_alert(scope, attrs)
+
+      assert alert.user_id == scope.user.id
+      assert alert.logz_id == attrs.logz_id
+      assert alert.alert_title == attrs.alert_title
+      assert alert.alert_description == attrs.alert_description
+      assert alert.alert_severity == attrs.alert_severity
+      assert alert.alert_event_samples == attrs.alert_event_samples
+      assert alert.alert_tags == attrs.alert_tags
       assert alert.start == ~U[2025-05-12 15:42:00Z]
       assert alert.end == ~U[2025-05-12 16:23:20Z]
-      assert alert.logz_id == 1000
-      assert alert.alert_title == "some alert_title"
-      assert alert.alert_description == "some alert_description"
-      assert alert.alert_severity == "some alert_severity"
-      assert alert.alert_event_samples == "some alert_event_samples"
-      assert alert.alert_tags == ["option1", "option2"]
-      assert alert.user_id == scope.user.id
     end
 
-    test "create_alert/2 with invalid data returns error changeset" do
+    test "with invalid data returns error changeset" do
       scope = user_scope_fixture()
-      assert {:error, %Ecto.Changeset{}} = Monitoring.create_alert(scope, @invalid_attrs)
+      assert {:error, %Ecto.Changeset{}} = Monitoring.create_alert(scope, invalid_alert_attrs())
     end
 
-    test "create_alert/2 with valid data normalizes the severity to lowercase" do
-      valid_attrs = %{
-        start: "1747064520000",
-        end: "1747067000000",
-        logz_id: 1000,
-        alert_title: "some alert_title",
-        alert_description: "some alert_description",
-        alert_severity: "High",
-        alert_event_samples: "some alert_event_samples",
-        alert_tags: ["option1", "option2"]
-      }
-
+    test "with valid data normalizes the severity to lowercase" do
+      attrs = Enum.into(%{alert_severity: "High"}, valid_alert_attrs())
       scope = user_scope_fixture()
-      assert {:ok, %Alert{} = alert} = Monitoring.create_alert(scope, valid_attrs)
 
-      assert alert.alert_severity == "high"
+      assert {:ok, %Alert{} = alert} = Monitoring.create_alert(scope, attrs)
+      assert alert.alert_severity == String.downcase(attrs.alert_severity)
     end
+  end
+
+  test "get_alert!/1" do
+    scope = user_scope_fixture()
+    alert = alert_fixture(scope)
+
+    assert %Alert{} = a = Monitoring.get_alert!(scope, alert.id)
+    assert a.id == alert.id
   end
 end

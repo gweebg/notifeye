@@ -6,18 +6,17 @@ defmodule Notifeye.Notifications.Providers.Email do
   @behaviour Notifeye.Notifications.Behaviour
 
   alias Notifeye.Accounts.User
-  alias Notifeye.Accounts.UserNotifier
+  alias Notifeye.Accounts.Notifiers.Email
 
-  alias Notifeye.Mailer
-
-  @contexts [:description_created, :assignment_created, :group_notification, :lead_notification]
+  # , :lead_notification]
+  @contexts [:description_created, :assignment_created, :group_notification]
 
   @impl true
   def send_notification(%User{} = user, context) do
     if can_notify?(user) do
       user
-      |> UserNotifier.build_email(for: context)
-      |> Mailer.deliver()
+      |> Email.build_email(for: context)
+      |> Email.deliver()
     else
       {:skip, "#{provider_name()} is not configured for #{user.username}"}
     end

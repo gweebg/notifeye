@@ -8,19 +8,29 @@ defmodule Notifeye.MonitoringFixtures do
   Generate a alert.
   """
   def alert_fixture(scope, attrs \\ %{}) do
-    attrs =
-      Enum.into(attrs, %{
-        alert_description: "some alert_description",
-        alert_event_samples: "some alert_event_samples",
-        alert_severity: "some alert_severity",
-        alert_tags: ["option1", "option2"],
-        alert_title: "some alert_title",
-        end: "1747064520000",
-        logz_id: System.unique_integer([:positive, :monotonic]),
-        start: "1747067000000"
-      })
+    attrs = Enum.into(attrs, valid_alert_attrs())
 
     {:ok, alert} = Notifeye.Monitoring.create_alert(scope, attrs)
     alert
+  end
+
+  def valid_alert_attrs() do
+    %{
+      logz_id: System.unique_integer([:positive, :monotonic]),
+      alert_title: "Mock Alert Title",
+      alert_description: "This is a random alert description.",
+      alert_severity: "high",
+      alert_event_samples: "[{user: 'user'}]",
+      alert_tags: ["insider", "login"],
+      start: "1747064520000",
+      end: "1747067000000"
+    }
+  end
+
+  def invalid_alert_attrs do
+    %{
+      logz_id: -1,
+      alert_title: nil
+    }
   end
 end

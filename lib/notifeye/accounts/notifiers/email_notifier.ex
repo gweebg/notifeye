@@ -1,7 +1,9 @@
-defmodule Notifeye.Accounts.UserNotifier do
+defmodule Notifeye.Accounts.Notifiers.Email do
   @moduledoc false
 
   import Swoosh.Email
+
+  require Logger
 
   alias Notifeye.Mailer
   alias Notifeye.Accounts.User
@@ -11,10 +13,26 @@ defmodule Notifeye.Accounts.UserNotifier do
 
   use Phoenix.Swoosh, view: NotifeyeWeb.EmailView
 
-  defp base_email(to: %User{} = user) do
-    new()
-    |> to(user.notification_preferences.email.email_address)
-    |> from({"Notifeye", "noreply@notifeye.com"})
+  def deliver(email) do
+    # this is process-wide, but since I only call
+    # the deliver function within oban jobs it's fine
+    Logger.metadata(to: email.to, subject: email.subject)
+
+    case Mailer.deliver(email) do
+      {:ok, metadata} ->
+        Logger.debug("email delivered successfully",
+          message_id: Map.get(metadata, :id, "fix me")
+        )
+
+        {:ok, metadata}
+
+      {:error, reason} ->
+        Logger.error("failed to deliver email",
+          error: inspect(reason)
+        )
+
+        {:error, reason}
+    end
   end
 
   def build_email(
@@ -54,21 +72,28 @@ defmodule Notifeye.Accounts.UserNotifier do
         %User{} = user,
         for: {:group_notification, %NotificationGroup{} = ng, %AlertAssignment{} = as}
       ) do
-    alert_url =
-      NotifeyeWeb.Endpoint.url() <>
-        "/alerts/#{as.alert_id}"
+    base_url = NotifeyeWeb.Endpoint.url()
+    desc_url = base_url <> "/admin/descriptions/#{as.alert_description_id}"
+    url = base_url <> "/assignments/#{as.id}/acknowledge"
 
     base_email(to: user)
     |> subject("(##{as.alert_description_id}) Group notification")
     |> assign(:user, user)
     |> assign(:notification_group, ng)
     |> assign(:assignment, as)
-    |> assign(:alert_url, alert_url)
+    |> assign(:desc_url, desc_url)
+    |> assign(:url, url)
     |> render_body("group_notification.html")
   end
 
   def build_email(%User{} = user, for: _) do
     base_email(to: user)
+  end
+
+  defp base_email(to: %User{} = user) do
+    new()
+    |> to(user.notification_preferences.email.email_address)
+    |> from({"Notifeye", "notifications@notifeye.com"})
   end
 
   # Delivers the email using the application mailer.

@@ -45,7 +45,7 @@
                     color: #555555;
                   "
                 >
-                  Alert Notification
+                  (<%= @notification_group.name %>) Assignment Notification
                 </p>
               </td>
             </tr>
@@ -62,8 +62,15 @@
 
                 <!-- Main content -->
                 <p style="margin: 0 0 20px 0; font-size: 15px; color: #333333">
-                  A new instance of the alert <%= @assignment.alert_description_id %> has been
-                  identified. Press the following button to see more details about the event.
+                  A new alert of type <a
+            href="<%= @desc_url %>"
+            target="_blank"
+            style="text-decoration: underline"
+            ><%= @assignment.alert_description_id %></a
+          >, of
+                 <strong><%= @assignment.alert.alert_severity %></strong> severity has been assigned to the user
+                 <%= @assignment.user.username %>. See more details by pressing the button bellow.
+            
                 </p>
 
                 <!-- Centered Button -->
@@ -81,7 +88,7 @@
                       style="border-radius: 6px"
                     >
                       <a
-                        href="<%= @alert_url %>"
+                        href="<%= @url %>"
                         target="_blank"
                         style="
                           display: inline-block;

@@ -71,13 +71,13 @@ config :logger,
   backends: [:console, {LoggerFileBackend, :request_logger}],
   format: "[$level] $message\n"
 
-config :logger, :request_logger,
-  path: System.get_env("LOG_FILE_PATH") || "/tmp/notifeye.log",
-  level: :debug,
-  metadata: [:request_logger]
+# config :logger, :request_logger,
+#   path: System.get_env("LOG_FILE_PATH") || "/tmp/notifeye.log",
+#   level: :debug,
+#   metadata: [:request_logger]
 
 # Do not include metadata nor timestamps in development logs
-config :logger, :default_formatter, format: "[$level] $message\n"
+config :logger, :default_formatter, format: "[$level] $message\n", metadata: :all
 
 # Set a higher stacktrace during development. Avoid configuring such
 # in production as building large stacktraces may be expensive.
