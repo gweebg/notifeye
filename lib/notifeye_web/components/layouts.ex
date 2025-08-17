@@ -9,6 +9,8 @@ defmodule NotifeyeWeb.Layouts do
   """
   use NotifeyeWeb, :html
 
+  alias NotifeyeWeb.Components.Navbar
+
   embed_templates "layouts/*"
 
   @doc """
@@ -31,41 +33,35 @@ defmodule NotifeyeWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <header class="navbar px-4 sm:px-6 lg:px-8">
-      <div class="flex-1">
-        <a href="/" class="flex-1 flex w-fit items-center gap-2">
-          <img src={~p"/images/logo.svg"} width="36" />
-          <span class="text-sm font-semibold">v{Application.spec(:phoenix, :vsn)}</span>
-        </a>
-      </div>
-      <div class="flex-none">
-        <ul class="flex flex-column px-1 space-x-4 items-center">
-          <li>
-            <a href="https://phoenixframework.org/" class="btn btn-ghost">Website</a>
-          </li>
-          <li>
-            <a href="https://github.com/phoenixframework/phoenix" class="btn btn-ghost">GitHub</a>
-          </li>
-          <li>
-            <.theme_toggle />
-          </li>
-          <li>
-            <a href="https://hexdocs.pm/phoenix/overview.html" class="btn btn-primary">
-              Get Started <span aria-hidden="true">&rarr;</span>
-            </a>
-          </li>
-        </ul>
-      </div>
-    </header>
-
-    <main class="px-4 py-8 sm:px-6 lg:px-8">
-      <div class="mx-32 space-y-4">
+    <main class="flex flex-row h-screen">
+      <aside class="w-1/6">
+        <.live_component
+          module={Navbar}
+          id="navbar"
+          current_path={get_current_path(assigns)}
+          current_scope={@current_scope}
+        />
+      </aside>
+      <div class="flex-1 bg-base-200 overflow-y-auto p-4">
         {render_slot(@inner_block)}
       </div>
     </main>
 
     <.flash_group flash={@flash} />
     """
+  end
+
+  defp get_current_path(assigns) do
+    cond do
+      assigns[:current_path] ->
+        assigns.current_path
+
+      assigns[:socket] && assigns.socket.assigns[:current_path] ->
+        assigns.socket.assigns.current_path
+
+      true ->
+        "/"
+    end
   end
 
   @doc """
