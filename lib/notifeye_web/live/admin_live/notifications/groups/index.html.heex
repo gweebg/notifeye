@@ -26,11 +26,15 @@
     </div>
   </dialog>
 
-  <%!-- New Group Modal --%>
-  <dialog :if={@adding} open class="modal overflow-hidden" id="add_group_modal">
+  <%!-- New/Edit Group Modal --%>
+  <dialog :if={@adding or @editing_group} open class="modal overflow-hidden" id="add_group_modal">
     <div class="modal-box w-full max-w-lg">
       <h3 class="flex flex-row items-center font-medium text-xl text-primary mb-4 gap-2">
-        <.icon name="hero-plus-circle" class="w-6 h-6" /> Add a New Group
+        <.icon
+          name={if @editing_group, do: "hero-pencil", else: "hero-plus-circle"}
+          class="w-6 h-6"
+        />
+        {if @editing_group, do: "Edit Group", else: "Add a New Group"}
       </h3>
 
       <.form
@@ -135,32 +139,109 @@
           <button type="button" class="btn btn-outline" phx-click="close_add_modal">
             Cancel
           </button>
-          <.button type="submit" variant="primary" phx-disable-with="Creating...">
-            Create Group
+
+          <%!-- Delete Button (only shown when editing) --%>
+          <button
+            :if={@editing_group}
+            type="button"
+            class="btn btn-error btn-soft"
+            phx-click="confirm_delete"
+          >
+            <.icon name="hero-trash" class="w-4 h-4" /> Delete
+          </button>
+
+          <.button
+            type="submit"
+            variant="primary"
+            phx-disable-with={if @editing_group, do: "Updating...", else: "Creating..."}
+          >
+            {if @editing_group, do: "Update Group", else: "Create Group"}
           </.button>
         </div>
       </.form>
     </div>
   </dialog>
 
+  <%!-- Delete Confirmation Modal --%>
+  <dialog
+    :if={@show_delete_confirmation}
+    open
+    class="modal overflow-hidden"
+    id="delete_confirmation_modal"
+  >
+    <div class="modal-box w-full max-w-md">
+      <h3 class="flex flex-row items-center font-medium text-xl text-error mb-4 gap-2">
+        Confirm Deletion
+      </h3>
+
+      <div class="space-y-3">
+        <p>
+          Are you sure you want to delete the notification group <strong class="text-base-content">"{@editing_group.name}"</strong>?
+        </p>
+
+        <div class="bg-warning/10 border border-warning/20 rounded-lg p-3">
+          <div class="flex items-start gap-2">
+            <.icon
+              name="hero-exclamation-triangle"
+              class="w-5 h-5 text-warning flex-shrink-0 mt-0.5"
+            />
+            <div class="text-sm">
+              <p class="font-medium text-warning mb-1">This action cannot be undone.</p>
+              <p class="text-base-content/70">
+                All alert descriptions using this group will lose their notification group assignment.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-action">
+        <button type="button" class="btn btn-outline" phx-click="cancel_delete">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-error" phx-click="delete_group">
+          <.icon name="hero-trash" class="w-4 h-4" /> Delete Group
+        </button>
+      </div>
+    </div>
+  </dialog>
+
   <%!-- Main Content --%>
-  <div class="max-w-7xl mx-auto space-y-4">
+  <div class="m-6 space-y-4">
     <%!-- Header --%>
     <.header>
       <div class="flex flex-row gap-1">
-        <p class="text-2xl">
-          Notification Groups
+        <p class="text-3xl">
+          Groups
         </p>
-        <span class="hover:cursor-pointer" phx-click="open_help">
+        <span class="hover:cursor-pointer mt-1" phx-click="open_help">
           <.icon name="hero-question-mark-circle" class="w-5 h-5" />
         </span>
       </div>
       <:subtitle>
-        View and manage notification groups for your alert descriptions.
+        <div class="breadcrumbs text-sm">
+          <ul>
+            <li>
+              <.link href={~p"/"}>
+                <.icon name="hero-home" /> Home
+              </.link>
+            </li>
+            <li>
+              <.link href={~p"/"}>
+                <.icon name="hero-bell" /> Notifications
+              </.link>
+            </li>
+            <li>
+              <.link href={~p"/"}>
+                <.icon name="hero-users" /> Groups
+              </.link>
+            </li>
+          </ul>
+        </div>
       </:subtitle>
       <:actions>
         <.button variant="primary" phx-click="open_add_modal">
-          Add New
+          <.icon name="hero-plus" /> Add New
         </.button>
       </:actions>
     </.header>
@@ -218,7 +299,7 @@
           </div>
         </:col>
 
-        <:col :let={{_id, _group}} label="Actions">
+        <:col :let={{_id, group}} label="Actions">
           <div class="flex items-center gap-1 whitespace-nowrap">
             <div class="tooltip" data-tip="View">
               <.link navigate={~p"/descriptions"} class="btn btn-ghost btn-sm">
@@ -226,9 +307,9 @@
               </.link>
             </div>
             <div class="tooltip" data-tip="Edit">
-              <.link navigate={~p"/descriptions"} class="btn btn-ghost btn-sm">
+              <button phx-click="edit_group" phx-value-id={group.id} class="btn btn-ghost btn-sm">
                 <.icon name="hero-pencil" class="w-4 h-4" />
-              </.link>
+              </button>
             </div>
           </div>
         </:col>
