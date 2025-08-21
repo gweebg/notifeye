@@ -6,16 +6,13 @@ defmodule NotifeyeWeb.AlertLive.Show do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
+    <Layouts.app flash={@flash} current_scope={@current_scope} current_path={@current_path}>
       <.header>
         Alert {@alert.id}
         <:subtitle>This is a alert record from your database.</:subtitle>
         <:actions>
           <.button navigate={~p"/alerts"}>
             <.icon name="hero-arrow-left" />
-          </.button>
-          <.button variant="primary" navigate={~p"/alerts/#{@alert}/edit?return_to=show"}>
-            <.icon name="hero-pencil-square" /> Edit alert
           </.button>
         </:actions>
       </.header>

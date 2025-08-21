@@ -6,13 +6,7 @@ defmodule NotifeyeWeb.Components.Navbar do
   alias NotifeyeWeb.NavigationConfig
 
   def update(assigns, socket) do
-    current_path = "/admin/descriptions"
-
-    {:ok,
-     socket
-     |> assign(assigns)
-     |> assign(:current_path, current_path)
-     |> assign(:current_section, NavigationConfig.current_section(current_path))}
+    {:ok, assign(socket, assigns)}
   end
 
   def render(assigns) do

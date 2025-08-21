@@ -56,11 +56,6 @@ defmodule NotifeyeWeb.Router do
 
       live_dashboard "/dashboard", metrics: NotifeyeWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
-    end
-
-    scope "/" do
-      pipe_through :browser
-
       oban_dashboard("/oban")
     end
   end
@@ -76,15 +71,6 @@ defmodule NotifeyeWeb.Router do
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
     end
 
-    live_session :acknowledge,
-      on_mount: [
-        {NotifeyeWeb.UserAuth, :require_authenticated},
-        {NotifeyeWeb.LiveHooks.AuthorizeResource,
-         {:authorize_resource, &Notifeye.AlertAssignments.get_alert_assignment/1}}
-      ] do
-      live "/assignments/:id/acknowledge", AssignmentsLive.Acknowledge, :show
-    end
-
     post "/users/update-password", UserSessionController, :update_password
   end
 
@@ -96,26 +82,50 @@ defmodule NotifeyeWeb.Router do
       live "/users/register", UserLive.Registration, :new
       live "/users/log-in", UserLive.Login, :new
       live "/users/log-in/:token", UserLive.Confirmation, :new
-
-      live "/alerts", AlertLive.Index, :index
-      live "/alerts/new", AlertLive.Form, :new
-      live "/alerts/:id", AlertLive.Show, :show
-      live "/alerts/:id/edit", AlertLive.Form, :edit
     end
 
     post "/users/log-in", UserSessionController, :create
     delete "/users/log-out", UserSessionController, :delete
   end
 
-  scope "/admin", NotifeyeWeb do
+  scope "/", NotifeyeWeb do
     pipe_through [:browser]
 
-    live_session :admin,
-      on_mount: [{NotifeyeWeb.UserAuth, :ensure_admin}] do
+    live_session :alerts,
+      on_mount: [
+        {NotifeyeWeb.UserAuth, :require_authenticated},
+        {NotifeyeWeb.LiveHooks.CurrentPath, :current_path}
+      ] do
+      live "/alerts", AlertLive.Index, :index
+      live "/alerts/:id", AlertLive.Show, :show
+    end
+
+    live_session :descriptions,
+      on_mount: [
+        {NotifeyeWeb.UserAuth, :ensure_admin},
+        {NotifeyeWeb.LiveHooks.CurrentPath, :current_path}
+      ] do
       live "/descriptions", AdminLive.AlertDescriptions.Index, :index
-      live "/descriptions/groups", AdminLive.Notifications.Groups.Index, :index
       live "/descriptions/:id", AdminLive.AlertDescriptions.Show, :show
       live "/descriptions/:id/edit", AdminLive.AlertDescriptions.Edit, :edit
+      live "/descriptions/:id/test", AdminLive.AlertDescriptions.RuleTest, :test
+    end
+
+    live_session :notifications,
+      on_mount: [
+        {NotifeyeWeb.UserAuth, :ensure_admin},
+        {NotifeyeWeb.LiveHooks.CurrentPath, :current_path}
+      ] do
+      live "/notifications/groups", AdminLive.Notifications.Groups.Index, :index
+    end
+
+    live_session :assignments,
+      on_mount: [
+        {NotifeyeWeb.UserAuth, :require_authenticated},
+        {NotifeyeWeb.LiveHooks.AuthorizeResource,
+         {:authorize_resource, &Notifeye.AlertAssignments.get_alert_assignment/1}}
+      ] do
+      live "/assignments/acknowledge/:id", AssignmentsLive.Acknowledge, :show
     end
   end
 end

@@ -16,29 +16,40 @@ defmodule NotifeyeWeb.NavigationConfig do
         routes: [
           %{
             name: "Dashboard",
-            path: "/admin/notifications",
+            path: "/notifications",
             icon: "hero-arrow-trending-up"
           },
           %{
             name: "Groups",
-            path: "/admin/descriptions/groups",
+            path: "/notifications/groups",
             icon: "hero-rectangle-group"
           }
         ]
       },
-      "admin" => %{
+      "alerts" => %{
         title: "Alerts",
         icon: "hero-lock-closed",
         routes: [
           %{
             name: "Descriptions",
-            path: "/admin/descriptions",
+            path: "/descriptions",
             icon: "hero-document-text"
           },
           %{
-            name: "Alert Assignments",
-            path: "/admin/users",
+            name: "Assignments",
+            path: "/assignments",
             icon: "hero-shield-check"
+          }
+        ]
+      },
+      "admin" => %{
+        title: "Administration",
+        icon: "hero-lock-closed",
+        routes: [
+          %{
+            name: "Users",
+            path: "/admin/users",
+            icon: "hero-users"
           }
         ]
       }

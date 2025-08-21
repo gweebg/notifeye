@@ -29,16 +29,20 @@ defmodule NotifeyeWeb.Layouts do
     default: nil,
     doc: "the current [scope](https://hexdocs.pm/phoenix/scopes.html)"
 
+  attr :current_path, :string,
+    default: nil,
+    doc: "the current uri, used on nav bar logic"
+
   slot :inner_block, required: true
 
   def app(assigns) do
     ~H"""
     <main class="flex flex-row h-screen">
-      <aside class="w-1/6">
+      <aside :if={@current_scope && @current_path} class="w-1/6">
         <.live_component
           module={Navbar}
           id="navbar"
-          current_path={get_current_path(assigns)}
+          current_path={@current_path}
           current_scope={@current_scope}
         />
       </aside>
@@ -49,19 +53,6 @@ defmodule NotifeyeWeb.Layouts do
 
     <.flash_group flash={@flash} />
     """
-  end
-
-  defp get_current_path(assigns) do
-    cond do
-      assigns[:current_path] ->
-        assigns.current_path
-
-      assigns[:socket] && assigns.socket.assigns[:current_path] ->
-        assigns.socket.assigns.current_path
-
-      true ->
-        "/"
-    end
   end
 
   @doc """

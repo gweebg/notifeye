@@ -86,7 +86,7 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Index do
 
     {:noreply,
      socket
-     |> push_patch(to: ~p"/admin/descriptions?#{params}")}
+     |> push_patch(to: ~p"/descriptions?#{params}")}
   end
 
   @impl true

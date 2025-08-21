@@ -68,7 +68,7 @@ defmodule NotifeyeWeb.AdminLive.Notifications.Groups.Index do
 
   @impl true
   def handle_event("open_add_modal", _params, socket) do
-    {:noreply, push_patch(socket, to: ~p"/admin/descriptions/groups?adding=true")}
+    {:noreply, push_patch(socket, to: ~p"/notifications/groups?adding=true")}
   end
 
   @impl true
@@ -77,7 +77,7 @@ defmodule NotifeyeWeb.AdminLive.Notifications.Groups.Index do
      socket
      |> assign(:selected_users, [])
      |> assign(:user_search, "")
-     |> push_patch(to: ~p"/admin/descriptions/groups")}
+     |> push_patch(to: ~p"/notifications/groups")}
   end
 
   @impl true
@@ -102,7 +102,7 @@ defmodule NotifeyeWeb.AdminLive.Notifications.Groups.Index do
           user_search: ""
         )
         |> put_flash(:info, "Notification group created successfully")
-        |> push_patch(to: ~p"/admin/descriptions/groups")
+        |> push_patch(to: ~p"/notifications/groups")
         |> noreply()
 
       {:error, %Ecto.Changeset{} = changeset} ->

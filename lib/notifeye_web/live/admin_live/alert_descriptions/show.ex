@@ -47,7 +47,7 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Show do
   defp handle_not_found(socket) do
     socket
     |> put_flash(:error, "Alert description not found")
-    |> push_navigate(to: ~p"/admin/descriptions")
+    |> push_navigate(to: ~p"/descriptions")
   end
 
   defp load_related_data(socket, description_id) do
@@ -73,7 +73,7 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Show do
   defp handle_successful_deletion(socket) do
     socket
     |> put_flash(:info, "Alert description deleted successfully")
-    |> push_navigate(to: ~p"/admin/descriptions")
+    |> push_navigate(to: ~p"/descriptions")
   end
 
   defp assignment_indicator_class(:open), do: "bg-info"

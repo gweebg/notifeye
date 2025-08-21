@@ -1,4 +1,4 @@
-<Layouts.app flash={@flash} current_scope={@current_scope}>
+<Layouts.app flash={@flash} current_scope={@current_scope} current_path={@current_path}>
   <%!-- Help Dialog --%>
   <dialog :if={@show_help} open class="modal overflow-hidden" id="help_dialog">
     <div class="modal-box space-y-2">
@@ -13,7 +13,7 @@
         </p>
         <p>
           They include a name and an optional description for easy identification.
-          You can configure an <.link navigate={~p"/admin/descriptions"}>
+          You can configure an <.link navigate={~p"/descriptions"}>
             <i class="underline">Alert Description</i>
           </.link>on its editing page.
         </p>
@@ -170,7 +170,7 @@
       <Flop.Phoenix.table
         items={@streams.groups}
         meta={@meta}
-        path={~p"/admin/descriptions/groups"}
+        path={~p"/notifications/groups"}
         id="groups_table"
         opts={[
           table_attrs: [class: "table table-zebra"]
@@ -221,12 +221,12 @@
         <:col :let={{_id, _group}} label="Actions">
           <div class="flex items-center gap-1 whitespace-nowrap">
             <div class="tooltip" data-tip="View">
-              <.link navigate={~p"/admin/descriptions"} class="btn btn-ghost btn-sm">
+              <.link navigate={~p"/descriptions"} class="btn btn-ghost btn-sm">
                 <.icon name="hero-eye" class="w-4 h-4" />
               </.link>
             </div>
             <div class="tooltip" data-tip="Edit">
-              <.link navigate={~p"/admin/descriptions"} class="btn btn-ghost btn-sm">
+              <.link navigate={~p"/descriptions"} class="btn btn-ghost btn-sm">
                 <.icon name="hero-pencil" class="w-4 h-4" />
               </.link>
             </div>
