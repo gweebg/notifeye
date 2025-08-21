@@ -5,56 +5,63 @@ defmodule NotifeyeWeb.NavigationConfig do
   sections should be expanded based on the current route.
   """
 
-  @doc """
-  Returns the navigation structure with sections and their routes.
-  """
-  def navigation_sections do
-    %{
-      "notifications" => %{
-        title: "Notifications",
-        icon: "hero-bell",
+  @routes [
+    {
+      :dashboard,
+      %{
+        type: :single,
+        label: "Admin Dashboard",
+        icon: "rectangle-group",
+        path: "/"
+      }
+    },
+    {
+      :alerts,
+      %{
+        type: :multiple,
+        label: "Alerts",
+        icon: "shield-exclamation",
         routes: [
+          %{id: :alerts, name: "Alerts", path: "/alerts", icon: "server"},
           %{
-            name: "Dashboard",
-            path: "/notifications",
-            icon: "hero-arrow-trending-up"
-          },
-          %{
-            name: "Groups",
-            path: "/notifications/groups",
-            icon: "hero-rectangle-group"
-          }
-        ]
-      },
-      "alerts" => %{
-        title: "Alerts",
-        icon: "hero-lock-closed",
-        routes: [
-          %{
+            id: :descriptions,
             name: "Descriptions",
             path: "/descriptions",
-            icon: "hero-document-text"
+            icon: "document-text"
           },
-          %{
-            name: "Assignments",
-            path: "/assignments",
-            icon: "hero-shield-check"
-          }
+          %{id: :assignments, name: "Assignments", path: "/assignments", icon: "shield-check"}
         ]
-      },
-      "admin" => %{
-        title: "Administration",
-        icon: "hero-lock-closed",
+      }
+    },
+    {
+      :notifications,
+      %{
+        type: :multiple,
+        label: "Notifications",
+        icon: "bell",
         routes: [
-          %{
-            name: "Users",
-            path: "/admin/users",
-            icon: "hero-users"
-          }
+          %{name: "Dashboard", path: "/notifications", icon: "arrow-trending-up"},
+          %{name: "Groups", path: "/notifications/groups", icon: "server"}
+        ]
+      }
+    },
+    {
+      :admin,
+      %{
+        type: :multiple,
+        label: "Administration",
+        icon: "lock-closed",
+        routes: [
+          %{name: "Users", path: "/admin/users", icon: "users"}
         ]
       }
     }
-  end
+  ]
+
+  @doc """
+  Returns the navigation structure with sections and their routes.
+  """
+  def navigation_sections, do: @routes
 
   @doc """
   Determines if a section should be expanded based on the current path.
@@ -73,9 +80,26 @@ defmodule NotifeyeWeb.NavigationConfig do
 
   @doc """
   Determines if a specific route is currently active.
+  Uses exact matching or path-specific logic to avoid conflicts.
+
+  todo: remove hardcoded stuff
   """
   def route_active?(route_path, current_path) do
-    String.starts_with?(current_path, route_path)
+    cond do
+      # exact match
+      route_path == current_path ->
+        true
+
+      # For root paths, only match exact
+      route_path in ["/", "/notifications", "/alerts", "/admin"] ->
+        route_path == current_path
+
+      # For sub-paths, use starts_with but ensure it's not a false positive
+      true ->
+        String.starts_with?(current_path, route_path) and
+          (String.length(current_path) == String.length(route_path) or
+             String.at(current_path, String.length(route_path)) == "/")
+    end
   end
 
   @doc """

@@ -1,54 +1,61 @@
 <Layouts.app flash={@flash} current_scope={@current_scope} current_path={@current_path}>
   <div class="m-6 space-y-4">
     <.header>
-      <p class="text-2xl">Alert Descriptions</p>
+      <p class="text-3xl">Alert Descriptions</p>
       <:subtitle>
-        Manage and view all alert descriptions in the system. <br /> Alert descriptions are
-        automatically generated upon the receiving of a new alert.
+        <div class="breadcrumbs text-sm">
+          <ul>
+            <li>
+              <.link href={~p"/"}>
+                <.icon name="hero-home" /> Home
+              </.link>
+            </li>
+            <li>
+              <.link href={~p"/"}>
+                <.icon name="hero-document-text" /> Alert Descriptions
+              </.link>
+            </li>
+          </ul>
+        </div>
       </:subtitle>
-      <:actions>
-        <button class="btn btn-outline btn-primary" phx-click="export">
-          <.icon name="hero-arrow-down-tray" class="w-4 h-4" /> Export JSON
-        </button>
-      </:actions>
     </.header>
 
     <div class="flex flex-col gap-4">
       <%!-- Statistics Row --%>
       <div class="flex flex-col md:flex-row gap-4 justify-evenly">
         <div class="stat bg-base-100 border border-base-200 rounded-lg shadow-sm">
-          <div class="stat-figure text-primary">
+          <div class="stat-figure">
             <.icon name="hero-document-text" class="w-8 h-8" />
           </div>
           <div class="stat-title">Total Descriptions</div>
-          <div class="stat-value text-primary">{@stats.count}</div>
+          <div class="stat-value">{@stats.count}</div>
           <div class="stat-desc">registered on the system</div>
         </div>
 
         <div class="stat bg-base-100 border border-base-200 rounded-lg shadow-sm">
-          <div class="stat-figure text-success">
+          <div class="stat-figure">
             <.icon name="hero-check-circle" class="w-8 h-8" />
           </div>
           <div class="stat-title">Verified Descriptions</div>
-          <div class="stat-value text-success">{@stats.verified_count}</div>
+          <div class="stat-value">{@stats.verified_count}</div>
           <div class="stat-desc">{@stats.verified_percentage}% of total descriptions</div>
         </div>
 
         <div class="stat bg-base-100 border border-base-200 rounded-lg shadow-sm">
-          <div class="stat-figure text-success">
+          <div class="stat-figure">
             <.icon name="hero-play" class="w-8 h-8" />
           </div>
           <div class="stat-title">Active Descriptions</div>
-          <div class="stat-value text-success">{@stats.enabled_count}</div>
+          <div class="stat-value">{@stats.enabled_count}</div>
           <div class="stat-desc">enabled descriptions</div>
         </div>
 
         <div class="stat bg-base-100 border border-base-200 rounded-lg shadow-sm">
-          <div class="stat-figure text-info">
+          <div class="stat-figure">
             <.icon name="hero-swatch" class="w-8 h-8" />
           </div>
           <div class="stat-title">Unique Patterns</div>
-          <div class="stat-value text-info">{@stats.unique_patterns_count}</div>
+          <div class="stat-value">{@stats.unique_patterns_count}</div>
           <div class="stat-desc">unique patterns within all items</div>
         </div>
       </div>
@@ -158,8 +165,8 @@
         </div>
       </div>
 
-      <div class="flex flex-col justify-between min-h-[650px] card bg-base-100 shadow-sm overflow-x-auto">
-        <div class="table table-zebra w-full">
+      <div class="flex flex-col justify-between h-fit card bg-base-100 shadow-sm overflow-x-auto">
+        <div class="table table-zebra w-full mb-5">
           <Flop.Phoenix.table
             items={@streams.alert_descriptions}
             meta={@meta}

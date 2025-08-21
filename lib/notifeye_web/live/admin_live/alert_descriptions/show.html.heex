@@ -1,10 +1,28 @@
 <Layouts.app flash={@flash} current_scope={@current_scope} current_path={@current_path}>
-  <div class="max-w-7xl mx-auto space-y-4">
+  <div class="m-6 space-y-4">
     <%!-- Header --%>
     <.header>
-      <p class="text-2xl">Alert Description #{@alert_description.id}</p>
+      <p class="text-3xl">Description #{@alert_description.id}</p>
       <:subtitle>
-        Overall view of this alert description.
+        <div class="breadcrumbs text-sm">
+          <ul>
+            <li>
+              <.link href={~p"/"}>
+                <.icon name="hero-home" /> Home
+              </.link>
+            </li>
+            <li>
+              <.link href={~p"/"}>
+                <.icon name="hero-document-text" /> Alert Descriptions
+              </.link>
+            </li>
+            <li>
+              <.link href={~p"/"}>
+                {@alert_description.id}
+              </.link>
+            </li>
+          </ul>
+        </div>
       </:subtitle>
       <:actions>
         <button class="btn btn-primary" onclick="history.back()">
@@ -20,92 +38,92 @@
         <%!-- Overview Card --%>
         <div class="card bg-base-100 shadow-sm border border-base-200">
           <div class="card-body">
-            <div class="flex items-center justify-between mb-6">
-              <h2 class="card-title text-xl">
-                <.icon name="hero-document-text" class="w-6 h-6" /> Overview
-              </h2>
-              <div class="badge badge-neutral">
-                #{@alert_description.id}
-              </div>
-            </div>
+            <h2 class="card-title text-xl mb-4">
+              <.icon name="hero-document-text" class="w-6 h-6" /> Overview
+            </h2>
 
-            <%!-- Pattern Section --%>
-            <div class="mb-6">
-              <label class="label pb-1">
-                <span class="label-text font-semibold">Pattern</span>
-              </label>
-              <div class="bg-base-200 overflow-y-auto">
-                <pre class="px-4 py-3"><code class="text-sm text-base-content">{if @alert_description.pattern do
+            <%!-- Metadata --%>
+            <div class="flex flex-col gap-4">
+              <%!-- Pattern --%>
+              <div class="flex flex-col">
+                <label class="label pb-1">
+                  <span class="label-text font-semibold">Pattern</span>
+                </label>
+                <div class="bg-base-200 overflow-y-auto">
+                  <pre class="px-4 py-3"><code class="text-sm text-base-content">{if @alert_description.pattern do
                       @alert_description.pattern
                     else
                       "No pattern defined"
                     end}</code></pre>
-              </div>
-            </div>
-            <%!-- Metadata Grid --%>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div class="space-y-4">
-                <div>
-                  <label class="label pb-1">
-                    <span class="label-text font-semibold">Notification Group</span>
-                  </label>
-                  <div class="flex items-center space-x-2">
-                    <.icon name="hero-user-group" class="w-4 h-4 text-gray-500" />
-                    <span class="text-sm">
-                      {if @alert_description.notification_group_id do
-                        "Group #{@alert_description.notification_group.name}"
-                      else
-                        "No group assigned"
-                      end}
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <label class="label pb-1">
-                    <span class="label-text font-semibold">Edited By</span>
-                  </label>
-                  <div class="flex items-center space-x-2">
-                    <.icon name="hero-user" class="w-4 h-4 text-gray-500" />
-                    <span class="text-sm">
-                      {if @alert_description.edited_by do
-                        "#{@alert_description.user.email}"
-                      else
-                        "-"
-                      end}
-                    </span>
-                  </div>
                 </div>
               </div>
+              <%!-- Rest --%>
+              <div class="">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div class="space-y-4">
+                    <div>
+                      <label class="label pb-1">
+                        <span class="label-text font-semibold">Notification Group</span>
+                      </label>
+                      <div class="flex items-center space-x-2">
+                        <.icon name="hero-user-group" class="w-4 h-4 text-gray-500" />
+                        <span class="text-sm">
+                          {if @alert_description.notification_group_id do
+                            "Group #{@alert_description.notification_group.name}"
+                          else
+                            "No group assigned"
+                          end}
+                        </span>
+                      </div>
+                    </div>
 
-              <div class="space-y-4">
-                <div>
-                  <label class="label pb-1">
-                    <span class="label-text font-semibold">Created</span>
-                  </label>
-                  <div class="flex items-center space-x-2">
-                    <.icon name="hero-calendar" class="w-4 h-4 text-gray-500" />
-                    <span class="text-sm">
-                      {Calendar.strftime(
-                        @alert_description.inserted_at,
-                        "%B %d, %Y at %H:%M UTC"
-                      )}
-                    </span>
+                    <div>
+                      <label class="label pb-1">
+                        <span class="label-text font-semibold">Edited By</span>
+                      </label>
+                      <div class="flex items-center space-x-2">
+                        <.icon name="hero-user" class="w-4 h-4 text-gray-500" />
+                        <span class="text-sm">
+                          {if @alert_description.edited_by do
+                            "#{@alert_description.user.email}"
+                          else
+                            "-"
+                          end}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <label class="label pb-1">
-                    <span class="label-text font-semibold">Last Updated</span>
-                  </label>
-                  <div class="flex items-center space-x-2">
-                    <.icon name="hero-clock" class="w-4 h-4 text-gray-500" />
-                    <span class="text-sm">
-                      {Calendar.strftime(
-                        @alert_description.updated_at,
-                        "%B %d, %Y at %H:%M UTC"
-                      )}
-                    </span>
+                  <div class="space-y-4">
+                    <div>
+                      <label class="label pb-1">
+                        <span class="label-text font-semibold">Created</span>
+                      </label>
+                      <div class="flex items-center space-x-2">
+                        <.icon name="hero-calendar" class="w-4 h-4 text-gray-500" />
+                        <span class="text-sm">
+                          {Calendar.strftime(
+                            @alert_description.inserted_at,
+                            "%B %d, %Y at %H:%M UTC"
+                          )}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label class="label pb-1">
+                        <span class="label-text font-semibold">Last Updated</span>
+                      </label>
+                      <div class="flex items-center space-x-2">
+                        <.icon name="hero-clock" class="w-4 h-4 text-gray-500" />
+                        <span class="text-sm">
+                          {Calendar.strftime(
+                            @alert_description.updated_at,
+                            "%B %d, %Y at %H:%M UTC"
+                          )}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -195,7 +213,7 @@
               <.icon name="hero-chart-bar" class="w-5 h-5" /> Quick Stats
             </h3>
 
-            <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-2">
               <section>
                 <p class="stat-title text-xs">Total Alerts</p>
                 <p class="stat-value text-2xl text-primary">{@total_alerts}</p>
@@ -237,7 +255,7 @@
                 <.icon name="hero-clock" class="w-5 h-5" /> Recent Assignments
               </h3>
               <div class="flex flex-row gap-2 items-center">
-                <div class="tooltip text-sm hover:cursor-pointer">
+                <div class="tooltip tooltip-left text-sm hover:cursor-pointer">
                   <div class="tooltip-content text-start">
                     Results from the last 48 hours, limited to 10. <br />
                     Blue indicator displays an "open" status. <br />
@@ -302,7 +320,7 @@
               </.link>
 
               <button
-                class="btn btn-error btn-outline btn-block"
+                class="btn btn-error btn-soft btn-block"
                 phx-click="delete_description"
                 phx-value-id={@alert_description.id}
                 data-confirm="Are you sure you want to delete this alert description? This action cannot be undone."

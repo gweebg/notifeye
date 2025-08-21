@@ -1,11 +1,34 @@
 <Layouts.app flash={@flash} current_scope={@current_scope} current_path={@current_path}>
-  <div class="max-w-7xl mx-auto space-y-4">
+  <div class="m-6 space-y-4">
     <%!-- Header --%>
     <.header>
-      <p class="text-2xl">Alert Description #{@alert_description.id}</p>
+      <p class="text-3xl">Description #{@alert_description.id}</p>
       <:subtitle>
-        Update the alert description settings and test your regex pattern.
+        <div class="breadcrumbs text-sm">
+          <ul>
+            <li>
+              <.link href={~p"/"}>
+                <.icon name="hero-home" /> Home
+              </.link>
+            </li>
+            <li>
+              <.link href={~p"/"}>
+                <.icon name="hero-document-text" /> Alert Descriptions
+              </.link>
+            </li>
+            <li>
+              <.link href={~p"/"}>
+                <.icon name="hero-pencil" /> {@alert_description.id}
+              </.link>
+            </li>
+          </ul>
+        </div>
       </:subtitle>
+      <:actions>
+        <button class="btn btn-primary" onclick="history.back()">
+          <.icon name="hero-arrow-left" class="w-4 h-4" /> Back
+        </button>
+      </:actions>
     </.header>
 
     <div class="mx-auto">
@@ -164,9 +187,6 @@
 
           <%!-- Form Actions --%>
           <div class="flex justify-end gap-3">
-            <button type="button" class="btn btn-outline" onclick="history.back()">
-              Cancel
-            </button>
             <%= if match?(matches when is_list(matches), @test_result) do %>
               <.button phx-disable-with="Saving..." class="btn btn-primary" type="submit">
                 <.icon name="hero-check" class="w-4 h-4" /> Save Changes
