@@ -206,6 +206,15 @@
     </div>
   </dialog>
 
+  <%!-- Show Group Modal --%>
+  <NotificationGroupShow.notification_group_show
+    group={@showing_group}
+    alert_descriptions={@group_alert_descriptions}
+    show={@showing_group != nil}
+    on_close="close_show_modal"
+    on_edit="edit_group"
+  />
+
   <%!-- Main Content --%>
   <div class="m-6 space-y-4">
     <%!-- Header --%>
@@ -302,9 +311,9 @@
         <:col :let={{_id, group}} label="Actions">
           <div class="flex items-center gap-1 whitespace-nowrap">
             <div class="tooltip" data-tip="View">
-              <.link navigate={~p"/descriptions"} class="btn btn-ghost btn-sm">
+              <button phx-click="show_group" phx-value-id={group.id} class="btn btn-ghost btn-sm">
                 <.icon name="hero-eye" class="w-4 h-4" />
-              </.link>
+              </button>
             </div>
             <div class="tooltip" data-tip="Edit">
               <button phx-click="edit_group" phx-value-id={group.id} class="btn btn-ghost btn-sm">

@@ -6,6 +6,7 @@ defmodule NotifeyeWeb.AdminLive.Notifications.Groups.Index do
 
   alias Notifeye.Notifications
   alias Notifeye.Accounts
+  alias NotifeyeWeb.Components.Modals.NotificationGroupShow
 
   @impl true
   def mount(_params, _session, socket) do
@@ -19,7 +20,9 @@ defmodule NotifeyeWeb.AdminLive.Notifications.Groups.Index do
      |> assign(:user_search, "")
      |> assign(:filtered_users, [])
      |> assign(:editing_group, nil)
-     |> assign(:show_delete_confirmation, false)}
+     |> assign(:show_delete_confirmation, false)
+     |> assign(:showing_group, nil)
+     |> assign(:group_alert_descriptions, [])}
   end
 
   @impl true
@@ -110,6 +113,27 @@ defmodule NotifeyeWeb.AdminLive.Notifications.Groups.Index do
   @impl true
   def handle_event("edit_group", %{"id" => id}, socket) do
     {:noreply, push_patch(socket, to: ~p"/notifications/groups?editing=#{id}")}
+  end
+
+  @impl true
+  def handle_event("show_group", %{"id" => id}, socket) do
+    group = Notifications.get_notification_group_with_users!(id)
+
+    alert_descriptions =
+      Notifeye.AlertDescriptions.list_alert_descriptions_for_notification_group(id)
+
+    {:noreply,
+     socket
+     |> assign(:showing_group, group)
+     |> assign(:group_alert_descriptions, alert_descriptions)}
+  end
+
+  @impl true
+  def handle_event("close_show_modal", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:showing_group, nil)
+     |> assign(:group_alert_descriptions, [])}
   end
 
   @impl true

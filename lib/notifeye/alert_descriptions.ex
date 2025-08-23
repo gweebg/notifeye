@@ -33,6 +33,23 @@ defmodule Notifeye.AlertDescriptions do
   end
 
   @doc """
+  Gets alert descriptions that use a specific notification group.
+
+  ## Examples
+
+      iex> list_alert_descriptions_for_notification_group(notification_group_id)
+      [%AlertDescription{}, ...]
+
+  """
+  def list_alert_descriptions_for_notification_group(notification_group_id) do
+    from(ad in AlertDescription,
+      where: ad.notification_group_id == ^notification_group_id,
+      order_by: [desc: ad.updated_at]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
   Gets a single alert_description.
 
   Raises `Ecto.NoResultsError` if the Alert description does not exist.
