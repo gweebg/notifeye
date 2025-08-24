@@ -2,7 +2,8 @@ defmodule Notifeye.Repo.Migrations.CreateDescriptionRules do
   use Ecto.Migration
 
   def change do
-    create table(:alert_description_rules) do
+    create table(:alert_description_rules, primary_key: false) do
+      add :id, :binary_id, primary_key: true
       add :name, :string, null: false
       add :active, :boolean, null: false
       add :count, :integer, null: false

@@ -12,7 +12,7 @@ defmodule Notifeye.AlertDescriptionRulesTest do
     end
 
     test "returns nil when rule does not exist" do
-      assert Rules.get_rule(-1) == nil
+      assert Rules.get_rule(Ecto.UUID.generate()) == nil
     end
   end
 
@@ -24,7 +24,7 @@ defmodule Notifeye.AlertDescriptionRulesTest do
 
     test "raises when rule does not exist" do
       assert_raise Ecto.NoResultsError, fn ->
-        Rules.get_rule!(-1)
+        Rules.get_rule!(Ecto.UUID.generate())
       end
     end
   end

@@ -16,6 +16,13 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.Rule do
 
   @actions ~w(notify nothing)a
 
+  @derive {Flop.Schema,
+           filterable: [:name],
+           sortable: [:updated_at, :name],
+           default_order: %{order_by: [:updated_at], order_directions: [:desc]}}
+
+  @primary_key {:id, :binary_id, autogenerate: true}
+  @foreign_key_type :binary_id
   schema "alert_description_rules" do
     field :name, :string
     field :active, :boolean, default: false
@@ -23,7 +30,7 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.Rule do
     field :action, Ecto.Enum, values: @actions
     field :action_value, :string
 
-    belongs_to :alert_description, AlertDescription
+    belongs_to :alert_description, AlertDescription, type: :integer
     embeds_many :rule_blocks, RuleBlock
 
     timestamps(type: :utc_datetime)
