@@ -1,0 +1,52 @@
+<Layouts.app flash={@flash} current_scope={@current_scope} current_path={@current_path}>
+  <div class="m-6 pt-4 px-4">
+    <.header>
+      <p class="text-3xl">Received Alerts</p>
+      <:subtitle>
+        <div class="breadcrumbs text-sm">
+          <ul>
+            <li>
+              <.link href={~p"/"}>
+                <.icon name="hero-home" /> Home
+              </.link>
+            </li>
+            <li>
+              <.link href={~p"/"}>
+                <.icon name="hero-server" /> Alerts
+              </.link>
+            </li>
+          </ul>
+        </div>
+      </:subtitle>
+      <:actions>
+        <div class="dropdown dropdown-end">
+          <div tabindex="0" role="button" class="btn m-1 btn-soft btn-primary">
+            <.icon name="hero-folder-arrow-down-solid" /> Export
+          </div>
+          <ul
+            tabindex="0"
+            class="dropdown-content menu bg-base-100 rounded-box z-1 w-full p-2 shadow-sm"
+          >
+            <li><a><.icon name="hero-arrow-down-tray" />JSON</a></li>
+            <li><a><.icon name="hero-arrow-down-tray" />CSV</a></li>
+          </ul>
+        </div>
+      </:actions>
+    </.header>
+
+    <div class="sticky top-0 z-10 w-full bg-base-200 mb-4 pt-3">
+      <label class="input w-full h-10">
+        <.icon name="hero-magnifying-glass" />
+        <input type="search" class="grow" placeholder="Add Filters" />
+        <kbd class="kbd kbd-sm">⌘</kbd>
+        <kbd class="kbd kbd-sm">K</kbd>
+      </label>
+    </div>
+
+    <div class="flex flex-col gap-4 w-full mx-auto">
+      <%= for {alert_id, alert} <- @streams.alerts do %>
+        <.live_component module={Cards.AlertCard} id={alert_id} alert={alert} />
+      <% end %>
+    </div>
+  </div>
+</Layouts.app>

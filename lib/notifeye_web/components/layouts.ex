@@ -46,7 +46,7 @@ defmodule NotifeyeWeb.Layouts do
           current_scope={@current_scope}
         />
       </aside>
-      <div class="flex-1 bg-base-200 overflow-y-auto overflow-x-hidden p-4">
+      <div class="flex-1 bg-base-200 overflow-y-auto">
         {render_slot(@inner_block)}
       </div>
     </main>

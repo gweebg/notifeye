@@ -5,57 +5,6 @@ defmodule NotifeyeWeb.AlertLive.Index do
   alias NotifeyeWeb.Components.Cards
 
   @impl true
-  def render(assigns) do
-    ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope} current_path={@current_path}>
-      <.header>
-        Listing Alerts
-        <:actions>
-          <.button variant="primary" navigate={~p"/alerts/new"}>
-            <.icon name="hero-plus" /> New Alert
-          </.button>
-        </:actions>
-      </.header>
-
-      <div class="flex flex-col gap-4 w-full mx-auto">
-        <%= for {alert_id, alert} <- @streams.alerts do %>
-          <.live_component module={Cards.AlertCard} id={alert_id} alert={alert} />
-        <% end %>
-      </div>
-
-      <%!-- <.table
-        id="alerts"
-        rows={@streams.alerts}
-        row_click={fn {_id, alert} -> JS.navigate(~p"/alerts/#{alert}") end}
-      >
-        <:col :let={{_id, alert}} label="Logz">{alert.logz_id}</:col>
-        <:col :let={{_id, alert}} label="Alert title">{alert.alert_title}</:col>
-        <:col :let={{_id, alert}} label="Alert description">{alert.alert_description}</:col>
-        <:col :let={{_id, alert}} label="Alert severity">{alert.alert_severity}</:col>
-        <:col :let={{_id, alert}} label="Alert event samples">{alert.alert_event_samples}</:col>
-        <:col :let={{_id, alert}} label="Alert tags">{alert.alert_tags}</:col>
-        <:col :let={{_id, alert}} label="Start">{alert.start}</:col>
-        <:col :let={{_id, alert}} label="End">{alert.end}</:col>
-        <:action :let={{_id, alert}}>
-          <div class="sr-only">
-            <.link navigate={~p"/alerts/#{alert}"}>Show</.link>
-          </div>
-          <.link navigate={~p"/alerts/#{alert}/edit"}>Edit</.link>
-        </:action>
-        <:action :let={{id, alert}}>
-          <.link
-            phx-click={JS.push("delete", value: %{id: alert.id}) |> hide("##{id}")}
-            data-confirm="Are you sure?"
-          >
-            Delete
-          </.link>
-        </:action>
-      </.table> --%>
-    </Layouts.app>
-    """
-  end
-
-  @impl true
   def mount(_params, _session, socket) do
     if connected?(socket) do
       Monitoring.subscribe_alerts(socket.assigns.current_scope)
