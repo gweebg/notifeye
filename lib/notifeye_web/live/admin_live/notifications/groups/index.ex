@@ -112,7 +112,13 @@ defmodule NotifeyeWeb.AdminLive.Notifications.Groups.Index do
 
   @impl true
   def handle_event("edit_group", %{"id" => id}, socket) do
-    {:noreply, push_patch(socket, to: ~p"/notifications/groups?editing=#{id}")}
+    {
+      :noreply,
+      socket
+      |> assign(:showing_group, nil)
+      |> assign(:group_alert_descriptions, [])
+      |> push_patch(to: ~p"/notifications/groups?editing=#{id}")
+    }
   end
 
   @impl true

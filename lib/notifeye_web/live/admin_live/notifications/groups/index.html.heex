@@ -28,13 +28,13 @@
 
   <%!-- New/Edit Group Modal --%>
   <dialog :if={@adding or @editing_group} open class="modal overflow-hidden" id="add_group_modal">
-    <div class="modal-box w-full max-w-lg">
-      <h3 class="flex flex-row items-center font-medium text-xl text-primary mb-4 gap-2">
+    <div class="modal-box w-full max-w-xl">
+      <h3 class="flex flex-row items-center font-semibold text-xl mb-4 gap-2">
         <.icon
           name={if @editing_group, do: "hero-pencil", else: "hero-plus-circle"}
           class="w-6 h-6"
         />
-        {if @editing_group, do: "Edit Group", else: "Add a New Group"}
+        {if @editing_group, do: "Edit Group", else: "New Group"}
       </h3>
 
       <.form
@@ -111,7 +111,7 @@
           </div>
 
           <%!-- User List --%>
-          <div class="border border-base-300 rounded-lg max-h-40 overflow-y-auto">
+          <div class="border border-base-300 rounded-lg max-h-64 overflow-y-auto">
             <div
               :for={user <- @filtered_users}
               class="flex items-center justify-between p-2 hover:bg-base-200 border-b border-base-200 last:border-b-0"
@@ -135,12 +135,7 @@
         </div>
 
         <%!-- Modal Actions --%>
-        <div class="modal-action">
-          <button type="button" class="btn btn-outline" phx-click="close_add_modal">
-            Cancel
-          </button>
-
-          <%!-- Delete Button (only shown when editing) --%>
+        <div class="modal-action flex flex-row justify-between">
           <button
             :if={@editing_group}
             type="button"
@@ -150,13 +145,19 @@
             <.icon name="hero-trash" class="w-4 h-4" /> Delete
           </button>
 
-          <.button
-            type="submit"
-            variant="primary"
-            phx-disable-with={if @editing_group, do: "Updating...", else: "Creating..."}
-          >
-            {if @editing_group, do: "Update Group", else: "Create Group"}
-          </.button>
+          <div class="ml-auto">
+            <button type="button" class="btn btn-soft" phx-click="close_add_modal">
+              Cancel
+            </button>
+
+            <.button
+              type="submit"
+              variant="primary"
+              phx-disable-with={if @editing_group, do: "Updating...", else: "Creating..."}
+            >
+              {if @editing_group, do: "Update Group", else: "Create Group"}
+            </.button>
+          </div>
         </div>
       </.form>
     </div>
@@ -169,14 +170,14 @@
     class="modal overflow-hidden"
     id="delete_confirmation_modal"
   >
-    <div class="modal-box w-full max-w-md">
+    <div class="modal-box w-full">
       <h3 class="flex flex-row items-center font-medium text-xl text-error mb-4 gap-2">
         Confirm Deletion
       </h3>
 
       <div class="space-y-3">
         <p>
-          Are you sure you want to delete the notification group <strong class="text-base-content">"{@editing_group.name}"</strong>?
+          Are you sure you want to delete the notification group <strong class="text-base-content">{@editing_group.name}</strong>?
         </p>
 
         <div class="bg-warning/10 border border-warning/20 rounded-lg p-3">
@@ -196,11 +197,11 @@
       </div>
 
       <div class="modal-action">
-        <button type="button" class="btn btn-outline" phx-click="cancel_delete">
+        <button type="button" class="btn btn-soft" phx-click="cancel_delete">
           Cancel
         </button>
         <button type="button" class="btn btn-error" phx-click="delete_group">
-          <.icon name="hero-trash" class="w-4 h-4" /> Delete Group
+          <.icon name="hero-trash" class="w-4 h-4" /> Commit
         </button>
       </div>
     </div>

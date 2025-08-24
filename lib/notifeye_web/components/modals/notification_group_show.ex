@@ -1,18 +1,11 @@
 defmodule NotifeyeWeb.Components.Modals.NotificationGroupShow do
   @moduledoc """
   Reusable notification group show modal component.
-
-  Displays detailed information about a notification group including:
-  - Basic information (name, description)
-  - Member list
-  - Associated alert descriptions
-  - Actions (edit, delete if enabled)
   """
 
   use Phoenix.Component
   import NotifeyeWeb.CoreComponents
 
-  # Import route helpers
   use NotifeyeWeb, :html
 
   @doc """
@@ -41,70 +34,53 @@ defmodule NotifeyeWeb.Components.Modals.NotificationGroupShow do
     ~H"""
     <dialog :if={@show} open class="modal overflow-hidden" id="notification_group_show_modal">
       <div class="modal-box w-full max-w-2xl">
-        <h3 class="flex flex-row items-center font-medium text-xl text-primary mb-4 gap-2">
-          <.icon name="hero-eye" class="w-6 h-6" /> Notification Group Details
+        <%!-- Header --%>
+        <h3 class="font-semibold text-xl mb-4 gap-2">
+          Group Details
         </h3>
 
         <div class="space-y-6">
-          <%!-- Basic Information --%>
-          <div class="space-y-4">
+          <%!-- Information --%>
+          <div class="flex flex-col gap-4">
             <div>
-              <label class="label pb-1">
-                <span class="label-text font-semibold">Name</span>
+              <label class="label">
+                <span class="label-text text-sm">Name</span>
               </label>
-              <div class="flex items-center space-x-2">
-                <.icon name="hero-tag" class="w-4 h-4 text-gray-500" />
-                <span class="text-sm font-medium">{@group.name}</span>
-              </div>
+              <p>{@group.name}</p>
+            </div>
+
+            <div :if={@group.description}>
+              <label class="label">
+                <span class="label-text text-sm">Description</span>
+              </label>
+              <p>{@group.description}</p>
             </div>
 
             <div>
-              <label class="label pb-1">
-                <span class="label-text font-semibold">Description</span>
+              <label class="label">
+                <span class="label-text text-sm">Created</span>
               </label>
-              <div class="flex items-start space-x-2">
-                <.icon name="hero-document-text" class="w-4 h-4 text-gray-500 mt-0.5" />
-                <span class="text-sm">
-                  {@group.description || "No description provided"}
-                </span>
-              </div>
+              <p>{Calendar.strftime(@group.inserted_at, "%B %d, %Y at %H:%M UTC")}</p>
             </div>
 
             <div>
-              <label class="label pb-1">
-                <span class="label-text font-semibold">Created</span>
+              <label class="label text-sm">
+                <span class="label-text">Last Updated</span>
               </label>
-              <div class="flex items-center space-x-2">
-                <.icon name="hero-calendar" class="w-4 h-4 text-gray-500" />
-                <span class="text-sm">
-                  {Calendar.strftime(@group.inserted_at, "%B %d, %Y at %H:%M UTC")}
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <label class="label pb-1">
-                <span class="label-text font-semibold">Last Updated</span>
-              </label>
-              <div class="flex items-center space-x-2">
-                <.icon name="hero-clock" class="w-4 h-4 text-gray-500" />
-                <span class="text-sm">
-                  {Calendar.strftime(@group.updated_at, "%B %d, %Y at %H:%M UTC")}
-                </span>
-              </div>
+              <p>{Calendar.strftime(@group.updated_at, "%B %d, %Y at %H:%M UTC")}</p>
             </div>
           </div>
 
           <%!-- Members Section --%>
           <div>
             <label class="label pb-2">
-              <span class="label-text font-semibold flex items-center gap-2">
+              <span class="label-text flex items-center gap-2 text-sm">
                 <.icon name="hero-users" class="w-4 h-4" /> Members ({length(@group.users)})
               </span>
             </label>
 
             <div :if={length(@group.users) > 0} class="space-y-2">
-              <div class="max-h-32 overflow-y-auto border border-base-300 rounded-lg">
+              <div class="max-h-48 overflow-y-auto border border-base-300 rounded-lg">
                 <div
                   :for={user <- @group.users}
                   class="flex items-center justify-between p-3 hover:bg-base-200 border-b border-base-200 last:border-b-0"
@@ -130,17 +106,17 @@ defmodule NotifeyeWeb.Components.Modals.NotificationGroupShow do
             </div>
           </div>
 
-          <%!-- Alert Descriptions Section --%>
+          <%!-- Descriptions Section --%>
           <div>
             <label class="label pb-2">
-              <span class="label-text font-semibold flex items-center gap-2">
+              <span class="label-text text-sm flex items-center gap-2">
                 <.icon name="hero-bell" class="w-4 h-4" />
                 Alert Descriptions ({length(@alert_descriptions)})
               </span>
             </label>
 
             <div :if={length(@alert_descriptions) > 0} class="space-y-2">
-              <div class="max-h-40 overflow-y-auto border border-base-300 rounded-lg">
+              <div class="max-h-48 overflow-y-auto border border-base-300 rounded-lg">
                 <div
                   :for={description <- @alert_descriptions}
                   class="flex items-center justify-between p-3 hover:bg-base-200 border-b border-base-200 last:border-b-0"
@@ -157,12 +133,6 @@ defmodule NotifeyeWeb.Components.Modals.NotificationGroupShow do
                         end
                       ]}>
                         {String.capitalize(to_string(description.state))}
-                      </span>
-                      <span class={[
-                        "badge badge-sm",
-                        if(description.verified, do: "badge-info", else: "badge-neutral")
-                      ]}>
-                        {if description.verified, do: "Verified", else: "Unverified"}
                       </span>
                     </div>
                   </div>
@@ -192,18 +162,18 @@ defmodule NotifeyeWeb.Components.Modals.NotificationGroupShow do
 
         <%!-- Modal Actions --%>
         <div class="modal-action">
-          <button type="button" class="btn btn-outline" phx-click={@on_close}>
+          <button type="button" class="btn btn-soft" phx-click={@on_close}>
             Close
           </button>
 
           <div :if={@show_actions} class="flex gap-2">
             <button
               type="button"
-              class="btn btn-primary btn-outline"
+              class="btn btn-primary"
               phx-click={@on_edit}
               phx-value-id={@group.id}
             >
-              <.icon name="hero-pencil" class="w-4 h-4" /> Edit
+              <.icon name="hero-pencil-solid" class="w-4 h-4" /> Edit
             </button>
           </div>
         </div>
