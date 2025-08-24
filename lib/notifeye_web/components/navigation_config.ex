@@ -11,7 +11,7 @@ defmodule NotifeyeWeb.NavigationConfig do
       %{
         type: :single,
         label: "Admin Dashboard",
-        icon: "rectangle-group",
+        icon: "hero-rectangle-group",
         path: "/"
       }
     },
@@ -20,16 +20,21 @@ defmodule NotifeyeWeb.NavigationConfig do
       %{
         type: :multiple,
         label: "Alerts",
-        icon: "shield-exclamation",
+        icon: "hero-shield-exclamation",
         routes: [
-          %{id: :alerts, name: "Alerts", path: "/alerts", icon: "server"},
+          %{id: :alerts, name: "Alerts", path: "/alerts", icon: "hero-server"},
           %{
             id: :descriptions,
             name: "Descriptions",
             path: "/descriptions",
-            icon: "document-text"
+            icon: "hero-document-text"
           },
-          %{id: :assignments, name: "Assignments", path: "/assignments", icon: "shield-check"}
+          %{
+            id: :assignments,
+            name: "Assignments",
+            path: "/assignments",
+            icon: "hero-shield-check"
+          }
         ]
       }
     },
@@ -38,10 +43,10 @@ defmodule NotifeyeWeb.NavigationConfig do
       %{
         type: :multiple,
         label: "Notifications",
-        icon: "bell",
+        icon: "hero-bell",
         routes: [
-          %{name: "Dashboard", path: "/notifications", icon: "arrow-trending-up"},
-          %{name: "Groups", path: "/notifications/groups", icon: "server"}
+          %{name: "Dashboard", path: "/notifications", icon: "hero-arrow-trending-up"},
+          %{name: "Groups", path: "/notifications/groups", icon: "hero-server"}
         ]
       }
     },
@@ -50,9 +55,9 @@ defmodule NotifeyeWeb.NavigationConfig do
       %{
         type: :multiple,
         label: "Administration",
-        icon: "lock-closed",
+        icon: "hero-lock-closed",
         routes: [
-          %{name: "Users", path: "/admin/users", icon: "users"}
+          %{name: "Users", path: "/admin/users", icon: "hero-users"}
         ]
       }
     }

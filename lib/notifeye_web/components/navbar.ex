@@ -39,7 +39,7 @@ defmodule NotifeyeWeb.Components.Navbar do
                     )
                   ]}
                 >
-                  <.icon name={"hero-" <> section.icon} class="size-5" />
+                  <.icon name={section.icon} class="size-5" />
                   {section.label}
                 </.link>
               </div>
@@ -51,7 +51,7 @@ defmodule NotifeyeWeb.Components.Navbar do
                   checked={NavigationConfig.section_expanded?(key, @current_path)}
                 />
                 <div class="collapse-title font-semibold flex items-center gap-2">
-                  <.icon name={"hero-" <> section.icon} class="size-5" />
+                  <.icon name={section.icon} class="size-5" />
                   <p>{section.label}</p>
                 </div>
                 <div class="collapse-content text-md">
@@ -68,7 +68,7 @@ defmodule NotifeyeWeb.Components.Navbar do
                             )
                           ]}
                         >
-                          <.icon name={"hero-" <> route.icon} class="w-4 h-4" />
+                          <.icon name={route.icon} class="w-4 h-4" />
                           {route.name}
                         </.link>
                       </li>
