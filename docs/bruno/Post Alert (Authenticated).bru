@@ -1,0 +1,33 @@
+meta {
+  name: Post Alert (Authenticated)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{local_url}}/alerts
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "alert": {
+      "id": "d588ccb7-fd50-4d62-bb09-a3a4427201ef",
+      "start": "2025-07-08T10:27:05Z",
+      "end": "2025-07-08T10:27:06Z",
+      "inserted_at": "2025-07-08T10:29:02Z",
+      "updated_at": "2025-07-08T10:29:02Z",
+      "alert_description": "This is the description of an alert.",
+      "alert_event_samples": "\"user\" : \"Watchdog\", \"user\" : \"Guilherme\"",
+      "logz_id": "3",
+      "alert_title": "Mock Alert #3",
+      "alert_severity": "Low",
+      "alert_tags": [
+        "more",
+        "examples"
+      ]
+    }
+  }
+  
+}
