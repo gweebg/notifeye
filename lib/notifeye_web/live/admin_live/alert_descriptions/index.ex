@@ -39,8 +39,7 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Index do
     {:ok, {alert_descriptions, meta}} =
       AlertDescriptions.list_alert_descriptions(params,
         page_size: page_size,
-        preload: [:user, :notification_group],
-        no_ignored: true
+        preload: [:user, :notification_group]
       )
 
     {:noreply,
@@ -89,20 +88,13 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Index do
      |> push_patch(to: ~p"/descriptions?#{params}")}
   end
 
-  @impl true
-  def handle_event("export", _params, socket) do
-    # todo: implement export functionalitty to a json file
-    {:noreply, put_flash(socket, :info, "Export functionality coming soon")}
-  end
-
   defp refresh(socket) do
     params = socket.assigns.current_params || %{}
 
     {:ok, {alert_descriptions, meta}} =
       AlertDescriptions.list_alert_descriptions(params,
         page_size: socket.assigns.current_page_size,
-        preload: [:user, :notification_group],
-        no_ignored: true
+        preload: [:user, :notification_group]
       )
 
     socket

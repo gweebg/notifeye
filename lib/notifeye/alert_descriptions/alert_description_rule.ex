@@ -17,9 +17,9 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.Rule do
   @actions ~w(notify nothing)a
 
   @derive {Flop.Schema,
-           filterable: [:name],
-           sortable: [:updated_at, :name],
-           default_order: %{order_by: [:updated_at], order_directions: [:desc]}}
+           filterable: [:id, :name, :active],
+           sortable: [:inserted_at, :id],
+           default_order: %{order_by: [:inserted_at], order_directions: [:desc]}}
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id

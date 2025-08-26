@@ -23,8 +23,15 @@ defmodule Notifeye.Rules do
   def list_rules(alert_description_id) do
     Rule
     |> where([r], r.alert_description_id == ^alert_description_id)
-    |> order_by([r], asc: :active)
     |> Repo.all()
+  end
+
+  def list_rules_flop(flop, alert_description_id) when is_integer(alert_description_id) do
+    query =
+      Rule
+      |> where([r], r.alert_description_id == ^alert_description_id)
+
+    Flop.validate_and_run(query, flop, for: Rule)
   end
 
   def create_rule(attrs \\ %{}) do
@@ -135,4 +142,29 @@ defmodule Notifeye.Rules do
       fun -> fun.(field, expected_value)
     end
   end
+
+  def stringify(%Rule{} = rule) do
+    rule.rule_blocks
+    |> Enum.map_join(" OR ", &block_to_expression/1)
+  end
+
+  defp block_to_expression(%RuleBlock{clauses: clauses}) do
+    clauses
+    |> Enum.map_join(" AND ", &clause_to_expression/1)
+    |> wrap_if_needed(length(clauses) > 1)
+  end
+
+  defp clause_to_expression(%RuleClause{field: field, operator: op, value: value}) do
+    formatted_value =
+      case Fields.format_for(field) do
+        :datetime -> "\"#{value}\""
+        :time -> "\"#{value}\""
+        _ -> inspect(value)
+      end
+
+    "#{field} #{op} #{formatted_value}"
+  end
+
+  defp wrap_if_needed(str, true), do: "(" <> str <> ")"
+  defp wrap_if_needed(str, false), do: str
 end

@@ -46,7 +46,8 @@ defmodule NotifeyeWeb.NavigationConfig do
         icon: "hero-bell",
         routes: [
           %{name: "Dashboard", path: "/notifications", icon: "hero-arrow-trending-up"},
-          %{name: "Groups", path: "/notifications/groups", icon: "hero-server"}
+          %{name: "Groups", path: "/notifications/groups", icon: "hero-server"},
+          %{name: "Rules", path: "/notifications/rules", icon: "hero-funnel"}
         ]
       }
     },

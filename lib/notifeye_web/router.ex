@@ -117,6 +117,7 @@ defmodule NotifeyeWeb.Router do
         {NotifeyeWeb.LiveHooks.CurrentPath, :current_path}
       ] do
       live "/notifications/groups", AdminLive.Notifications.Groups.Index, :index
+      live "/notifications/rules", RulesLive.Index, :index
     end
 
     live_session :assignments,

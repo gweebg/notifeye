@@ -1,0 +1,204 @@
+<Layouts.app flash={@flash} current_scope={@current_scope} current_path={@current_path}>
+  <div class="m-6 space-y-4 p-4">
+    <%!-- Header --%>
+    <.header>
+      <p class="text-3xl">Rules</p>
+      <:subtitle>
+        <div class="breadcrumbs text-sm">
+          <ul>
+            <li>
+              <.link href={~p"/"}>
+                <.icon name="hero-home" /> Home
+              </.link>
+            </li>
+            <li>
+              <.link href={~p"/"}>
+                <.icon name="hero-bell" /> Notifications
+              </.link>
+            </li>
+            <li>
+              <.link href={~p"/"}>
+                <.icon name="hero-funnel" /> Rules
+              </.link>
+            </li>
+          </ul>
+        </div>
+      </:subtitle>
+      <:actions>
+        <form phx-change="select_description">
+          <select class="select select-bordered w-sm mt-5" name="description_id">
+            <option value="" selected disabled>Select Alert Description</option>
+            <option
+              :for={desc <- @alert_descriptions}
+              value={desc.id}
+              selected={@selected_description && @selected_description.id == desc.id}
+            >
+              Description #{desc.id}
+            </option>
+          </select>
+        </form>
+      </:actions>
+    </.header>
+
+    <%!-- Content --%>
+    <div class="flex flex-col gap-2">
+      <%= cond do %>
+        <% is_nil(@selected_description) -> %>
+          <NotifeyeWeb.Components.RulesEmptyState.rules_empty_state />
+        <% Enum.empty?(@rules) -> %>
+          <NotifeyeWeb.Components.RulesTutorial.rules_tutorial description_id={
+            @selected_description.id
+          } />
+        <% true -> %>
+          <%!-- Filters and Actions --%>
+          <section class="flex flex-row justify-between items-center w-full">
+            <.form
+              :let={f}
+              for={%{}}
+              as={:filters}
+              phx-change="update-filter"
+              phx-submit="update-filter"
+            >
+              <div class="flex flex-row gap-2 items-center">
+                <.input
+                  field={f[:active]}
+                  type="select"
+                  prompt="Any State"
+                  options={[
+                    {"Show Active", "true"},
+                    {"Show Inactive", "false"}
+                  ]}
+                  value={@filters["active"]}
+                  class="select select-bordered w-35 mb-0"
+                />
+
+                <.input
+                  field={f[:name]}
+                  type="text"
+                  placeholder="Search by the name..."
+                  class="w-full input input-bordered mb-0"
+                  value={@filters["name"]}
+                  phx-debounce="250"
+                />
+              </div>
+            </.form>
+
+            <div>
+              <button class="btn btn-primary gap-2 mb-2" disabled title="Coming soon">
+                <.icon name="hero-plus" /> Create Rule
+              </button>
+            </div>
+          </section>
+
+          <%!-- Rules Table --%>
+          <div class="card bg-base-100 shadow-sm">
+            <div class="card-body p-0">
+              <Flop.Phoenix.table
+                items={@rules}
+                meta={@meta}
+                path={~p"/notifications/rules"}
+                id="rules-table"
+                opts={[
+                  container: true,
+                  table_attrs: [class: "table table-zebra"]
+                ]}
+              >
+                <:col :let={rule} label="Status" field={:active} col_style="width: 10%;">
+                  <div class={[
+                    "badge badge-soft",
+                    if(rule.active, do: "badge-success", else: "badge-ghost")
+                  ]}>
+                    {if rule.active, do: "Active", else: "Inactive"}
+                  </div>
+                </:col>
+
+                <:col :let={rule} label="Name" field={:name} col_style="width: auto%;">
+                  <span
+                    class="font-medium text-primary underline cursor-pointer"
+                    title="Click to edit (coming soon)"
+                  >
+                    {rule.name}
+                  </span>
+                </:col>
+
+                <:col :let={rule} label="Match Against" col_style="width: auto%;">
+                  {Rules.stringify(rule)}
+                </:col>
+
+                <:col :let={rule} label="Action" col_style="width: auto%;">
+                  {String.capitalize(to_string(rule.action))}
+                </:col>
+
+                <:action :let={rule} label="" col_style="width: 5%;">
+                  <div class="dropdown dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm">
+                      <.icon name="hero-ellipsis-vertical" class="w-4 h-4" />
+                    </div>
+                    <ul
+                      tabindex="0"
+                      class="fixed dropdown-content menu bg-base-100 rounded-box z-[1] w-36 p-2 shadow border border-base-200"
+                    >
+                      <li>
+                        <button disabled class="text-sm opacity-50 cursor-not-allowed">
+                          <.icon name="hero-pencil" class="w-4 h-4" /> Edit
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          phx-click="toggle_rule"
+                          phx-value-rule_id={rule.id}
+                          phx-value-action={if rule.active, do: "disable", else: "enable"}
+                          class="text-sm"
+                        >
+                          <.icon
+                            name={if rule.active, do: "hero-pause", else: "hero-play"}
+                            class="w-4 h-4"
+                          />
+                          {if rule.active, do: "Disable", else: "Enable"}
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          phx-click="confirm_delete"
+                          phx-value-rule_id={rule.id}
+                          class="text-sm text-error hover:bg-error hover:text-error-content"
+                        >
+                          <.icon name="hero-trash" class="w-4 h-4" /> Delete
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                </:action>
+              </Flop.Phoenix.table>
+            </div>
+          </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%!-- Delete Confirmation Modal --%>
+  <dialog :if={@show_delete_modal} open class="modal">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg mb-4">Confirm Rule Deletion</h3>
+
+      <%= if @rule_to_delete do %>
+        <p class="text-base-content/70 mb-6">
+          Are you sure you want to delete the rule <strong>{@rule_to_delete.name}</strong>?
+          This action cannot be undone.
+        </p>
+
+        <div class="modal-action">
+          <button phx-click="cancel_delete" class="btn btn-ghost">
+            Cancel
+          </button>
+          <button phx-click="delete_rule" class="btn btn-error">
+            <.icon name="hero-trash" class="w-4 h-4" /> Delete Rule
+          </button>
+        </div>
+      <% end %>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button phx-click="cancel_delete">close</button>
+    </form>
+  </dialog>
+</Layouts.app>

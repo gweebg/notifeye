@@ -20,6 +20,9 @@ defmodule NotifeyeWeb.Components do
       import NotifeyeWeb.Components.Atoms.UpdatedByDisplay
 
       import NotifeyeWeb.Components.Cards.StatusCard
+
+      import NotifeyeWeb.Components.RulesEmptyState
+      import NotifeyeWeb.Components.RulesTutorial
     end
   end
 
