@@ -34,7 +34,7 @@ defmodule NotifeyeWeb.Components.Placeholders.RulesEmpty do
 
         <div class="mt-6">
           <.link
-            navigate={"/descriptions/#{@description_id}/rules/new"}
+            navigate={"/notifications/rules/#{@description_id}/new"}
             class="btn btn-primary gap-2 mb-2"
           >
             <.icon name="hero-plus" class="w-4 h-4" /> Create Rule

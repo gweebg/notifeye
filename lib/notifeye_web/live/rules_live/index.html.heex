@@ -83,7 +83,7 @@
 
             <div>
               <.link
-                navigate={~p"/descriptions/#{@selected_description.id}/rules/new"}
+                navigate={~p"/notifications/rules/#{@selected_description.id}/new"}
                 class="btn btn-primary gap-2 mb-2"
               >
                 <.icon name="hero-plus" class="w-4 h-4" /> Create Rule
@@ -124,12 +124,12 @@
                 </:col> --%>
 
                 <:col :let={rule} label="Name" field={:name} col_style="width: auto%;">
-                  <span
+                  <.link
+                    navigate={~p"/notifications/rules/#{rule.alert_description_id}/#{rule.id}"}
                     class="font-medium text-primary underline cursor-pointer"
-                    title="Click to edit (coming soon)"
                   >
                     {rule.name}
-                  </span>
+                  </.link>
                 </:col>
 
                 <:col :let={rule} label="Match Against" col_style="width: auto%;">
@@ -152,7 +152,7 @@
                       <li>
                         <.link
                           navigate={
-                            ~p"/descriptions/#{rule.alert_description_id}/rules/#{rule.id}/edit"
+                            ~p"/notifications/rules/#{rule.alert_description_id}/#{rule.id}"
                           }
                           class="text-sm"
                         >

@@ -1,4 +1,4 @@
-defmodule NotifeyeWeb.AdminLive.AlertDescriptions.RuleForm do
+defmodule NotifeyeWeb.RulesLive.Form do
   @moduledoc false
   use NotifeyeWeb, :live_view
 
@@ -42,6 +42,11 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.RuleForm do
     "inserted_at" => "2024-08-09T10:00:00Z"
   }
 
+  # todo: future improvements
+  # todo: add different field types based on the field type
+  # todo: better selectors with autocomplete
+  # todo: refactor the logic
+
   # Mount
 
   @impl true
@@ -53,7 +58,6 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.RuleForm do
 
   @impl true
   def handle_event("validate", %{"rule" => rule_params}, socket) do
-    # Use the same base rule approach as in assign_defaults for consistency
     base_rule =
       case socket.assigns.rule do
         nil -> %Rule{alert_description_id: socket.assigns.alert_description.id}
@@ -74,11 +78,9 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.RuleForm do
     updated_providers =
       if provider in list, do: List.delete(list, provider), else: [provider | list]
 
-    # Get current form data and update action_value
     current_changeset = socket.assigns.form.source
     current_action = Ecto.Changeset.get_field(current_changeset, :action)
 
-    # Only set action_value if action is :notify
     action_value =
       if current_action == :notify do
         Enum.join(updated_providers, ",")
@@ -86,7 +88,7 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.RuleForm do
         Ecto.Changeset.get_field(current_changeset, :action_value)
       end
 
-    # Create updated changeset with new action_value
+    # create updated changeset with new action_value
     updated_changeset =
       current_changeset
       |> Ecto.Changeset.put_change(:action_value, action_value)
@@ -179,10 +181,10 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.RuleForm do
           {nil, base_rule_changeset, []}
 
         id ->
-          # Edit rule - rebuild the changeset structure like a new rule
+          # rebuild the changeset structure like a new rule, avoids
+          # the need for handling form params
           rule = Rules.get_rule!(id)
 
-          # Convert the existing rule back to changeset form
           rule_params = %{
             "name" => rule.name,
             "action" => to_string(rule.action),
@@ -220,7 +222,7 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.RuleForm do
   defp parse_providers(val),
     do: val |> String.split(",") |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == ""))
 
-  # Convert database rule_blocks back to form params structure
+  # convert database rule_blocks back to form params structure
   defp convert_rule_blocks_to_params(rule_blocks) do
     rule_blocks
     |> Enum.with_index()
@@ -229,11 +231,12 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.RuleForm do
         block.clauses
         |> Enum.with_index()
         |> Map.new(fn {clause, clause_index} ->
-          {to_string(clause_index), %{
-            "field" => clause.field,
-            "operator" => clause.operator,
-            "value" => clause.value
-          }}
+          {to_string(clause_index),
+           %{
+             "field" => clause.field,
+             "operator" => clause.operator,
+             "value" => clause.value
+           }}
         end)
 
       {to_string(block_index), %{"clauses" => clauses_params}}
