@@ -34,6 +34,12 @@ defmodule Notifeye.Rules do
     Flop.validate_and_run(query, flop, for: Rule)
   end
 
+  def count_rules(alert_description_id) do
+    Rule
+    |> where([r], r.alert_description_id == ^alert_description_id)
+    |> Repo.aggregate(:count, :id)
+  end
+
   def create_rule(attrs \\ %{}) do
     # drop :active field, as we only allow its setting via dedicated function
     attrs = Map.delete(attrs, :active)

@@ -45,7 +45,7 @@ defmodule NotifeyeWeb.RulesLive.Index do
     {:noreply, push_patch(socket, to: ~p"/notifications/rules?description=#{description_id}")}
   end
 
-  def handle_event("update-filter", %{"filters" => filters}, socket) do
+  def handle_event("update_filter", %{"filters" => filters}, socket) do
     current_description_id =
       if socket.assigns.selected_description do
         socket.assigns.selected_description.id
@@ -129,12 +129,14 @@ defmodule NotifeyeWeb.RulesLive.Index do
 
   defp load_rules_for_description(socket, description, params) do
     filters = filters_from_params(params)
+    rule_count = Rules.count_rules(description.id)
 
     case Rules.list_rules_flop(params, description.id) do
       {:ok, {rules, meta}} ->
         socket
         |> assign(:selected_description, description)
         |> assign(:rules, rules)
+        |> assign(:rule_count, rule_count)
         |> assign(:filters, filters)
         |> assign(:meta, meta)
         |> assign(:loading, false)
@@ -143,6 +145,7 @@ defmodule NotifeyeWeb.RulesLive.Index do
         socket
         |> assign(:selected_description, description)
         |> assign(:rules, [])
+        |> assign(:rule_count, 0)
         |> assign(:filters, %{})
         |> assign(:meta, nil)
         |> assign(:loading, false)

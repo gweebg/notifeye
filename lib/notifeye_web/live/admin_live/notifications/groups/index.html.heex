@@ -284,7 +284,7 @@
             <span
               :for={{user, index} <- Enum.with_index(group.users)}
               :if={index < 2}
-              class="badge badge-soft badge-neutral badge-sm"
+              class="badge badge-soft badge-ghost badge-sm"
             >
               {user.username}
             </span>
@@ -293,7 +293,7 @@
               class="tooltip tooltip-top"
               data-tip={Enum.map_join(group.users, ", ", & &1.username)}
             >
-              <span class="badge badge-soft badge-neutral badge-sm cursor-help mb-2">
+              <span class="badge badge-soft badge-ghost badge-sm cursor-help mb-2">
                 +{length(group.users) - 2}
               </span>
             </div>

@@ -16,6 +16,10 @@ defmodule NotifeyeWeb.AssignmentsLive.Acknowledge do
     "I acknowledge receipt of this alert and affirm that I understand the context and implications of the situation."
   ]
 
+  # todo:
+  # FunctionClauseError at GET /assignments/acknowledge/94b89a46-4cf5-4af5-8768-e1caa93e2a04
+  # no function clause matching in Calendar.strftime/3
+
   @impl true
   def mount(_params, _session, socket) do
     {:ok,
