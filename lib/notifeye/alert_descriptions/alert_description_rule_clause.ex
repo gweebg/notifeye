@@ -82,4 +82,12 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.RuleClause do
         end
     end
   end
+
+  def empty_clause() do
+    %__MODULE__{
+      field: "alert_title",
+      operator: "is",
+      value: ""
+    }
+  end
 end

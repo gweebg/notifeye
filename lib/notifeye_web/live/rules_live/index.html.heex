@@ -82,9 +82,12 @@
             </.form>
 
             <div>
-              <button class="btn btn-primary gap-2 mb-2" disabled title="Coming soon">
-                <.icon name="hero-plus" /> Create Rule
-              </button>
+              <.link
+                navigate={~p"/descriptions/#{@selected_description.id}/rules/new"}
+                class="btn btn-primary gap-2 mb-2"
+              >
+                <.icon name="hero-plus" class="w-4 h-4" /> Create Rule
+              </.link>
             </div>
           </section>
 
@@ -116,6 +119,10 @@
                   </div>
                 </:col>
 
+                <%!-- <:col :let={rule} label="ID" field={:id} col_style="width: 10%;">
+                  {rule.id}
+                </:col> --%>
+
                 <:col :let={rule} label="Name" field={:name} col_style="width: auto%;">
                   <span
                     class="font-medium text-primary underline cursor-pointer"
@@ -143,9 +150,14 @@
                       class="fixed dropdown-content menu bg-base-100 rounded-box z-[1] w-36 p-2 shadow border border-base-200"
                     >
                       <li>
-                        <button disabled class="text-sm opacity-50 cursor-not-allowed">
+                        <.link
+                          navigate={
+                            ~p"/descriptions/#{rule.alert_description_id}/rules/#{rule.id}/edit"
+                          }
+                          class="text-sm"
+                        >
                           <.icon name="hero-pencil" class="w-4 h-4" /> Edit
-                        </button>
+                        </.link>
                       </li>
                       <li>
                         <button

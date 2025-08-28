@@ -73,7 +73,7 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.Rule do
   """
   def add_block(%Ecto.Changeset{} = changeset) do
     rule_blocks = get_field(changeset, :rule_blocks) || []
-    empty_block = %RuleBlock{clauses: [%RuleClause{}]}
+    empty_block = %RuleBlock{clauses: [RuleClause.empty_clause()]}
     updated_blocks = rule_blocks ++ [empty_block]
 
     put_embed(changeset, :rule_blocks, updated_blocks)
@@ -92,7 +92,7 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.Rule do
 
       block ->
         clauses = Map.get(block, :clauses, [])
-        updated_clauses = clauses ++ [%RuleClause{}]
+        updated_clauses = clauses ++ [RuleClause.empty_clause()]
         updated_block = Map.put(block, :clauses, updated_clauses)
         updated_blocks = List.replace_at(rule_blocks, block_index, updated_block)
 

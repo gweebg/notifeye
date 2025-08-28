@@ -108,7 +108,8 @@ defmodule NotifeyeWeb.Router do
       live "/descriptions", AdminLive.AlertDescriptions.Index, :index
       live "/descriptions/:id", AdminLive.AlertDescriptions.Show, :show
       live "/descriptions/:id/edit", AdminLive.AlertDescriptions.Edit, :edit
-      live "/descriptions/:id/test", AdminLive.AlertDescriptions.RuleTest, :test
+      live "/descriptions/:id/rules/new", AdminLive.AlertDescriptions.RuleForm, :new
+      live "/descriptions/:id/rules/:rule_id/edit", AdminLive.AlertDescriptions.RuleForm, :edit
     end
 
     live_session :notifications,

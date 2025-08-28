@@ -1,0 +1,185 @@
+<Layouts.app flash={@flash} current_scope={@current_scope} current_path={@current_path}>
+  <div class="m-6 space-y-4 p-4">
+    <.header>
+      <p class="text-3xl">
+        <%= if @rule do %>
+          Edit Notification Rule
+        <% else %>
+          Create Notification Rule
+        <% end %>
+      </p>
+    </.header>
+
+    <.form for={@form} id="rule-form" phx-change="validate" phx-submit="save">
+      <div class="space-y-8">
+        <%!-- Metatada --%>
+        <.input
+          field={@form[:name]}
+          type="text"
+          label="Rule Name (Required)"
+          placeholder="A descriptive rule name"
+          class="input input-bordered"
+        />
+        <div class="divider"></div>
+
+        <%!--  Rule Conditions --%>
+        <div class="flex flex-col gap-2">
+          <h3 class="text-lg font-semibold">When incoming alerts match...</h3>
+          <div class="">
+            <.inputs_for :let={block_form} field={@form[:rule_blocks]}>
+              <div class="">
+                <%!-- OR separator for non-first blocks --%>
+                <%= if block_form.index > 0 do %>
+                  <div class="flex items-center">
+                    <div class="badge badge-soft badge-info my-6">Or</div>
+                  </div>
+                <% end %>
+
+                <%!-- Clause Group Card --%>
+                <div class="">
+                  <.inputs_for :let={clause_form} field={block_form[:clauses]}>
+                    <%!-- AND divider for non-first clauses --%>
+                    <%= if clause_form.index > 0 do %>
+                      <span class="badge badge-soft badge-success mb-2">And</span>
+                    <% end %>
+
+                    <div class="flex items-center gap-3">
+                      <%!-- Field  --%>
+                      <div class="flex-1">
+                        <.input
+                          label={if clause_form.index == 0, do: "Field"}
+                          field={clause_form[:field]}
+                          type="select"
+                          options={field_options()}
+                          class="select select-bordered w-full"
+                        />
+                      </div>
+
+                      <%!-- Operator --%>
+                      <div class="flex-1">
+                        <.input
+                          label={if clause_form.index == 0, do: "Operator"}
+                          field={clause_form[:operator]}
+                          type="select"
+                          options={operator_options(clause_form[:field].value)}
+                          class="select select-bordered w-full"
+                        />
+                      </div>
+
+                      <%!-- Value --%>
+                      <div class="flex-1">
+                        <.input
+                          label={if clause_form.index == 0, do: "Value"}
+                          field={clause_form[:value]}
+                          type="text"
+                          placeholder={value_placeholder(clause_form[:field].value)}
+                          class="input input-bordered w-full"
+                        />
+                      </div>
+
+                      <%!--  Action Buttons  --%>
+                      <div class={[
+                        "flex items-center gap-2",
+                        if(clause_form.index == 0, do: "mt-3", else: "mb-2")
+                      ]}>
+                        <.button
+                          type="button"
+                          phx-click="add_clause"
+                          phx-value-block_index={block_form.index}
+                          class="btn btn-outline btn-xs"
+                          title="Add AND condition"
+                        >
+                          And
+                        </.button>
+
+                        <%= if block_form.index == length(@form[:rule_blocks].value) - 1 and clause_form.index == length(block_form[:clauses].value) - 1 do %>
+                          <.button
+                            type="button"
+                            phx-click="add_block"
+                            class="btn btn-outline btn-xs"
+                            title="Add OR condition group"
+                          >
+                            Or
+                          </.button>
+                        <% end %>
+
+                        <% total_blocks = length(@form[:rule_blocks].value) %>
+                        <% total_clauses_in_block = length(block_form[:clauses].value) %>
+                        <% show_remove_button = total_blocks > 1 or total_clauses_in_block > 1 %>
+
+                        <%= if show_remove_button do %>
+                          <.button
+                            type="button"
+                            phx-click="remove_clause"
+                            phx-value-block_index={block_form.index}
+                            phx-value-clause_index={clause_form.index}
+                            class="btn btn-ghost btn-xs text-error"
+                            title="Remove this condition"
+                          >
+                            <.icon name="hero-x-mark" class="w-4 h-4" />
+                          </.button>
+                        <% end %>
+                      </div>
+                    </div>
+                  </.inputs_for>
+                </div>
+              </div>
+            </.inputs_for>
+          </div>
+          <h3 class="text-lg font-semibold">Then...</h3>
+
+          <%!-- Action Selection --%>
+          <div class="form-control">
+            <.input
+              field={@form[:action]}
+              type="select"
+              label="Action"
+              options={[{"Notify users", "notify"}, {"Do nothing", "nothing"}]}
+              class="select select-bordered"
+            />
+          </div>
+
+          <%!-- Notification Methods (shown only when action is notify) --%>
+          <div :if={@form[:action].value == :notify} class="form-control">
+            <h3 class="text-lg font-semibold">Using...</h3>
+
+            <div class="flex flex-wrap flex-col mt-2">
+              <%= for provider <- @available_providers do %>
+                <% selected = provider in @selected_providers %>
+                <label class="label cursor-pointer flex items-center p-2">
+                  <input
+                    type="checkbox"
+                    class="checkbox checkbox-primary checkbox-sm"
+                    checked={selected}
+                    phx-click="toggle_provider"
+                    phx-value-provider={provider}
+                  />
+                  <span class="capitalize">
+                    {String.replace(provider, "_", " ")}
+                  </span>
+                </label>
+              <% end %>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider" />
+
+        <%!-- <section>
+          <h3 class="text-lg font-semibold">Rule Representation</h3>
+        </section>
+        <div class="divider" /> --%>
+
+        <%!-- Form Actions --%>
+        <div class="flex flex-col sm:flex-row gap-3 justify-end">
+          <.button navigate={~p"/descriptions/#{@alert_description.id}"} variant="error">
+            Cancel
+          </.button>
+          <.button phx-disable-with="Saving...">
+            {if @rule, do: "Update Rule", else: "Create Rule"}
+          </.button>
+        </div>
+      </div>
+    </.form>
+  </div>
+</Layouts.app>

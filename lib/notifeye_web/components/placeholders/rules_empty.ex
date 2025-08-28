@@ -33,9 +33,12 @@ defmodule NotifeyeWeb.Components.Placeholders.RulesEmpty do
         </p>
 
         <div class="mt-6">
-          <button class="btn btn-primary gap-2" disabled title="Coming soon">
+          <.link
+            navigate={"/descriptions/#{@description_id}/rules/new"}
+            class="btn btn-primary gap-2 mb-2"
+          >
             <.icon name="hero-plus" class="w-4 h-4" /> Create Rule
-          </button>
+          </.link>
         </div>
       </div>
     </div>
