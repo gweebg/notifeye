@@ -21,7 +21,7 @@ defmodule Notifeye.Repo.Seeds.Accounts do
   defp create_users do
     @users
     |> Enum.map(fn name -> "#{name}@#{@domain}" end)
-    |> Enum.map(&Accounts.register_user/1)
+    |> Enum.map(&Accounts.register_user(%{email: &1}))
     |> Enum.split_with(&match?({:ok, _}, &1))
     |> case do
       {oks, []} -> Mix.shell().info("Generated #{length(oks)} users and an administrator.")
