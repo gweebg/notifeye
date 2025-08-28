@@ -145,7 +145,7 @@ defmodule Notifeye.Workers.ProcessorTest do
     end
 
     test "returns an admin assignment if the samples match but user doesn't exist" do
-      {:ok, admin} = Accounts.create_admin_user()
+      {:ok, admin} = Accounts.create_admin_user(%{email: "admin@example.com"})
 
       description =
         alert_description_fixture(%{

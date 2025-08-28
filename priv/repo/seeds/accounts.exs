@@ -14,7 +14,7 @@ defmodule Notifeye.Repo.Seeds.Accounts do
   end
 
   defp seed do
-    Accounts.create_admin_user()
+    Accounts.create_admin_user(%{email: "admin@#{@domain}"})
     create_users()
   end
 
