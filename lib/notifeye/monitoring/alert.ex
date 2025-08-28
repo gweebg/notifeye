@@ -11,7 +11,7 @@ defmodule Notifeye.Monitoring.Alert do
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
-  @derive {Jason.Encoder, except: [:user, :__meta__]}
+  @derive {Jason.Encoder, except: [:user, :alert_assignments, :id, :__meta__]}
   schema "alerts" do
     field :logz_id, :integer
 

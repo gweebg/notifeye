@@ -367,14 +367,10 @@ defmodule Notifeye.Accounts do
     Repo.get_by(User, role: :admin)
   end
 
-  def create_admin_user() do
-    if get_admin_user() do
-      {:error, "admin user already exists, cannot create another one"}
-    else
-      %User{}
-      |> User.admin_changeset(%{email: "admin@notifeye.com", role: :admin, username: "Watchdog"})
-      |> Repo.insert()
-    end
+  def create_admin_user(attrs) do
+    %User{}
+    |> User.admin_changeset(attrs, infer_username: true)
+    |> Repo.insert()
   end
 
   @doc """

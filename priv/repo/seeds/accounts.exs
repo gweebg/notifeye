@@ -1,47 +1,36 @@
 defmodule Notifeye.Repo.Seeds.Accounts do
-  alias Notifeye.Accounts
+  alias Notifeye.{Accounts, Repo}
+  alias Notifeye.Accounts.User
 
-  @users ~w(logz@eurotux.com)
+  @domain "notifeye.com"
+  @users ~w(nier yonah kaine emil devola popola nines atwo twob adam)
 
   def run do
-    case accounts?() do
-      false -> generate_users(@users)
-      _ -> Mix.shell().error("Database already has accounts, aborting seeding process.")
+    if accounts_exist?() do
+      Mix.shell().error("Database already has accounts, aborting seeding process.")
+    else
+      seed()
     end
   end
 
-  defp accounts? do
-    case Notifeye.Repo.all(Accounts.User) do
-      [] -> false
-      _ -> true
-    end
-  end
-
-  defp generate_users(users) do
+  defp seed do
     Accounts.create_admin_user()
+    create_users()
+  end
 
-    for email <- users do
-      # Register the user
-      {:ok, user} = Accounts.register_user(%{"email" => email})
-
-      # Verify the user & login
-      token =
-        extract_user_token(fn url ->
-          Accounts.deliver_login_instructions(user, url)
-        end)
-
-      {:ok, user, _expired_tokens} = Accounts.login_user_by_magic_link(token)
-
-      # Generate a user API key
-      token = Accounts.create_user_api_token(user)
-      Mix.shell().info("User #{user.email} created with API token: #{token}")
+  defp create_users do
+    @users
+    |> Enum.map(fn name -> "#{name}@#{@domain}" end)
+    |> Enum.map(&Accounts.register_user/1)
+    |> Enum.split_with(&match?({:ok, _}, &1))
+    |> case do
+      {oks, []} -> Mix.shell().info("Generated #{length(oks)} users and an administrator.")
+      {_, errors} -> Mix.shell().error("Failed to generate #{length(errors)} accounts: #{inspect(errors)}")
     end
   end
 
-  defp extract_user_token(fun) do
-    {:ok, captured_email} = fun.(&"[TOKEN]#{&1}[TOKEN]")
-    [_, token | _] = String.split(captured_email.text_body, "[TOKEN]")
-    token
+  defp accounts_exist? do
+    Repo.exists?(User)
   end
 end
 

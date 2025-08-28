@@ -165,11 +165,8 @@ defmodule Notifeye.Accounts.User do
   """
   def admin_changeset(user, attrs, opts \\ []) do
     user
-    |> cast(attrs, [:email, :role, :username])
-    |> validate_email(opts)
-    |> validate_required([:email, :role, :username])
-    |> validate_inclusion(:role, [:admin])
-    |> unique_constraint(:email)
+    |> registration_changeset(attrs, opts)
+    |> put_change(:role, :admin)
   end
 
   @doc """
