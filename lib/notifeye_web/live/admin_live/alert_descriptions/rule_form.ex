@@ -53,15 +53,19 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.RuleForm do
 
   @impl true
   def handle_event("validate", %{"rule" => rule_params}, socket) do
+    # Use the same base rule approach as in assign_defaults for consistency
     base_rule =
-      socket.assigns.rule || %Rule{alert_description_id: socket.assigns.alert_description.id}
+      case socket.assigns.rule do
+        nil -> %Rule{alert_description_id: socket.assigns.alert_description.id}
+        rule -> %Rule{alert_description_id: socket.assigns.alert_description.id, id: rule.id}
+      end
 
     changeset =
       base_rule
       |> Rules.change_rule_building(rule_params)
       |> Map.put(:action, :validate)
 
-    {:noreply, assign(socket, form: to_form(changeset))}
+    {:noreply, assign(socket, :form, to_form(changeset))}
   end
 
   def handle_event("toggle_provider", %{"provider" => provider}, socket) do
@@ -70,7 +74,30 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.RuleForm do
     updated_providers =
       if provider in list, do: List.delete(list, provider), else: [provider | list]
 
-    {:noreply, assign(socket, :selected_providers, updated_providers)}
+    # Get current form data and update action_value
+    current_changeset = socket.assigns.form.source
+    current_action = Ecto.Changeset.get_field(current_changeset, :action)
+
+    # Only set action_value if action is :notify
+    action_value =
+      if current_action == :notify do
+        Enum.join(updated_providers, ",")
+      else
+        Ecto.Changeset.get_field(current_changeset, :action_value)
+      end
+
+    # Create updated changeset with new action_value
+    updated_changeset =
+      current_changeset
+      |> Ecto.Changeset.put_change(:action_value, action_value)
+      |> Map.put(:action, :validate)
+
+    {
+      :noreply,
+      socket
+      |> assign(:selected_providers, updated_providers)
+      |> assign(:form, to_form(updated_changeset))
+    }
   end
 
   def handle_event("add_block", _, socket),
@@ -94,8 +121,6 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.RuleForm do
     changeset_function =
       if total_blocks > 1 and total_clauses_in_block == 1 do
         &Rule.remove_block(&1, block_index)
-
-        # otherwise just remove the clause
       else
         &Rule.remove_clause(&1, block_index, clause_index)
       end
@@ -145,6 +170,7 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.RuleForm do
     {rule, changeset, selected_providers} =
       case rule_id do
         nil ->
+          # New rule - start fresh
           base_rule_changeset =
             %Rule{alert_description_id: alert_description.id}
             |> Rules.change_rule_building(%{"action" => "notify"})
@@ -153,9 +179,21 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.RuleForm do
           {nil, base_rule_changeset, []}
 
         id ->
+          # Edit rule - rebuild the changeset structure like a new rule
           rule = Rules.get_rule!(id)
-          changeset = Rules.change_rule_building(rule)
-          {rule, changeset, parse_providers(rule.action_value)}
+
+          # Convert the existing rule back to changeset form
+          rule_params = %{
+            "name" => rule.name,
+            "action" => to_string(rule.action),
+            "rule_blocks" => convert_rule_blocks_to_params(rule.rule_blocks)
+          }
+
+          base_rule = %Rule{alert_description_id: alert_description.id}
+          changeset = Rules.change_rule_building(base_rule, rule_params)
+          selected_providers = parse_providers(rule.action_value)
+
+          {rule, changeset, selected_providers}
       end
 
     socket
@@ -181,6 +219,26 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.RuleForm do
 
   defp parse_providers(val),
     do: val |> String.split(",") |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == ""))
+
+  # Convert database rule_blocks back to form params structure
+  defp convert_rule_blocks_to_params(rule_blocks) do
+    rule_blocks
+    |> Enum.with_index()
+    |> Map.new(fn {block, block_index} ->
+      clauses_params =
+        block.clauses
+        |> Enum.with_index()
+        |> Map.new(fn {clause, clause_index} ->
+          {to_string(clause_index), %{
+            "field" => clause.field,
+            "operator" => clause.operator,
+            "value" => clause.value
+          }}
+        end)
+
+      {to_string(block_index), %{"clauses" => clauses_params}}
+    end)
+  end
 
   # Public for form selects
 

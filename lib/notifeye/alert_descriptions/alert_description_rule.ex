@@ -31,7 +31,7 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.Rule do
     field :action_value, :string
 
     belongs_to :alert_description, AlertDescription, type: :integer
-    embeds_many :rule_blocks, RuleBlock
+    embeds_many :rule_blocks, RuleBlock, on_replace: :delete
 
     timestamps(type: :utc_datetime)
   end
