@@ -16,9 +16,12 @@ defmodule NotifeyeWeb.AssignmentsLive.Acknowledge do
     "I acknowledge receipt of this alert and affirm that I understand the context and implications of the situation."
   ]
 
-  # todo:
-  # FunctionClauseError at GET /assignments/acknowledge/94b89a46-4cf5-4af5-8768-e1caa93e2a04
-  # no function clause matching in Calendar.strftime/3
+  # todo today:
+  # states: :expired, :unassigned
+  # if expired don't allow for ack
+  # if unassigned dont't show the form, allow re-assignment, triggers new notification job
+  # if admin, allow admin to see and ack for another user (how to deal with navbar?)
+  # add name to alert description
 
   @impl true
   def mount(_params, _session, socket) do
@@ -130,10 +133,8 @@ defmodule NotifeyeWeb.AssignmentsLive.Acknowledge do
     end
   end
 
-  defp status_color(:open), do: "text-info"
-  defp status_color(:closed), do: "text-success"
-  defp status_color(:expired), do: "text-error"
-  defp status_color(_), do: "text-base-content"
+  defp recurrency_card_style(true), do: {"text-error", "Recurrent"}
+  defp recurrency_card_style(_status), do: {"text-success", "Non Recurrent"}
 
   defp badge_color(:open), do: "badge-info"
   defp badge_color(:closed), do: "badge-success"

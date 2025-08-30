@@ -368,9 +368,11 @@ defmodule Notifeye.Accounts do
   end
 
   def create_admin_user(attrs) do
-    %User{}
-    |> User.admin_changeset(attrs, infer_username: true)
-    |> Repo.insert()
+    if !get_admin_user() do
+      %User{}
+      |> User.admin_changeset(attrs, infer_username: true)
+      |> Repo.insert()
+    end
   end
 
   @doc """

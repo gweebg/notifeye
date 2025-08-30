@@ -1,20 +1,24 @@
 <Layouts.app flash={@flash} current_scope={@current_scope}>
-  <div class="max-w-5xl mx-auto space-y-4 p-4">
+  <div class="max-w-5xl mx-auto my-10 space-y-4">
     <%!-- Header --%>
     <.header>
-      <p class="text-2xl">Acknowledge Assignment</p>
-
-      <:actions>
-        <button class="btn btn-circle btn-soft btn-sm">?</button>
-      </:actions>
+      <p class="text-3xl">Acknowledgement Form</p>
     </.header>
+
+    <%!-- Informative Banner --%>
+    <div :if={@assignment.status == :open} role="alert" class="alert alert-info alert-soft mt-2">
+      <.icon name="hero-information-circle" class="size-6" />
+      <span class="text-sm">
+        The eligibility for restoration depends the recurrency status of the alert and time of acknowledge.
+        <br /> You have up to 24 hours since the assignment to acknowledge the alert.
+      </span>
+    </div>
 
     <%!-- Assignment Status Row --%>
     <div class="flex flex-col md:flex-row gap-4 w-full">
       <%!-- Status Card  --%>
       <.status_card
         title="Assignment Status"
-        title_class={status_color(@assignment.status)}
         description={
           if @assignment.status == :open do
             Calendar.strftime(@assignment.inserted_at, "%Y-%m-%d %H:%M")
@@ -31,107 +35,90 @@
         </div>
       </.status_card>
 
-      <%= if @assignment.status == :open do %>
-        <%!-- Points Card - Open --%>
-        <.status_card
-          title="Point Recovery"
-          title_class={if(@meta.can_recover, do: "text-success", else: "text-error")}
-          description={
-            if @meta.can_recover do
-              "#{@meta.recoverable_standing} point(s) can be restored"
-            else
-              "Not eligible"
-            end
-          }
-        >
-          <% color = if @meta.can_recover, do: "success", else: "error"
-          sign = if @meta.can_recover, do: "+", else: "-" %>
-
-          <div class={"w-7 h-7 bg-#{color} rounded-full font-semibold flex items-center justify-center"}>
-            <span class={"text-xs text-#{color}-content"}>{sign}</span>
-            <span class={"text-#{color}-content text-lg text-bold"}>
-              {@meta.recoverable_standing}
-            </span>
-          </div>
-        </.status_card>
-      <% else %>
-        <%!-- Points Card - Closed --%>
-        <.status_card
-          title="Point Recovery"
-          title_class={
-            if(@assignment.metadata.change_action == :increase,
-              do: "text-success",
-              else: "text-error"
-            )
-          }
-          description={
-            if @assignment.metadata.change_action == :increase do
-              "#{@assignment.metadata.change_amount} point(s) added to your standing"
-            else
-              "Lost #{@assignment.metadata.change_amount} points"
-            end
-          }
-        >
-          <% color =
-            if @assignment.metadata.change_action == :increase, do: "success", else: "error"
-
-          sign = if @assignment.metadata.change_action == :increase, do: "+", else: "-" %>
-
-          <div class={"w-7 h-7 bg-#{color} rounded-full font-semibold flex items-center justify-center"}>
-            <span class={"text-xs text-#{color}-content"}>{sign}</span>
-            <span class={"text-#{color}-content text-lg text-bold"}>
-              {@meta.recoverable_standing}
-            </span>
-          </div>
-        </.status_card>
-      <% end %>
-
-      <%!-- Recurrence Status --%>
+      <%!-- Points Card (Open) --%>
       <.status_card
-        title={
-          if @meta.can_recover do
-            "Non-Recurrent Issue"
-          else
-            "Recurrent Issue"
-          end
-        }
-        title_class={if(@assignment.metadata.recurrent, do: "text-error", else: "text-success")}
+        :if={@assignment.status == :open}
+        title="Your Standing"
         description={
-          if @assignment.metadata.recurrent do
-            "3+ times in 10 days interval"
-          else
-            "3 or less in 10 days interval"
-          end
+          if(@meta.can_recover,
+            do: "#{@meta.recoverable_standing} point(s) can be restored",
+            else: "If acknowledged right now"
+          )
         }
       >
-        <.icon
-          name="hero-arrow-path"
-          class={
-            if(@assignment.metadata.recurrent,
-              do: "h-7 w-7 text-error",
-              else: "h-7 w-7 text-success"
-            )
-          }
-        />
+        <% color = if @meta.can_recover, do: "text-success", else: "text-error"
+        sign = if @meta.can_recover, do: "+", else: "-" %>
+
+        <div class="size-8 rounded-full flex items-center justify-center gap-2 text-lg">
+          {@current_scope.user.standing}
+          <span class={"#{color} text-bold"}>{sign}</span>
+          <span class={"#{color} text-bold"}>
+            {@meta.recoverable_standing}
+          </span>
+        </div>
       </.status_card>
 
-      <%= if @assignment.status == :open do %>
-        <%!-- Time Remaining --%>
-        <.status_card
-          title="Time Remaining"
-          title_class="text-warning"
-          description="Acknowledgment window"
+      <%!-- Points Card (Closed) --%>
+      <.status_card
+        :if={@assignment.status != :open}
+        title="Your Standing"
+        description={
+          if(@assignment.metadata.change_action == :increase,
+            do: "Restored #{@assignment.metadata.change_amount} point(s) to your standing",
+            else: "Lost #{@assignment.metadata.change_amount} points"
+          )
+        }
+      >
+        <% color =
+          if @assignment.metadata.change_action == :increase,
+            do: "text-success",
+            else: "text-error"
+
+        sign = if @assignment.metadata.change_action == :increase, do: "+", else: "-" %>
+
+        <div class="size-8 rounded-full flex items-center justify-center gap-2 text-lg">
+          {@current_scope.user.standing}
+          <span class={"#{color} text-bold"}>{sign}</span>
+          <span class={"#{color} text-bold"}>
+            {@meta.recoverable_standing}
+          </span>
+        </div>
+      </.status_card>
+
+      <%!-- Frequency Card --%>
+      <.status_card
+        title="Frequency"
+        description={
+          if(@assignment.metadata.recurrent,
+            do: "3+ times in 10 days interval",
+            else: "3 or less in 10 days interval"
+          )
+        }
+      >
+        <% {color_class, text} = recurrency_card_style(@assignment.metadata.recurrent) %>
+        <div class="flex flex-row justify-center items-center">
+          <.icon name="hero-arrow-path" class={"size-6 #{color_class}"} />
+          <span class={"ml-2 font-semibold #{color_class}"}>
+            {text}
+          </span>
+        </div>
+      </.status_card>
+
+      <%!-- Time Remaining --%>
+      <.status_card
+        :if={@assignment.status == :open}
+        title="Time Remaining"
+        description="Acknowledgment window"
+      >
+        <div
+          id="countdown"
+          class="text-lg font-bold"
+          phx-hook="Countdown"
+          data-seconds={@meta.time_left}
         >
-          <div
-            id="countdown"
-            class="text-lg font-bold text-warning"
-            phx-hook="Countdown"
-            data-seconds={@meta.time_left}
-          >
-            <span class="loading loading-spinner loading-md"></span>
-          </div>
-        </.status_card>
-      <% end %>
+          <span class="loading loading-spinner loading-md"></span>
+        </div>
+      </.status_card>
     </div>
 
     <%!-- Alert Details --%>
@@ -145,7 +132,7 @@
               <.icon name="hero-arrow-top-right-on-square mb-1" class="w-4 h-4" />
             </.link>
           </p>
-          <span class="badge badge-sm badge-secondary">
+          <span class="badge badge-sm badge-soft">
             {Calendar.strftime(@assignment.alert.start, "%d %b %Y at %H:%M")}
           </span>
         </h3>
@@ -226,7 +213,7 @@
     <%= if @assignment.status != :open do %>
       <div class="card bg-base-100 shadow-sm">
         <div class="card-body">
-          <h3 class="card-title text-success">Assignment Already Acknowledged</h3>
+          <h3 class="card-title text-success">Acknowledged</h3>
           <p class="text-base-content/80">
             This assignment has been closed and can no longer be acknowledged.
           </p>
@@ -240,7 +227,7 @@
     <% else %>
       <form phx-submit="acknowledge" phx-change="validate" class="card bg-base-100 shadow-sm">
         <div class="card-body flex flex-col gap-4">
-          <h3 class="card-title">Acknowledgment Form</h3>
+          <h3 class="card-title">Your Statement</h3>
 
           <p class="text-sm text-base-content/70">
             To acknownledge this alert that was assigned to you, please
@@ -249,7 +236,7 @@
           </p>
 
           <div class="card bg-base-200 flex flex-row gap-2 items-center p-2">
-            <.icon name="hero-chevron-right" class="text-primary w-6 h-6" />
+            <.icon name="hero-chevron-right" class="size-4" />
             <p class="text-sm">
               {@required_phrase}
             </p>
@@ -262,7 +249,7 @@
             phx-hook="NoPaste"
             phx-debounce="250"
             class={[
-              "input input-bordered w-full  resize-none",
+              "input input-bordered w-full resize-none",
               if(@acknowledgment_phrase != "" and @acknowledgment_phrase != @required_phrase,
                 do: "input-error",
                 else:
