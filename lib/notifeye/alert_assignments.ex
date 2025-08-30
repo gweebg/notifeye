@@ -239,6 +239,8 @@ defmodule Notifeye.AlertAssignments do
       changeset =
         AlertAssignment.changeset(%AlertAssignment{status: status}, params)
 
+      # todo: decrease standing ? hello ?
+
       Multi.insert(multi, assignment_key(index), changeset)
     end)
     |> Repo.transaction()
@@ -413,5 +415,127 @@ defmodule Notifeye.AlertAssignments do
       |> Repo.aggregate(:count, :id)
 
     count >= threshold
+  end
+
+  @doc """
+  Transfers an assignment from one user to another.
+
+  This function can only be executed by admin users and is used to reassign
+  an alert assignment to a different user. The assignment must be in :open or :unassigned status.
+
+  ## Parameters
+
+  * `%Scope{}` - Admin scope for the current logged in user.
+  * `%AlertAssignment{}` - The assignment to transfer.
+  * `target_user_id` - The ID of the user to transfer the assignment to.
+
+  ## Returns
+
+  * `{:ok, %AlertAssignment{}}` - If the transfer is successful.
+  * `{:error, reason}` - If the transfer fails.
+  """
+  def transfer_assignment(
+        %Scope{user: %User{role: :admin}} = _scope,
+        %AlertAssignment{status: status} = assignment,
+        target_user_id
+      )
+      when status in [:open, :unassigned] do
+    target_user = Accounts.get_user!(target_user_id)
+
+    # Update assignment with new user and recalculate recurrency
+    is_recurrent = recurrent?(target_user.id, assignment.alert_description_id)
+
+    update_attrs = %{
+      user_id: target_user.id,
+      status: :open,
+      metadata: %{recurrent: is_recurrent}
+    }
+
+    case update_alert_assignment(assignment, update_attrs) do
+      {:ok, updated_assignment} ->
+        {:ok, Repo.preload(updated_assignment, [:user, :alert, :alert_description])}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
+  end
+
+  def transfer_assignment(%Scope{user: %User{role: role}}, _assignment, _target_user_id) do
+    {:error, "Only admin users can transfer assignments, current role: #{role}"}
+  end
+
+  def transfer_assignment(_scope, %AlertAssignment{status: status}, _target_user_id) do
+    {:error,
+     "Assignment cannot be transferred, expected status :open or :unassigned but got #{status}"}
+  end
+
+  @doc """
+  Force acknowledges an assignment without validation.
+
+  This function can only be executed by admin users and bypasses the normal
+  acknowledgment validation (phrase matching, ownership checks).
+
+  ## Parameters
+
+  * `%Scope{}` - Admin scope for the current logged in user.
+  * `%AlertAssignment{}` - The assignment to force acknowledge.
+
+  ## Returns
+
+  * `{:ok, %AlertAssignment{}, current_standing, restored?}` - If successful.
+  * `{:error, reason}` - If the operation fails.
+  """
+  def force_acknowledge_assignment(
+        %Scope{user: %User{role: :admin}} = _scope,
+        %AlertAssignment{status: status} = assignment
+      )
+      when status in [:open] do
+    # Get the assignment owner's current standing for restoration calculation
+    assignment_owner = Accounts.get_user!(assignment.user_id)
+    owner_scope = Scope.for_user(assignment_owner)
+
+    standing_penalty =
+      assignment.alert.alert_severity
+      |> Monitoring.calculate_standing_amount_by_severity()
+
+    can_restore = status == :open && eligible_for_restore?(assignment)
+
+    close_assignment(
+      owner_scope,
+      assignment,
+      standing_penalty,
+      can_restore
+    )
+  end
+
+  def force_acknowledge_assignment(%Scope{user: %User{role: role}}, _assignment) do
+    {:error, "Only admin users can force acknowledge assignments, current role: #{role}"}
+  end
+
+  def force_acknowledge_assignment(_scope, %AlertAssignment{status: status}) do
+    {:error, "Assignment cannot be force acknowledged, expected status :open but got #{status}"}
+  end
+
+  @doc """
+  Lists all users except the specified user ID.
+
+  This is useful for populating transfer assignment dropdowns where
+  we don't want to include the currently assigned user.
+
+  ## Parameters
+
+  * `exclude_user_id` - The user ID to exclude from the results.
+
+  ## Returns
+
+  * A list of users with id, username, and email fields.
+  """
+  def list_users_except(exclude_user_id) do
+    from(u in User,
+      where: u.id != ^exclude_user_id,
+      select: %{id: u.id, username: u.username, email: u.email},
+      order_by: [u.username, u.email]
+    )
+    |> Repo.all()
   end
 end

@@ -5,212 +5,73 @@
       <p class="text-3xl">Acknowledgement Form</p>
     </.header>
 
-    <%!-- Informative Banner --%>
-    <div :if={@assignment.status == :open} role="alert" class="alert alert-info alert-soft mt-2">
-      <.icon name="hero-information-circle" class="size-6" />
-      <span class="text-sm">
-        The eligibility for restoration depends the recurrency status of the alert and time of acknowledge.
-        <br /> You have up to 24 hours since the assignment to acknowledge the alert.
-      </span>
-    </div>
+    <%!-- Alert Messages (conditional based on status) --%>
+    <%= if @meta.alert_message do %>
+      <% {alert_type, message} = @meta.alert_message %>
+      <div role="alert" class={"alert alert-#{alert_type} alert-soft mt-2"}>
+        <.icon
+          name={
+            if alert_type == :warning,
+              do: "hero-exclamation-triangle",
+              else: "hero-information-circle"
+          }
+          class="size-6"
+        />
+        <span class="text-sm">{message}</span>
+      </div>
+    <% end %>
 
-    <%!-- Assignment Status Row --%>
-    <div class="flex flex-col md:flex-row gap-4 w-full">
-      <%!-- Status Card  --%>
-      <.status_card
-        title="Assignment Status"
-        description={
-          if @assignment.status == :open do
-            Calendar.strftime(@assignment.inserted_at, "%Y-%m-%d %H:%M")
-          else
-            Calendar.strftime(@assignment.metadata.closed_at, "%Y-%m-%d %H:%M")
-          end
-        }
-      >
-        <div class={[
-          "badge badge-lg",
-          badge_color(@assignment.status)
-        ]}>
-          {String.capitalize(to_string(@assignment.status))}
+    <%!-- Unassigned Banner --%>
+    <%= if @assignment.status == :unassigned do %>
+      <div role="alert" class="alert alert-warning alert-soft mt-2">
+        <.icon name="hero-exclamation-triangle" class="size-6" />
+        <div class="text-sm">
+          <strong>Unassigned:</strong>
+          This alert has been created but is not assigned to any specific user.
+          Please review the event logs below to determine the appropriate assignee, then use the transfer form to assign it to the correct user.
         </div>
-      </.status_card>
+      </div>
+    <% end %>
 
-      <%!-- Points Card (Open) --%>
-      <.status_card
-        :if={@assignment.status == :open}
-        title="Your Standing"
-        description={
-          if(@meta.can_recover,
-            do: "#{@meta.recoverable_standing} point(s) can be restored",
-            else: "If acknowledged right now"
-          )
-        }
-      >
-        <% color = if @meta.can_recover, do: "text-success", else: "text-error"
-        sign = if @meta.can_recover, do: "+", else: "-" %>
+    <%!-- Assignment Status Section --%>
+    <.live_component
+      module={NotifeyeWeb.Components.Assignments.StatusSection}
+      id="status-section"
+      assignment={@assignment}
+      current_scope={@current_scope}
+      meta={@meta}
+    />
 
-        <div class="size-8 rounded-full flex items-center justify-center gap-2 text-lg">
-          {@current_scope.user.standing}
-          <span class={"#{color} text-bold"}>{sign}</span>
-          <span class={"#{color} text-bold"}>
-            {@meta.recoverable_standing}
-          </span>
-        </div>
-      </.status_card>
-
-      <%!-- Points Card (Closed) --%>
-      <.status_card
-        :if={@assignment.status != :open}
-        title="Your Standing"
-        description={
-          if(@assignment.metadata.change_action == :increase,
-            do: "Restored #{@assignment.metadata.change_amount} point(s) to your standing",
-            else: "Lost #{@assignment.metadata.change_amount} points"
-          )
-        }
-      >
-        <% color =
-          if @assignment.metadata.change_action == :increase,
-            do: "text-success",
-            else: "text-error"
-
-        sign = if @assignment.metadata.change_action == :increase, do: "+", else: "-" %>
-
-        <div class="size-8 rounded-full flex items-center justify-center gap-2 text-lg">
-          {@current_scope.user.standing}
-          <span class={"#{color} text-bold"}>{sign}</span>
-          <span class={"#{color} text-bold"}>
-            {@meta.recoverable_standing}
-          </span>
-        </div>
-      </.status_card>
-
-      <%!-- Frequency Card --%>
-      <.status_card
-        title="Frequency"
-        description={
-          if(@assignment.metadata.recurrent,
-            do: "3+ times in 10 days interval",
-            else: "3 or less in 10 days interval"
-          )
-        }
-      >
-        <% {color_class, text} = recurrency_card_style(@assignment.metadata.recurrent) %>
-        <div class="flex flex-row justify-center items-center">
-          <.icon name="hero-arrow-path" class={"size-6 #{color_class}"} />
-          <span class={"ml-2 font-semibold #{color_class}"}>
-            {text}
-          </span>
-        </div>
-      </.status_card>
-
-      <%!-- Time Remaining --%>
-      <.status_card
-        :if={@assignment.status == :open}
-        title="Time Remaining"
-        description="Acknowledgment window"
-      >
-        <div
-          id="countdown"
-          class="text-lg font-bold"
-          phx-hook="Countdown"
-          data-seconds={@meta.time_left}
-        >
-          <span class="loading loading-spinner loading-md"></span>
-        </div>
-      </.status_card>
-    </div>
+    <%!-- Admin Actions Section --%>
+    <.live_component
+      module={NotifeyeWeb.Components.Assignments.AdminActions}
+      id="admin-actions"
+      assignment={@assignment}
+      current_scope={@current_scope}
+      meta={@meta}
+      available_users={@available_users}
+      transfer_user_id={@transfer_user_id}
+    />
 
     <%!-- Alert Details --%>
-    <div class="card bg-base-100 shadow-sm">
-      <div class="card-body">
-        <%!-- Alert Header --%>
-        <h3 class="card-title mb-4 flex flex-row justify-between">
-          <p>
-            Alert Details
-            <.link navigate={~p"/alerts/#{@assignment.alert.id}"}>
-              <.icon name="hero-arrow-top-right-on-square mb-1" class="w-4 h-4" />
-            </.link>
-          </p>
-          <span class="badge badge-sm badge-soft">
-            {Calendar.strftime(@assignment.alert.start, "%d %b %Y at %H:%M")}
-          </span>
-        </h3>
+    <.live_component
+      module={NotifeyeWeb.Components.Assignments.AlertDetails}
+      id="alert-details"
+      assignment={@assignment}
+    />
 
-        <div class="flex flex-col lg:flex-row gap-6">
-          <div class="flex-1 space-y-4">
-            <%!-- Alert ID --%>
-            <div class="space-y-2">
-              <label class="label">
-                <span class="label-text font-medium">Event ID</span>
-              </label>
-              <p class="text-sm">{@assignment.alert.logz_id}</p>
-            </div>
-            <%!-- Alert Title --%>
-            <div class="space-y-2">
-              <label class="label">
-                <span class="label-text font-medium">Alert Title</span>
-              </label>
-              <p class="text-base-content">{@assignment.alert.alert_title}</p>
-            </div>
-          </div>
+    <%!-- User Acknowledgment Form --%>
+    <.live_component
+      module={NotifeyeWeb.Components.Assignments.AcknowledgmentForm}
+      id="acknowledgment-form"
+      assignment={@assignment}
+      meta={@meta}
+      required_phrase={@required_phrase}
+      acknowledgment_phrase={@acknowledgment_phrase}
+    />
 
-          <div class="flex-1 space-y-4">
-            <%!-- Alert Severity --%>
-            <div class="flex flex-col gap-2">
-              <label class="label">
-                <span class="label-text font-medium">Severity</span>
-              </label>
-              <div class={[
-                "badge",
-                case @assignment.alert.alert_severity do
-                  "high" -> "badge-error"
-                  "medium" -> "badge-warning"
-                  "low" -> "badge-success"
-                  _ -> "badge-neutral"
-                end
-              ]}>
-                {String.capitalize(@assignment.alert.alert_severity)}
-              </div>
-            </div>
-
-            <div class="space-y-2">
-              <label class="label">
-                <span class="label-text font-medium">Tags</span>
-              </label>
-              <div class="flex flex-wrap gap-2">
-                <%= for tag <- @assignment.alert.alert_tags do %>
-                  <div class="badge badge-neutral badge-sm">
-                    {tag}
-                  </div>
-                <% end %>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-4 space-y-2">
-          <label class="label">
-            <span class="label-text font-medium">Description</span>
-          </label>
-          <p>{@assignment.alert.alert_description}</p>
-        </div>
-
-        <%= if @assignment.alert.alert_event_samples do %>
-          <div class="mt-4 space-y-2">
-            <label class="label">
-              <span class="label-text font-medium">Event Samples</span>
-            </label>
-            <div class="card bg-base-200 text-sm p-4">
-              <pre class="whitespace-pre-wrap"><code>{@assignment.alert.alert_event_samples}</code></pre>
-            </div>
-          </div>
-        <% end %>
-      </div>
-    </div>
-
-    <%!-- Acknowledgment Form --%>
-    <%= if @assignment.status != :open do %>
+    <%!-- Closed Assignment Message --%>
+    <%= if @assignment.status == :closed do %>
       <div class="card bg-base-100 shadow-sm">
         <div class="card-body">
           <h3 class="card-title text-success">Acknowledged</h3>
@@ -224,77 +85,24 @@
           </div>
         </div>
       </div>
-    <% else %>
-      <form phx-submit="acknowledge" phx-change="validate" class="card bg-base-100 shadow-sm">
-        <div class="card-body flex flex-col gap-4">
-          <h3 class="card-title">Your Statement</h3>
+    <% end %>
 
-          <p class="text-sm text-base-content/70">
-            To acknownledge this alert that was assigned to you, please
-            type out the phrase bellow. By acknowledging, you confirm that
-            you have reviewed and understood this alert assignment.
+    <%!-- Expired Assignment Message (for non-admin users) --%>
+    <%= if @assignment.status == :expired and @current_scope.user.role != :admin do %>
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+          <h3 class="card-title text-error">Assignment Expired</h3>
+          <p class="text-base-content/80">
+            This assignment has expired and can no longer be acknowledged.
+            Please contact an administrator if you need assistance.
           </p>
-
-          <div class="card bg-base-200 flex flex-row gap-2 items-center p-2">
-            <.icon name="hero-chevron-right" class="size-4" />
-            <p class="text-sm">
-              {@required_phrase}
-            </p>
-          </div>
-
-          <input
-            id="acknowledgment_phrase"
-            name="acknowledgment_phrase"
-            value={@acknowledgment_phrase}
-            phx-hook="NoPaste"
-            phx-debounce="250"
-            class={[
-              "input input-bordered w-full resize-none",
-              if(@acknowledgment_phrase != "" and @acknowledgment_phrase != @required_phrase,
-                do: "input-error",
-                else:
-                  if(@acknowledgment_phrase == @required_phrase,
-                    do: "input-success",
-                    else: ""
-                  )
-              )
-            ]}
-            placeholder="Type the exact phrase here..."
-            required
-            autocomplete="off"
-            spellcheck="false"
-          />
-          <%= if @acknowledgment_phrase != "" and @acknowledgment_phrase != @required_phrase do %>
-            <div class="label">
-              <span class="label-text-alt text-error">
-                Phrase doesn't match. Please type exactly as shown above.
-              </span>
-            </div>
-          <% end %>
-          <%= if @acknowledgment_phrase == @required_phrase do %>
-            <div class="label">
-              <span class="label-text-alt text-success">✓ Phrase matches!</span>
-            </div>
-          <% end %>
-
-          <div class="card-actions justify-end items-center">
-            <button
-              type="submit"
-              phx-disable-with="Saving..."
-              disabled={@acknowledgment_phrase != @required_phrase}
-              class={[
-                "btn mt-2",
-                if(@acknowledgment_phrase != @required_phrase,
-                  do: "btn-disabled",
-                  else: "btn-primary"
-                )
-              ]}
-            >
-              Acknowledge
-            </button>
+          <div class="card-actions justify-end">
+            <.link navigate={~p"/"} class="btn btn-primary">
+              Back to Assignments
+            </.link>
           </div>
         </div>
-      </form>
+      </div>
     <% end %>
   </div>
 </Layouts.app>

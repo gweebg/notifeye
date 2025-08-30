@@ -23,6 +23,11 @@ defmodule NotifeyeWeb.Components do
 
       import NotifeyeWeb.Components.Placeholders.RulesGuide
       import NotifeyeWeb.Components.Placeholders.RulesEmpty
+
+      import NotifeyeWeb.Components.Assignments.StatusSection
+      import NotifeyeWeb.Components.Assignments.AdminActions
+      import NotifeyeWeb.Components.Assignments.AcknowledgmentForm
+      import NotifeyeWeb.Components.Assignments.AlertDetails
     end
   end
 

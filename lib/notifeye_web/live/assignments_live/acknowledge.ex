@@ -25,32 +25,36 @@ defmodule NotifeyeWeb.AssignmentsLive.Acknowledge do
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok,
-     socket
-     |> assign(acknowledgment_phrase: "")}
+    {:ok, assign(socket, acknowledgment_phrase: "", transfer_user_id: nil)}
   end
 
   @impl true
   def handle_params(%{"id" => _id}, _, socket) do
     case socket.assigns.resource do
       %AlertAssignment{} = assignment ->
-        socket =
-          socket
-          |> assign(:assignment, assignment)
-          |> assign(:meta, build_meta(assignment))
-          |> assign(:required_phrase, Enum.random(@phrase_list))
-
-        {:noreply, socket}
+        {:noreply,
+         socket
+         |> assign(:assignment, assignment)
+         |> assign(:meta, build_meta(assignment, socket.assigns.current_scope))
+         |> assign(:required_phrase, Enum.random(@phrase_list))
+         |> assign_available_users(assignment, socket.assigns.current_scope)}
 
       nil ->
         {:noreply,
-         socket |> put_flash(:error, "The assignment doesn't exist.") |> push_navigate(to: ~p"/")}
+         socket
+         |> put_flash(:error, "The assignment doesn't exist.")
+         |> push_navigate(to: ~p"/")}
     end
   end
 
   @impl true
   def handle_event("validate", %{"acknowledgment_phrase" => phrase}, socket) do
     {:noreply, assign(socket, acknowledgment_phrase: phrase)}
+  end
+
+  @impl true
+  def handle_event("validate_transfer", %{"transfer_user_id" => user_id}, socket) do
+    {:noreply, assign(socket, transfer_user_id: user_id)}
   end
 
   @impl true
@@ -73,7 +77,64 @@ defmodule NotifeyeWeb.AssignmentsLive.Acknowledge do
     end
   end
 
-  defp build_meta(%AlertAssignment{} = assignment) do
+  @impl true
+  def handle_event("transfer_assignment", %{"transfer_user_id" => user_id}, socket) do
+    %{assignment: assignment, current_scope: scope} = socket.assigns
+
+    case AlertAssignments.transfer_assignment(scope, assignment, user_id) do
+      {:ok, updated_assignment} ->
+        {:noreply,
+         socket
+         |> put_flash(:success, "Assignment transferred successfully.")
+         |> assign(:assignment, updated_assignment)
+         |> assign(:meta, build_meta(updated_assignment, scope))
+         |> assign_available_users(updated_assignment, scope)}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to transfer assignment: #{inspect(reason)}")}
+    end
+  end
+
+  @impl true
+  def handle_event("force_acknowledge", _params, socket) do
+    %{assignment: assignment, current_scope: scope} = socket.assigns
+
+    case AlertAssignments.force_acknowledge_assignment(scope, assignment) do
+      {:ok, result, new_standing, restored} ->
+        message =
+          if restored do
+            "Assignment force acknowledged successfully! User's current standing is #{new_standing}."
+          else
+            "Assignment force acknowledged successfully."
+          end
+
+        {:noreply,
+         socket
+         |> put_flash(:info, message)
+         |> assign(:assignment, result)
+         |> assign(:meta, build_meta(result, scope))}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to force acknowledge assignment: #{inspect(reason)}")}
+    end
+  end
+
+  # Helper Functions
+
+  defp assign_available_users(socket, assignment, %{user: %{role: :admin}}) do
+    available_users = AlertAssignments.list_users_except(assignment.user_id)
+    assign(socket, :available_users, available_users)
+  end
+
+  defp assign_available_users(socket, _assignment, _scope) do
+    assign(socket, :available_users, [])
+  end
+
+  defp build_meta(%AlertAssignment{} = assignment, scope) do
     time_left = calculate_time_left(assignment)
 
     can_recover_points =
@@ -85,9 +146,46 @@ defmodule NotifeyeWeb.AssignmentsLive.Acknowledge do
       is_recurrent: assignment.metadata.recurrent,
       recoverable_standing: calculate_potential_points(assignment),
       can_recover: can_recover_points,
-      time_left: time_left
+      time_left: time_left,
+      show_status_cards: show_status_cards?(assignment, scope),
+      show_transfer_form: show_transfer_form?(assignment, scope),
+      show_force_acknowledge: show_force_acknowledge?(assignment, scope),
+      show_user_acknowledgment: show_user_acknowledgment?(assignment, scope),
+      alert_message: get_alert_message(assignment)
     }
   end
+
+  # Status and role helper functions
+
+  defp show_status_cards?(%{status: :unassigned}, _scope), do: false
+  defp show_status_cards?(_assignment, _scope), do: true
+
+  defp show_transfer_form?(%{status: status}, %{user: %{role: :admin}})
+       when status in [:open, :unassigned],
+       do: true
+
+  defp show_transfer_form?(_assignment, _scope), do: false
+
+  defp show_force_acknowledge?(%{status: status}, %{user: %{role: :admin}})
+       when status in [:open, :expired],
+       do: true
+
+  defp show_force_acknowledge?(_assignment, _scope), do: false
+
+  defp show_user_acknowledgment?(%{status: :open, user_id: user_id}, %{user: %{id: user_id}}),
+    do: true
+
+  defp show_user_acknowledgment?(_assignment, _scope), do: false
+
+  defp get_alert_message(%{status: :open}),
+    do:
+      {:info,
+       "The eligibility for restoration depends the recurrency status of the alert and time of acknowledge. You have up to 24 hours since the assignment to acknowledge the alert."}
+
+  defp get_alert_message(%{status: :expired}),
+    do: {:warning, "This assignment has expired due to lack of acknowledgment within 24 hours."}
+
+  defp get_alert_message(_assignment), do: nil
 
   defp acknowledge_assignment(socket) do
     %{assignment: assignment, current_scope: scope} = socket.assigns
@@ -106,8 +204,7 @@ defmodule NotifeyeWeb.AssignmentsLive.Acknowledge do
           socket
           |> put_flash(:info, message)
           |> assign(:assignment, result)
-          # no need to rebuild :meta, since status=closed doesn't use any
-          # metadata for display
+          |> assign(:meta, build_meta(result, scope))
         }
 
       {:error, reason} ->
@@ -132,12 +229,4 @@ defmodule NotifeyeWeb.AssignmentsLive.Acknowledge do
       0
     end
   end
-
-  defp recurrency_card_style(true), do: {"text-error", "Recurrent"}
-  defp recurrency_card_style(_status), do: {"text-success", "Non Recurrent"}
-
-  defp badge_color(:open), do: "badge-info"
-  defp badge_color(:closed), do: "badge-success"
-  defp badge_color(:expired), do: "badge-error"
-  defp badge_color(_), do: ""
 end
