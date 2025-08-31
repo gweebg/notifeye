@@ -7,7 +7,7 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.Rule do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias Notifeye.Notifications.Dispatcher
+  alias Notifeye.Notifications.Providers
   alias Notifeye.AlertDescriptions.AlertDescription
   alias Notifeye.AlertDescriptions.AlertDescription.{RuleBlock, RuleClause}
 
@@ -167,7 +167,7 @@ defmodule Notifeye.AlertDescriptions.AlertDescription.Rule do
           |> String.split(",")
           |> Enum.map(&String.trim/1)
 
-        available_methods = Dispatcher.available_providers()
+        available_methods = Providers.names()
         invalid_methods = methods -- available_methods
 
         if invalid_methods == [] do

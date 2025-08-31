@@ -117,17 +117,10 @@ defmodule Notifeye.Rules do
   Returns `true` if the alert satisfies the conditions of the rule, `false`
   otherwise.
 
-  todo: enable rules on processor
   """
-  def check(alert_description_id, alert) do
-    alert_description_id
-    |> get_active_rule()
-    |> apply_rule(alert)
-  end
+  def check(nil, _alert), do: false
 
-  defp apply_rule(nil, _alert), do: false
-
-  defp apply_rule(%Rule{} = rule, alert) do
+  def check(%Rule{} = rule, alert) do
     # any?/2 OR's stuff
     Enum.any?(rule.rule_blocks, &apply_block(&1, alert))
   end

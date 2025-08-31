@@ -17,6 +17,7 @@ defmodule Notifeye.Notifications.Providers.RocketChat do
       is_nil(@webhook_url) ->
         {:skip, "#{provider_name()} provider is missing ROCKET_CHAT_NOTIFICATION_HOOK variable"}
 
+      # todo: remove? is redundant since this check is done at RuleEngine
       not can_notify?(user) ->
         {:skip, "#{provider_name()} is disabled for user #{user.email}"}
 

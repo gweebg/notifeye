@@ -7,9 +7,6 @@ defmodule Notifeye.Accounts.Notifiers.Email do
 
   alias Notifeye.Mailer
   alias Notifeye.Accounts.User
-  alias Notifeye.AlertAssignments.AlertAssignment
-  alias Notifeye.AlertDescriptions.AlertDescription
-  alias Notifeye.Notifications.NotificationGroup
 
   use Phoenix.Swoosh, view: NotifeyeWeb.EmailView
 
@@ -21,7 +18,7 @@ defmodule Notifeye.Accounts.Notifiers.Email do
     case Mailer.deliver(email) do
       {:ok, metadata} ->
         Logger.debug("email delivered successfully",
-          message_id: Map.get(metadata, :id, "fix me")
+          message_id: Map.get(metadata, :id)
         )
 
         {:ok, metadata}
@@ -35,59 +32,56 @@ defmodule Notifeye.Accounts.Notifiers.Email do
     end
   end
 
-  def build_email(
-        %User{} = user,
-        for: {:assignment_created, %AlertAssignment{} = assignment}
-      ) do
-    base_url = NotifeyeWeb.Endpoint.url()
-    user_url = base_url <> "/users/settings"
-    assignment_url = base_url <> "/assignments/#{assignment.id}/acknowledge"
+  defp url(), do: NotifeyeWeb.Endpoint.url()
+
+  # new description
+  def build_email(%User{} = user, :description_created, %{description: d}) do
+    desc_url = "#{url()}/descriptions/#{d.id}"
+
+    base_email(to: user)
+    |> subject("(##{d.id}) A new alert type has been identified")
+    |> assign(:user, user)
+    |> assign(:description, d)
+    |> assign(:description_url, desc_url)
+    |> render_body("description_created.html")
+  end
+
+  # new assignment
+  def build_email(%User{} = user, :assignment_created, %{assignment: a}) do
+    user_url = "#{url()}/users/settings"
+    assignment_url = "#{url()}/assignments/acknowledge/#{a.id}"
 
     base_email(to: user)
     |> subject("You've been assigned to a new alert")
     |> assign(:user, user)
-    |> assign(:assignment, assignment)
+    |> assign(:assignment, a)
     |> assign(:user_url, user_url)
     |> assign(:assignment_url, assignment_url)
     |> render_body("assignment_created.html")
   end
 
-  def build_email(
-        %User{} = user,
-        for: {:description_created, %AlertDescription{} = description}
-      ) do
-    description_url =
-      NotifeyeWeb.Endpoint.url() <>
-        "/admin/descriptions/#{description.id}"
+  # group notification
+  def build_email(%User{} = user, :group_notification, %{group: g, assignment: a}) do
+    desc_url = "#{url()}/descriptions/#{a.alert_description_id}"
+    url = "#{url()}/assignments/acknowledge/#{a.id}"
 
     base_email(to: user)
-    |> subject("(##{description.id}) A new alert type has been identified")
+    |> subject("(##{a.alert_description_id}) Group notification")
     |> assign(:user, user)
-    |> assign(:description, description)
-    |> assign(:description_url, description_url)
-    |> render_body("description_created.html")
-  end
-
-  def build_email(
-        %User{} = user,
-        for: {:group_notification, %NotificationGroup{} = ng, %AlertAssignment{} = as}
-      ) do
-    base_url = NotifeyeWeb.Endpoint.url()
-    desc_url = base_url <> "/admin/descriptions/#{as.alert_description_id}"
-    url = base_url <> "/assignments/#{as.id}/acknowledge"
-
-    base_email(to: user)
-    |> subject("(##{as.alert_description_id}) Group notification")
-    |> assign(:user, user)
-    |> assign(:notification_group, ng)
-    |> assign(:assignment, as)
+    |> assign(:notification_group, g)
+    |> assign(:assignment, a)
     |> assign(:desc_url, desc_url)
     |> assign(:url, url)
     |> render_body("group_notification.html")
   end
 
-  def build_email(%User{} = user, for: _) do
+  # lead notification
+  # todo: build_email
+
+  def build_email(%User{} = user, type, data) do
     base_email(to: user)
+    |> subject(inspect(type))
+    |> text_body(inspect(data))
   end
 
   defp base_email(to: %User{} = user) do
