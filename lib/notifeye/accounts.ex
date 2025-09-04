@@ -517,6 +517,18 @@ defmodule Notifeye.Accounts do
   end
 
   @doc """
+  Returns the User with its `standing` value updated.
+  """
+  def update_standing(%User{} = user, amount, direction)
+      when is_integer(amount) and amount >= 0 do
+    new_standing = calculate_new_standing(user, amount, direction)
+
+    user
+    |> User.standing_changeset(%{standing: new_standing})
+    |> Repo.update()
+  end
+
+  @doc """
   Filter users based on their username or email.
   """
   def filter_users(users, ""), do: users

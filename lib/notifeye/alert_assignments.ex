@@ -209,79 +209,83 @@ defmodule Notifeye.AlertAssignments do
   end
 
   @doc """
-  Creates atomically and in bulk `%AlertAssignments{}`, associated with `description_id`
-  for each user in `users`. If any of the assignments fails during creation, the whole insertion
-  is rollbacked and the function returns.
+  Given the resulting user matches from applying an alert description pattern
+  onto some alert samples, this function tries to match the user match with
+  an `%User{}`, creating the assignment and updating its standing.
 
-  ## Parameters
-
-  * `users` - String list of the matched usernamed. The function tries to match the username
-    to an actual `%User{}`. If it can't, defaults to the `admin` user.
-
-  * `description_id` - The `%AlertDescription{}` id to associate on the assignment.
-
-  * `alert_id` - The `%Alert{}` id to associate on the assignment.
-
-  ## Examples
-
-      iex> create_alert_assignments_bulk(["username1", ..., "usernameN"], 1, "alert-id")
-      {:ok, result}
-
-      iex> create_alert_assignments_bulk(["username1", ..., "usernameN"], 2, "alert-id")
-      {}:error, failed_operation, changeset, _changes}
+  If the match doesn't correspond to an user, then the assignment is created
+  for the `:admin` with the status `:unassigned`.
   """
-  def create_alert_assignments_bulk(users, description_id, alert_id) do
+  def create_assignments_from_matches(users, desc_id, alert_id) when is_list(users) do
     users
-    |> Enum.with_index()
-    |> Enum.reduce(Multi.new(), fn {user_match, index}, multi ->
-      {params, status} = build_assignment_params(user_match, description_id, alert_id)
-
-      changeset =
-        AlertAssignment.changeset(%AlertAssignment{status: status}, params)
-
-      # todo: decrease standing ? hello ?
-
-      Multi.insert(multi, assignment_key(index), changeset)
+    |> Enum.map(fn user_match ->
+      case process_assignment(user_match, desc_id, alert_id) do
+        {:ok, assignment} -> {:ok, Repo.preload(assignment, [:user, :alert])}
+        error -> error
+      end
     end)
-    |> Repo.transaction()
-    |> case do
-      {:ok, assignments_map} ->
-        preloaded_assignments =
-          assignments_map
-          |> Map.values()
-          |> Enum.map(fn a -> Repo.preload(a, [:user, :alert]) end)
-
-        {:ok, preloaded_assignments}
-
-      error ->
-        error
-    end
   end
 
-  defp build_assignment_params(user_match, description_id, alert_id) do
-    {user_id, is_admin} = resolve_user_id(user_match)
-    status = if is_admin, do: :unassigned, else: :open
-
-    # determine if assignment is recurrent
-    is_recurrent = recurrent?(user_id, description_id)
-
-    {%{
-       match: user_match,
-       user_id: user_id,
-       alert_id: alert_id,
-       alert_description_id: description_id,
-       metadata: %{recurrent: is_recurrent}
-     }, status}
-  end
-
-  defp resolve_user_id(user_match) do
+  defp resolve_user(user_match) do
     case Accounts.get_user_by_name_or_alias(user_match) do
       nil -> {Accounts.get_admin_user!().id, true}
       %Accounts.User{id: id} -> {id, false}
     end
   end
 
-  defp assignment_key(index), do: "assignment_#{index}"
+  defp process_assignment(user_match, desc_id, alert_id) do
+    Multi.new()
+    |> Multi.run(:resolved_user, fn _repo, _changes ->
+      {user_id, is_admin} = resolve_user(user_match)
+      {:ok, %{user_id: user_id, is_admin: is_admin}}
+    end)
+    |> Multi.run(:assignment, fn _repo,
+                                 %{resolved_user: %{user_id: user_id, is_admin: is_admin}} ->
+      assignment_changeset =
+        build_assignment_changeset(user_id, is_admin, user_match, desc_id, alert_id)
+
+      if assignment_changeset.valid? do
+        Repo.insert(assignment_changeset)
+      else
+        {:error, assignment_changeset}
+      end
+    end)
+    |> Multi.run(:update_standing, fn _repo, %{assignment: assignment} ->
+      maybe_update_standing(assignment)
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{assignment: assignment}} -> {:ok, assignment}
+      error -> error
+    end
+  end
+
+  defp build_assignment_changeset(user_id, is_admin, user_match, desc_id, alert_id) do
+    status = if is_admin, do: :unassigned, else: :open
+
+    AlertAssignment.changeset(%AlertAssignment{}, %{
+      status: status,
+      match: user_match,
+      user_id: user_id,
+      alert_id: alert_id,
+      alert_description_id: desc_id,
+      metadata: %{
+        recurrent: recurrent?(user_id, desc_id)
+      }
+    })
+  end
+
+  defp maybe_update_standing(%AlertAssignment{status: :open, user_id: user_id, alert_id: alert_id}) do
+    alert = Monitoring.get_alert!(alert_id)
+
+    Accounts.update_standing(
+      Accounts.get_user!(user_id),
+      Monitoring.calculate_standing_amount_by_severity(alert.alert_severity),
+      :decrease
+    )
+  end
+
+  defp maybe_update_standing(_assignment), do: {:ok, :noop}
 
   @doc """
   Acknowledges an alert assignment for a given user.
