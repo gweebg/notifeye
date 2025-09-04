@@ -16,11 +16,6 @@ defmodule NotifeyeWeb.AssignmentsLive.Acknowledge do
     "I acknowledge receipt of this alert and affirm that I understand the context and implications of the situation."
   ]
 
-  # todo today:
-  # states: :expired, :unassigned
-  # if expired don't allow for ack
-  # if unassigned dont't show the form, allow re-assignment, triggers new notification job
-  # if admin, allow admin to see and ack for another user (how to deal with navbar?)
   # add name to alert description
 
   @impl true
