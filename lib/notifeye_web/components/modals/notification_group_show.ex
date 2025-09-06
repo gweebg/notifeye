@@ -122,7 +122,9 @@ defmodule NotifeyeWeb.Components.Modals.NotificationGroupShow do
                   class="flex items-center justify-between p-3 hover:bg-base-200 border-b border-base-200 last:border-b-0"
                 >
                   <div class="flex flex-col">
-                    <span class="text-sm font-medium">{description.name || "Unnamed Description"}</span>
+                    <span class="text-sm font-medium">
+                      {description.name || "Unnamed Description"}
+                    </span>
                     <div class="flex items-center gap-2 mt-2">
                       <span class={[
                         "badge badge-sm",
@@ -134,9 +136,7 @@ defmodule NotifeyeWeb.Components.Modals.NotificationGroupShow do
                       ]}>
                         {String.capitalize(to_string(description.state))}
                       </span>
-                      <span class=
-                        "badge badge-sm badge-neutral"
-                      >
+                      <span class="badge badge-sm badge-neutral">
                         {description.id}
                       </span>
                     </div>
