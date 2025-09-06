@@ -9,7 +9,6 @@ defmodule Notifeye.RulesApplyTest do
   alias Notifeye.Rules
 
   describe "check/2" do
-
     test "returns false when rule exists but is inactive" do
       alert_description = alert_description_fixture()
 
