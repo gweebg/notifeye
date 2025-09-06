@@ -1,4 +1,9 @@
 defmodule Notifeye.Notifications.MessageBuilder do
+  @moduledoc """
+  Module for building `%Message{}` structs from arguments
+  passed onto an Oban `perform/1` job.
+  """
+
   alias Notifeye.{Accounts, AlertAssignments, AlertDescriptions, Notifications}
   alias Notifeye.Notifications.Message
 

@@ -14,9 +14,7 @@ defmodule Notifeye.Notifications.Providers.RocketChat do
 
   @impl true
   def send_notification(%Message{to: %User{} = user} = message) do
-    IO.inspect(@webhook_url)
-
-    if not is_nil(@webhook_url) do
+    if @webhook_url != nil do
       user.notification_preferences.rocket_chat.username
       |> RocketChat.new_body(message.type, message.data)
       |> RocketChat.deliver(url: @webhook_url)
