@@ -141,9 +141,7 @@ defmodule Notifeye.Workers.Processor do
          %AlertAssignment{} = assignment,
          %AlertDescription{} = description
        ) do
-    group_users = Notifications.list_users_to_notify_for_alert(description)
-
-    for %{id: user_id} <- group_users do
+    for %{id: user_id} <- Notifications.list_group_users(description) do
       %{
         user_id: user_id,
         group_id: description.notification_group_id,
