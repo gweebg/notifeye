@@ -70,12 +70,11 @@ defmodule Notifeye.Monitoring do
 
   """
   def list_alerts_since(description_id, opts \\ []) do
-    interval = Keyword.get(opts, :interval, 48 * 60 * 60)
     limit = Keyword.get(opts, :limit, 10)
 
     Alert
     |> where([alert], alert.logz_id == ^description_id)
-    |> where([alert], alert.inserted_at >= ago(^interval, "second"))
+    |> order_by([alert], desc: alert.inserted_at)
     |> limit(^limit)
     |> Repo.all()
   end

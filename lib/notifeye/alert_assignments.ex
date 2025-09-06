@@ -178,12 +178,11 @@ defmodule Notifeye.AlertAssignments do
   This function preloads the `:user` association for each assignment.
   """
   def list_assignments_since(description_id, opts \\ []) do
-    interval = Keyword.get(opts, :interval, 48 * 60 * 60)
     limit = Keyword.get(opts, :limit, 10)
 
     AlertAssignment
     |> where([a], a.alert_description_id == ^description_id)
-    |> where([alert], alert.inserted_at >= ago(^interval, "second"))
+    |> order_by([a], desc: a.inserted_at)
     |> limit(^limit)
     |> preload([:user])
     |> Repo.all()
