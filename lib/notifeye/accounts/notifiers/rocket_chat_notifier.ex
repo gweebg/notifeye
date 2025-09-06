@@ -3,11 +3,6 @@ defmodule Notifeye.Accounts.Notifiers.RocketChat do
 
   require Logger
 
-  alias Notifeye.AlertDescriptions.AlertDescription
-  alias Notifeye.AlertAssignments.AlertAssignment
-  alias Notifeye.AlertDescriptions.AlertDescription
-  alias Notifeye.Notifications.NotificationGroup
-
   def deliver(content, url: webhook_url) do
     Logger.metadata(to: Map.get(content, :channel, "-"), webhook_url: webhook_url)
 
@@ -36,31 +31,29 @@ defmodule Notifeye.Accounts.Notifiers.RocketChat do
     end
   end
 
-  def new_body(
-        username,
-        {:group_notification, %NotificationGroup{} = ng, %AlertAssignment{} = as}
-      ) do
-    base_url = NotifeyeWeb.Endpoint.url()
-    desc_url = base_url <> "/admin/descriptions/#{as.alert_description_id}"
-    url = base_url <> "/assignments/#{as.id}/acknowledge"
+  defp url(), do: NotifeyeWeb.Endpoint.url()
+
+  def new_body(username, :group_notification, %{group: g, assignment: a}) do
+    desc_url = "#{url()}/descriptions/#{a.alert_description_id}"
+    assignment_url = "#{url()}/assignments/acknowledge/#{a.id}"
 
     %{
       channel: "@#{username}",
       attachments: [
         %{
-          title: "(#{ng.name}) A new alert has been assigned!",
-          text: "A new alert of type [#{as.alert_description_id}](#{desc_url}), of
-                 *#{as.alert.alert_severity}* severity has been assigned to the user
-                 #{as.user.username}. See more details by pressing the button bellow.
+          title: "(#{g.name}) A new alert has been assigned!",
+          text: "A new alert of type [#{a.alert_description_id}](#{desc_url}), of
+                 *#{a.alert.alert_severity}* severity has been assigned to the user
+                 #{a.user.username}. See more details by pressing the button bellow.
                  \nYou're receiving this notification because you are part of the
-                 notification group #{ng.name} which is enabled for the alert
-                 description #{as.alert_description_id}.",
+                 notification group #{g.name} which is enabled for the alert
+                 description #{a.alert_description_id}.",
           color: "#0096FF",
           actions: [
             %{
               type: "button",
               text: "Open in Browser",
-              url: url,
+              url: assignment_url,
               buttonType: "primary"
             }
           ]
@@ -69,8 +62,8 @@ defmodule Notifeye.Accounts.Notifiers.RocketChat do
     }
   end
 
-  def new_body(username, {:assignment_created, %AlertAssignment{} = assignment}) do
-    url = NotifeyeWeb.Endpoint.url() <> "/assignments/#{assignment.id}/acknowledge"
+  def new_body(username, :assignment_created, %{assignment: a}) do
+    url = "#{url()}/assignments/acknowledge/#{a.id}"
 
     %{
       channel: "@#{username}",
@@ -95,8 +88,8 @@ defmodule Notifeye.Accounts.Notifiers.RocketChat do
     }
   end
 
-  def new_body(username, {:description_created, %AlertDescription{} = desc}) do
-    url = NotifeyeWeb.Endpoint.url() <> "/admin/descriptions/#{desc.id}/edit"
+  def new_body(username, :description_created, %{description: d}) do
+    url = "#{url()}/descriptions/#{d.id}/edit"
 
     %{
       channel: "@#{username}",
@@ -104,7 +97,7 @@ defmodule Notifeye.Accounts.Notifiers.RocketChat do
         %{
           title: "New Alert Identified!",
           text: "A new alert type has been identified by *Notifeye*. This led to the creation
-            of the [Alert Description #{desc.id}](#{url}) that requires further configuration
+            of the [Alert Description #{d.id}](#{url}) that requires further configuration
             so that future alerts of this type can be processed accordingly.",
           color: "#764FA5",
           actions: [
@@ -120,10 +113,10 @@ defmodule Notifeye.Accounts.Notifiers.RocketChat do
     }
   end
 
-  def new_body(username, _context) do
+  def new_body(username, type, data) do
     %{
       channel: "@#{username}",
-      text: username
+      text: "#{inspect(type)}: #{inspect(data)}"
     }
   end
 end

@@ -6,7 +6,7 @@ defmodule NotifeyeWeb.RulesLive.Form do
   alias Notifeye.Rules
   alias Notifeye.AlertDescriptions.AlertDescription.Rule
   alias Notifeye.AlertDescriptions.Rule.Fields
-  alias Notifeye.Notifications.Dispatcher
+  alias Notifeye.Notifications.Providers
 
   @field_labels %{
     "alert_title" => "Alert Title",
@@ -167,7 +167,7 @@ defmodule NotifeyeWeb.RulesLive.Form do
 
   defp assign_defaults(socket, alert_description_id, rule_id) do
     alert_description = AlertDescriptions.get_alert_description!(alert_description_id)
-    available_providers = Dispatcher.available_providers()
+    available_providers = Providers.names()
 
     {rule, changeset, selected_providers} =
       case rule_id do

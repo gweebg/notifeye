@@ -8,9 +8,12 @@ defmodule Notifeye.Workers.Processor do
   the alert for further processing.
   """
 
+  require Logger
+
   alias Notifeye.{AlertDescriptions, AlertAssignments, Notifications}
   alias Notifeye.AlertDescriptions.AlertDescription
   alias Notifeye.AlertAssignments.AlertAssignment
+  alias Notifeye.Workers
 
   use Oban.Worker,
     queue: :processing,
@@ -28,7 +31,7 @@ defmodule Notifeye.Workers.Processor do
 
     defstruct ~w(alert_id logz_id samples description)a
 
-    def new(alert_id, logz_id, samples) do
+    def init(alert_id, logz_id, samples) do
       %__MODULE__{
         alert_id: alert_id,
         logz_id: logz_id,
@@ -48,7 +51,7 @@ defmodule Notifeye.Workers.Processor do
   def perform(%Oban.Job{
         args: %{"id" => alert_id, "logz_id" => logz_id, "alert_event_samples" => samples}
       }) do
-    context = Context.new(alert_id, logz_id, samples)
+    context = Context.init(alert_id, logz_id, samples)
 
     case AlertDescriptions.get_alert_description(context.logz_id) do
       # create new alert description if it does not exist
@@ -63,11 +66,6 @@ defmodule Notifeye.Workers.Processor do
     end
   end
 
-  @impl true
-  def perform(_job) do
-    {:cancel, "unknown argument type for processor worker"}
-  end
-
   defp create_description(logz_id) do
     with {:ok, %AlertDescription{} = description} <-
            AlertDescriptions.create_alert_description(%{id: logz_id}) do
@@ -76,8 +74,8 @@ defmodule Notifeye.Workers.Processor do
     end
   end
 
-  defp process_alert(%Context{description: %AlertDescription{state: :disabled} = description}) do
-    {:ok, "alert (#{description.id}) is disabled"}
+  defp process_alert(%Context{description: %AlertDescription{id: id, state: :disabled}}) do
+    {:ok, "description #{id} is disabled"}
   end
 
   defp process_alert(%Context{description: description} = context) do
@@ -94,40 +92,70 @@ defmodule Notifeye.Workers.Processor do
   end
 
   defp create_assignments_and_notify(%Context{description: description} = context, users) do
-    # we either create assignments for all users or for none
-    # create_alert_assignments_bulk/2 is atomic and only succeeds if all assignments are created
-    # if at least one error occurs, no assignments are created and the tx are rolled back
-    case AlertAssignments.create_alert_assignments_bulk(users, description.id, context.alert_id) do
-      {:ok, assignments} ->
-        # if desc. is enabled, notify the assigned user(s)
-        if description.state == :enabled do
-          enqueue_assignment_notifications(assignments)
-        end
+    assignments =
+      AlertAssignments.create_assignments_from_matches(
+        users,
+        description.id,
+        context.alert_id
+      )
 
-        if description.notification_group_id do
-          enqueue_group_notifications(assignments, description)
-        end
+    for {status, result} <- assignments do
+      # notify based on the result
+      handle_assignment_notifications(status, result, context)
+    end
 
-        {:ok, assignments}
-
-      # Ecto.Multi error
-      {:error, failed_operation, changeset, _changes} ->
-        {:error,
-         "failed to create alert assignments: #{failed_operation} - #{inspect(changeset)}"}
+    assignments
+    |> Enum.any?(fn {status, _} -> match?(:error, status) end)
+    |> case do
+      true -> {:cancel, assignments}
+      _ -> {:ok, assignments}
     end
   end
 
-  # notify users who were assigned to handle this alert
-  defp enqueue_assignment_notifications(assignments) when is_list(assignments) do
-    assignments
-    |> Enum.each(fn %AlertAssignment{} = assignment ->
-      # serverity = high & (lead != nil | standing < 5)
-      maybe_notify_lead(assignment)
+  defp handle_assignment_notifications(:ok, %AlertAssignment{} = assignment, %Context{
+         description: description
+       }) do
+    if description.state == :enabled do
+      enqueue_assignment_notification(assignment)
+    end
 
-      %{assignment_id: assignment.id}
-      |> Notifeye.Workers.Notifier.new()
+    if description.notification_group_id != nil and
+         description.state in [:enabled, :grouponly] do
+      enqueue_group_notifications(assignment, description)
+    end
+  end
+
+  defp handle_assignment_notifications(:error, error, context) do
+    Logger.error("failed creating assignment", error: error, alert_id: context.alert_id)
+  end
+
+  defp enqueue_assignment_notification(%AlertAssignment{} = assignment) do
+    maybe_notify_lead(assignment)
+
+    %{assignment_id: assignment.id}
+    |> Workers.Notifier.new()
+    |> Oban.insert()
+  end
+
+  defp enqueue_group_notifications(
+         %AlertAssignment{} = assignment,
+         %AlertDescription{} = description
+       ) do
+    for %{id: user_id} <- Notifications.list_group_users(description) do
+      %{
+        user_id: user_id,
+        group_id: description.notification_group_id,
+        assignment_id: assignment.id
+      }
+      |> Workers.Notifier.new()
       |> Oban.insert()
-    end)
+    end
+  end
+
+  defp enqueue_new_alert_notification(%AlertDescription{} = description) do
+    %{description_id: description.id}
+    |> Workers.Notifier.new()
+    |> Oban.insert()
   end
 
   defp maybe_notify_lead(%AlertAssignment{} = assignment) do
@@ -143,31 +171,5 @@ defmodule Notifeye.Workers.Processor do
       |> Notifeye.Workers.Notifier.new()
       |> Oban.insert()
     end
-  end
-
-  # notify all users in the notification group about the alert
-  defp enqueue_group_notifications(
-         assignments,
-         %AlertDescription{} = description
-       ) do
-    users = Notifications.list_users_to_notify_for_alert(description)
-
-    for %AlertAssignment{id: assignment_id} <- assignments,
-        %{id: user_id} <- users do
-      %{
-        user_id: user_id,
-        group_id: description.notification_group_id,
-        assignment_id: assignment_id
-      }
-      |> Notifeye.Workers.Notifier.new()
-      |> Oban.insert()
-    end
-  end
-
-  # notify about a new alert description that needs to be configured
-  defp enqueue_new_alert_notification(%AlertDescription{} = description) do
-    %{description_id: description.id}
-    |> Notifeye.Workers.Notifier.new()
-    |> Oban.insert()
   end
 end

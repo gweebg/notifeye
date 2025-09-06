@@ -260,13 +260,13 @@ defmodule Notifeye.Notifications do
 
   ## Examples
 
-      iex> list_users_to_notify_for_alert(alert_description)
+      iex> list_group_users(alert_description)
       [%User{}, ...]
 
   """
-  def list_users_to_notify_for_alert(%AlertDescription{notification_group_id: nil}), do: []
+  def list_group_users(%AlertDescription{notification_group_id: nil}), do: []
 
-  def list_users_to_notify_for_alert(%AlertDescription{notification_group_id: group_id}) do
+  def list_group_users(%AlertDescription{notification_group_id: group_id}) do
     from(u in User,
       join: ngu in "notification_group_users",
       on: ngu.user_id == u.id,

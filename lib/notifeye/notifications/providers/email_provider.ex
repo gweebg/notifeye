@@ -8,18 +8,16 @@ defmodule Notifeye.Notifications.Providers.Email do
   alias Notifeye.Accounts.User
   alias Notifeye.Accounts.Notifiers.Email
 
-  # , :lead_notification]
+  alias Notifeye.Notifications.Message
+
+  # todo: implement messaging for :lead_notification
   @contexts [:description_created, :assignment_created, :group_notification]
 
   @impl true
-  def send_notification(%User{} = user, context) do
-    if can_notify?(user) do
-      user
-      |> Email.build_email(for: context)
-      |> Email.deliver()
-    else
-      {:skip, "#{provider_name()} is not configured for #{user.username}"}
-    end
+  def send_notification(%Message{} = message) do
+    message.to
+    |> Email.build_email(message.type, message.data)
+    |> Email.deliver()
   end
 
   @impl true

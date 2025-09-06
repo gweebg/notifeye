@@ -7,18 +7,7 @@ defmodule Notifeye.Notifications.Behaviour do
   """
 
   alias Notifeye.Accounts.User
-  alias Notifeye.AlertDescriptions.AlertDescription
-  alias Notifeye.AlertAssignments.AlertAssignment
-  alias Notifeye.Notifications.NotificationGroup
-
-  @typedoc """
-  Types of notifications we will be sending.
-  """
-  @type notification_context ::
-          {:description_created, AlertDescription.t()}
-          | {:assignment_created, AlertAssignment.t()}
-          | {:lead_notification, AlertAssignment.t()}
-          | {:group_notification, NotificationGroup.t(), AlertAssignment.t()}
+  alias Notifeye.Notifications.Message
 
   @doc """
   Sends a notification to a user about an event.
@@ -28,7 +17,7 @@ defmodule Notifeye.Notifications.Behaviour do
   * `{:error, reason}` on failure
   * `{:skip, reason}` if the notification should be skipped
   """
-  @callback send_notification(User.t(), notification_context()) ::
+  @callback send_notification(Message.t()) ::
               {:ok, map()} | {:error, term()} | {:skip, term()}
 
   @doc """

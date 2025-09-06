@@ -7,24 +7,28 @@ defmodule Notifeye.Notifications.Dispatcher do
   the notification through each applicable provider.
   """
 
-  alias Notifeye.Accounts.User
-  alias Notifeye.Notifications.ProviderSelector
+  alias Notifeye.Notifications.Message
 
-  def notify(%User{} = user, context) do
-    applicable_providers = ProviderSelector.select(user, context)
+  @doc """
+  Given a message, uses the `%Message{}`'s own providers to send notifications.
 
+  After execution, returns a map containing the provider name as the keys with,
+  the corresponding result from sending the notification as the value.
+
+  ## Examples
+
+      iex> notify(%Message{providers: [Email, RocketChat]})
+      %Message{results: %{email: result, rocket_chat: result}}
+  """
+  def notify(%Message{} = message) do
     results =
-      applicable_providers
+      message.providers
       |> Enum.map(fn provider ->
-        result = provider.send_notification(user, context)
+        result = provider.send_notification(message)
         {provider.provider_name(), result}
       end)
       |> Enum.into(%{})
 
-    {:ok, results}
-  end
-
-  def available_providers do
-    ProviderSelector.available_providers()
+    %Message{message | results: results}
   end
 end

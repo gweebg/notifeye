@@ -7,23 +7,19 @@ defmodule Notifeye.Notifications.Providers.RocketChat do
 
   alias Notifeye.Accounts.User
   alias Notifeye.Accounts.Notifiers.RocketChat
+  alias Notifeye.Notifications.Message
 
   @contexts [:description_created, :assignment_created, :group_notification]
   @webhook_url System.get_env("ROCKET_CHAT_NOTIFICATION_HOOK")
 
   @impl true
-  def send_notification(%User{} = user, context) do
-    cond do
-      is_nil(@webhook_url) ->
-        {:skip, "#{provider_name()} provider is missing ROCKET_CHAT_NOTIFICATION_HOOK variable"}
-
-      not can_notify?(user) ->
-        {:skip, "#{provider_name()} is disabled for user #{user.email}"}
-
-      true ->
-        user.notification_preferences.rocket_chat.username
-        |> RocketChat.new_body(context)
-        |> RocketChat.deliver(url: @webhook_url)
+  def send_notification(%Message{to: %User{} = user} = message) do
+    if @webhook_url != nil do
+      user.notification_preferences.rocket_chat.username
+      |> RocketChat.new_body(message.type, message.data)
+      |> RocketChat.deliver(url: @webhook_url)
+    else
+      {:skip, "#{provider_name()} provider is missing ROCKET_CHAT_NOTIFICATION_HOOK variable"}
     end
   end
 

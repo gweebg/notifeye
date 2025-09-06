@@ -103,7 +103,7 @@
                           font-weight: bold;
                         "
                       >
-                        Review #18219
+                        Review #<%= @description.id %>
                       </a>
                     </td>
                   </tr>

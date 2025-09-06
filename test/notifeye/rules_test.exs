@@ -9,13 +9,6 @@ defmodule Notifeye.RulesApplyTest do
   alias Notifeye.Rules
 
   describe "check/2" do
-    test "returns false when no active rule exists" do
-      alert_description = alert_description_fixture()
-      alert = alert_fixture(user_scope_fixture())
-
-      assert Rules.check(alert_description.id, alert) == false
-    end
-
     test "returns false when rule exists but is inactive" do
       alert_description = alert_description_fixture()
 
@@ -25,13 +18,13 @@ defmodule Notifeye.RulesApplyTest do
           %{title: "Alert #1"}
         )
 
-      _rule =
+      rule =
         rule_fixture(%{
           alert_description_id: alert_description.id,
           rule_blocks: [single_clause_block("alert_title", "is", "Alert #1")]
         })
 
-      assert Rules.check(alert_description.id, alert) == false
+      assert Rules.check(rule, alert) == false
     end
 
     test "returns true for a single-clause rule" do
@@ -43,14 +36,14 @@ defmodule Notifeye.RulesApplyTest do
           %{alert_title: "Alert #1"}
         )
 
-      _rule =
+      rule =
         rule_fixture(%{
           active: true,
           alert_description_id: alert_description.id,
           rule_blocks: [single_clause_block("alert_title", "starts_with", "Alert")]
         })
 
-      assert Rules.check(alert_description.id, alert) == true
+      assert Rules.check(rule, alert) == true
     end
 
     test "returns false for a single-clause rule" do
@@ -62,14 +55,14 @@ defmodule Notifeye.RulesApplyTest do
           %{alert_title: "Alert #1"}
         )
 
-      _rule =
+      rule =
         rule_fixture(%{
           active: true,
           alert_description_id: alert_description.id,
           rule_blocks: [single_clause_block("alert_title", "matches", "Test.*1")]
         })
 
-      assert Rules.check(alert_description.id, alert) == false
+      assert Rules.check(rule, alert) == false
     end
 
     test "returns true for a multi-clause rule" do
@@ -85,7 +78,7 @@ defmodule Notifeye.RulesApplyTest do
           }
         )
 
-      _rule =
+      rule =
         rule_fixture(%{
           active: true,
           alert_description_id: alert_description.id,
@@ -100,7 +93,7 @@ defmodule Notifeye.RulesApplyTest do
           ]
         })
 
-      assert Rules.check(alert_description.id, alert) == true
+      assert Rules.check(rule, alert) == true
     end
 
     test "returns false for a multi-clause rule (at least one clause fails)" do
@@ -116,7 +109,7 @@ defmodule Notifeye.RulesApplyTest do
           }
         )
 
-      _rule =
+      rule =
         rule_fixture(%{
           active: true,
           alert_description_id: alert_description.id,
@@ -131,7 +124,7 @@ defmodule Notifeye.RulesApplyTest do
           ]
         })
 
-      assert Rules.check(alert_description.id, alert) == false
+      assert Rules.check(rule, alert) == false
     end
 
     test "returns true for a multi-block rule (full-match)" do
@@ -146,7 +139,7 @@ defmodule Notifeye.RulesApplyTest do
           }
         )
 
-      _rule =
+      rule =
         rule_fixture(%{
           alert_description_id: alert_description.id,
           active: true,
@@ -156,7 +149,7 @@ defmodule Notifeye.RulesApplyTest do
           ]
         })
 
-      assert Rules.check(alert_description.id, alert) == true
+      assert Rules.check(rule, alert) == true
     end
 
     test "returns true for a multi-block rule (partial-match)" do
@@ -171,7 +164,7 @@ defmodule Notifeye.RulesApplyTest do
           }
         )
 
-      _rule =
+      rule =
         rule_fixture(%{
           alert_description_id: alert_description.id,
           active: true,
@@ -181,7 +174,7 @@ defmodule Notifeye.RulesApplyTest do
           ]
         })
 
-      assert Rules.check(alert_description.id, alert) == true
+      assert Rules.check(rule, alert) == true
     end
 
     test "returns false for a multi-block rule (none-match)" do
@@ -196,7 +189,7 @@ defmodule Notifeye.RulesApplyTest do
           }
         )
 
-      _rule =
+      rule =
         rule_fixture(%{
           alert_description_id: alert_description.id,
           active: true,
@@ -206,13 +199,13 @@ defmodule Notifeye.RulesApplyTest do
           ]
         })
 
-      assert Rules.check(alert_description.id, alert) == false
+      assert Rules.check(rule, alert) == false
     end
 
     test "checks for a multi-block multi-clause rule" do
       alert_description = alert_description_fixture()
 
-      _rule =
+      rule =
         rule_fixture(%{
           alert_description_id: alert_description.id,
           active: true,
@@ -239,14 +232,14 @@ defmodule Notifeye.RulesApplyTest do
           alert_severity: "high"
         })
 
-      assert Rules.check(alert_description.id, alert1) == true
+      assert Rules.check(rule, alert1) == true
 
       alert2 =
         alert_fixture(user_scope_fixture(), %{
           alert_title: "Emergency Alert"
         })
 
-      assert Rules.check(alert_description.id, alert2) == true
+      assert Rules.check(rule, alert2) == true
 
       alert3 =
         alert_fixture(user_scope_fixture(), %{
@@ -255,7 +248,7 @@ defmodule Notifeye.RulesApplyTest do
           alert_severity: "low"
         })
 
-      assert Rules.check(alert_description.id, alert3) == false
+      assert Rules.check(rule, alert3) == false
 
       alert4 =
         alert_fixture(user_scope_fixture(), %{
@@ -263,13 +256,13 @@ defmodule Notifeye.RulesApplyTest do
           alert_severity: "low"
         })
 
-      assert Rules.check(alert_description.id, alert4) == false
+      assert Rules.check(rule, alert4) == false
     end
 
     test "checks datetime and time operators agains a complex rule" do
       alert_description = alert_description_fixture()
 
-      _rule =
+      rule =
         rule_fixture(%{
           alert_description_id: alert_description.id,
           active: true,
@@ -295,7 +288,7 @@ defmodule Notifeye.RulesApplyTest do
           }
         )
 
-      assert Rules.check(alert_description.id, alert1) == true
+      assert Rules.check(rule, alert1) == true
 
       # should fail first block
       alert2 =
@@ -309,7 +302,7 @@ defmodule Notifeye.RulesApplyTest do
           }
         )
 
-      assert Rules.check(alert_description.id, alert2) == false
+      assert Rules.check(rule, alert2) == false
     end
   end
 end

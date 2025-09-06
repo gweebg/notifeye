@@ -334,7 +334,7 @@ defmodule Notifeye.NotificationsTest do
     end
   end
 
-  describe "list_users_to_notify_for_alert/1" do
+  describe "list_group_users/1" do
     test "returns users when alert description has notification group" do
       user1 = user_fixture()
       user2 = user_fixture()
@@ -348,7 +348,7 @@ defmodule Notifeye.NotificationsTest do
           notification_group
         )
 
-      users = Notifications.list_users_to_notify_for_alert(alert_description)
+      users = Notifications.list_group_users(alert_description)
 
       assert length(users) == 2
       user_ids = Enum.map(users, & &1.id)
@@ -360,7 +360,7 @@ defmodule Notifeye.NotificationsTest do
       alert_description =
         AlertDescriptionsFixtures.alert_description_fixture()
 
-      assert Notifications.list_users_to_notify_for_alert(alert_description) == []
+      assert Notifications.list_group_users(alert_description) == []
     end
 
     test "returns empty list when notification group exists but has no users" do
@@ -371,7 +371,7 @@ defmodule Notifeye.NotificationsTest do
           notification_group
         )
 
-      assert Notifications.list_users_to_notify_for_alert(alert_description) == []
+      assert Notifications.list_group_users(alert_description) == []
     end
   end
 

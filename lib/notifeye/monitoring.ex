@@ -104,6 +104,10 @@ defmodule Notifeye.Monitoring do
     Repo.get_by!(Alert, id: id, user_id: scope.user.id)
   end
 
+  def get_alert!(id) do
+    Repo.get_by!(Alert, id: id)
+  end
+
   @doc """
   Returns an alert that matches a given `%AlertDescription{}` id.
 
@@ -216,7 +220,7 @@ defmodule Notifeye.Monitoring do
       iex> calculate_standing_amount_by_severity("low")
       1
 
-      iex> calculate_standing_amount_by_severity("something"
+      iex> calculate_standing_amount_by_severity("something")
       0
   """
   def calculate_standing_amount_by_severity("low"), do: 1

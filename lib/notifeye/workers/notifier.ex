@@ -7,85 +7,49 @@ defmodule Notifeye.Workers.Notifier do
   an exponential backoff strategy for retries.
   """
 
-  require Logger
-
-  alias Notifeye.Notifications.Dispatcher
-  alias Notifeye.{Accounts, AlertAssignments, AlertDescriptions, Notifications}
+  alias Notifeye.Notifications.{Dispatcher, MessageBuilder, RuleEngine, Message}
 
   use Oban.Worker,
     queue: :notifier,
     max_attempts: 3,
     tags: ["notification"]
 
-  # todo: explore different backoff alternatives
+  # def backoff(attempt) do
+  #   # start at 15 min, then 30, 60...
+  #   base = :math.pow(2, attempt - 1) * 15 * 60
+  #   # add 0–5 min jitter
+  #   jitter = :rand.uniform(5 * 60)
+  #   # cap at 2 hours max
+  #   min(round(base + jitter), 1 * 60 * 60)
+  # end
 
   @doc """
   Performs the notifying job.
   """
   @impl Oban.Worker
   def perform(%Oban.Job{args: args}) do
-    {user, operation} = get_context(for: args)
+    args
+    |> MessageBuilder.from_args()
+    |> RuleEngine.apply()
+    |> Dispatcher.notify()
+    |> handle_result()
+  end
 
-    # results is a map from the provider name (string) to a tuple containing
-    # the result of the notification sending operation
-    # %{provider_name => {:ok|:error, whatever}}
-    {:ok, results} =
-      Dispatcher.notify(user, operation)
-
-    # todo: what to do with the errors?
-    failed_providers =
+  defp handle_result(%Message{results: results} = message) do
+    succeeded =
       results
-      |> Map.filter(fn {_provider, result} -> match?({:error, _}, result) end)
-      |> Map.keys()
+      |> Enum.filter(fn {_provider, res} -> match?({:ok, _}, res) end)
+      |> Enum.map(&elem(&1, 0))
 
-    # if all providers fail, we try again, else we complete the job
-    if length(failed_providers) == length(Map.keys(results)) do
-      {:error, "all providers failed to send notification: #{inspect(failed_providers)}"}
-    else
-      # at least one provider successfully notified the user
-      {:ok, failed_providers}
+    cond do
+      length(succeeded) == map_size(results) ->
+        {:ok, message}
+
+      succeeded != [] ->
+        {:ok, message}
+
+      true ->
+        {:error, message}
     end
-  end
-
-  # follows context types defined in `Notifeye.Notifications.Behaviour`
-  defp get_context(for: %{"description_id" => alert_description_id}) do
-    {
-      Accounts.get_admin_user!(),
-      {:description_created, AlertDescriptions.get_alert_description!(alert_description_id)}
-    }
-  end
-
-  defp get_context(
-         for: %{"user_id" => user_id, "group_id" => group_id, "assignment_id" => assignment_id}
-       ) do
-    user = Accounts.get_user!(user_id)
-
-    assignment =
-      AlertAssignments.get_alert_assignment!(assignment_id, [:alert, :user, :alert_description])
-
-    group = Notifications.get_notification_group!(group_id)
-
-    {user, {:group_notification, group, assignment}}
-  end
-
-  defp get_context(for: %{"lead_id" => lead_id, "assignment_id" => assignment_id}) do
-    assignment =
-      AlertAssignments.get_alert_assignment!(
-        assignment_id,
-        [:alert, :user, :alert_description]
-      )
-
-    lead = Accounts.get_user!(lead_id)
-    {lead, {:lead_notification, assignment}}
-  end
-
-  defp get_context(for: %{"assignment_id" => assignment_id}) do
-    assignment =
-      AlertAssignments.get_alert_assignment!(
-        assignment_id,
-        [:alert, :user, :alert_description]
-      )
-
-    {assignment.user, {:assignment_created, assignment}}
   end
 end

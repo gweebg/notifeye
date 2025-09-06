@@ -15,22 +15,22 @@ defmodule Notifeye.Workers.ProcessorTest do
   @single_sample """
   The following have met the condition:
   [ {
-    "dvchost" : "user1",
+    "host" : "user1",
   } ]
   """
 
   @multi_samples """
   The following have met the condition:
   [ {
-    "dvchost" : "user1",
+    "host" : "user1",
   }, {
-    "dvchost" : "user2",
+    "host" : "user2",
   }, {
-    "dvchost" : "user3",
+    "host" : "user3",
   } ]
   """
 
-  @standard_pattern "\"dvchost\" : \"(?<user>[A-Za-z0-9\\-\\.]+)\""
+  @standard_pattern "\"host\" : \"(?<user>[A-Za-z0-9\\-\\.]+)\""
   @non_matching_pattern ".*database.*"
   @invalid_pattern "["
 
@@ -54,7 +54,7 @@ defmodule Notifeye.Workers.ProcessorTest do
       job = create_job(alert_description.id)
 
       # job is cancelled with a message indicating the alert is disabled
-      expected_message = "alert (#{alert_description.id}) is disabled"
+      expected_message = "description #{alert_description.id} is disabled"
       assert {:ok, ^expected_message} = Processor.perform(job)
 
       # no notifications should be enqueued
@@ -105,7 +105,7 @@ defmodule Notifeye.Workers.ProcessorTest do
 
       job = create_job(alert_description.id)
 
-      assert {:ok, [%AlertAssignment{} = _assignment]} = Processor.perform(job)
+      assert {:ok, [{:ok, %AlertAssignment{} = _assignment}]} = Processor.perform(job)
 
       # verify assignments were created in the database
       [%AlertAssignment{} = assignment] =
@@ -155,7 +155,7 @@ defmodule Notifeye.Workers.ProcessorTest do
 
       job = create_job(description.id)
 
-      {:ok, [%AlertAssignment{} = _assignment]} = Processor.perform(job)
+      {:ok, [{:ok, %AlertAssignment{}}]} = Processor.perform(job)
 
       [%AlertAssignment{} = assignment] =
         AlertAssignments.list_alert_assignments_for_alert_description(description.id)
@@ -184,7 +184,7 @@ defmodule Notifeye.Workers.ProcessorTest do
 
       job = create_job(description.id)
 
-      assert {:ok, [%AlertAssignment{} = _assignment]} = Processor.perform(job)
+      assert {:ok, [{:ok, %AlertAssignment{}}]} = Processor.perform(job)
 
       [%AlertAssignment{} = assignment] =
         AlertAssignments.list_alert_assignments_for_alert_description(description.id)
@@ -223,7 +223,7 @@ defmodule Notifeye.Workers.ProcessorTest do
 
       job = create_job(description.id)
 
-      assert {:ok, [%AlertAssignment{} = _assignment]} = Processor.perform(job)
+      assert {:ok, [{:ok, %AlertAssignment{}}]} = Processor.perform(job)
 
       [%AlertAssignment{} = assignment] =
         AlertAssignments.list_alert_assignments_for_alert_description(description.id)
@@ -270,7 +270,7 @@ defmodule Notifeye.Workers.ProcessorTest do
 
       job = create_job(description.id)
 
-      assert {:ok, [%AlertAssignment{} = _assignment]} = Processor.perform(job)
+      assert {:ok, [{:ok, %AlertAssignment{}}]} = Processor.perform(job)
 
       [%AlertAssignment{} = assignment] =
         AlertAssignments.list_alert_assignments_for_alert_description(description.id)
