@@ -106,7 +106,7 @@ defmodule NotifeyeWeb.AdminLive.AlertDescriptions.Index do
   defp build_filter_param({{key, value}, index}) do
     {op, final_value} =
       case key do
-        "pattern" -> {"ilike", "#{value}"}
+        "name" -> {"ilike", "#{value}"}
         _ -> {"==", value}
       end
 

@@ -122,14 +122,14 @@
 
               <div class="form-control w-full">
                 <label class="label">
-                  <span class="label-text font-medium">Pattern</span>
+                  <span class="label-text font-medium">Name</span>
                 </label>
                 <.input
-                  field={f[:pattern]}
+                  field={f[:name]}
                   type="text"
-                  placeholder="Search pattern..."
+                  placeholder="Search by name..."
                   class="input input-bordered input-sm"
-                  value={@filters["pattern"]}
+                  value={@filters["name"]}
                   phx-debounce="250"
                 />
               </div>
@@ -180,6 +180,12 @@
               </div>
             </:col>
 
+            <:col :let={{_id, alert_description}} label="Description Name">
+              <div class="text-sm truncate max-w-[350px]">
+                {alert_description.name || "-"}
+              </div>
+            </:col>
+
             <:col :let={{_id, alert_description}} label="State" field={:state}>
               <.state_badge state={alert_description.state} />
             </:col>
@@ -188,13 +194,8 @@
               <.verified_badge verified={alert_description.verified} />
             </:col>
 
-            <:col :let={{_id, alert_description}} label="Pattern Preview">
-              <div class="font-mono text-sm truncate max-w-[200px]">
-                {alert_description.pattern || "No pattern"}
-              </div>
-            </:col>
 
-            <:col :let={{_id, alert_description}} label="Notification Group">
+            <:col :let={{_id, alert_description}} label="Group">
               <.notification_group_display notification_group={
                 alert_description.notification_group
               } />
