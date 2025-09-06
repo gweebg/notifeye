@@ -2,7 +2,7 @@
   <div class="m-6 space-y-4 p-4 h-screen">
     <%!-- Header --%>
     <.header>
-      <p class="text-3xl">Description #{@alert_description.id}</p>
+      <p class="text-3xl">{@alert_description.name}</p>
       <:subtitle>
         <div class="breadcrumbs text-sm">
           <ul>
@@ -57,7 +57,7 @@
                 <div class="flex items-center space-x-2">
                   <.icon name="hero-tag" class="w-4 h-4 text-gray-500 mr-1" />
                   <span class="text-sm">
-                    A very long name for this alert description! (TODO)
+                    {@alert_description.name}
                   </span>
                 </div>
               </div>

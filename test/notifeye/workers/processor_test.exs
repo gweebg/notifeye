@@ -36,7 +36,7 @@ defmodule Notifeye.Workers.ProcessorTest do
 
   describe "perform/1" do
     test "creates new description if it doesn't exist" do
-      logz_id = System.unique_integer([:positive])
+      %{logz_id: logz_id} = alert_fixture(user_scope_fixture())
       job = create_job(logz_id)
 
       # job returns the newly created alert description

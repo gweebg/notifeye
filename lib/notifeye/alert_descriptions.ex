@@ -7,6 +7,7 @@ defmodule Notifeye.AlertDescriptions do
   alias Notifeye.Repo
 
   alias Notifeye.AlertDescriptions.AlertDescription
+  alias Notifeye.Monitoring
 
   @doc """
   Returns the list of alert_descriptions.
@@ -100,11 +101,25 @@ defmodule Notifeye.AlertDescriptions do
 
   """
   def create_alert_description(attrs) do
+    attrs = maybe_set_name(attrs)
+
     %AlertDescription{}
     |> AlertDescription.changeset(attrs)
     |> Repo.insert()
     |> broadcast(:new_description)
   end
+
+  defp maybe_set_name(%{name: _} = attrs), do: attrs
+  defp maybe_set_name(%{"name" => _} = attrs), do: attrs
+
+  defp maybe_set_name(%{id: desc_id} = attrs) do
+    case Monitoring.get_latest_alert_for(desc_id) do
+      %{alert_title: title} -> Map.put(attrs, :name, title)
+      _ -> attrs
+    end
+  end
+
+  defp maybe_set_name(attrs), do: attrs
 
   @doc """
   Updates a alert_description.

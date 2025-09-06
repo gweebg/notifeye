@@ -107,6 +107,14 @@ defmodule Notifeye.Monitoring do
     Repo.get_by!(Alert, id: id)
   end
 
+  def get_latest_alert_for(desc_id) when is_integer(desc_id) do
+    Alert
+    |> where([a], a.logz_id == ^desc_id)
+    |> order_by([a], desc: a.inserted_at)
+    |> limit(1)
+    |> Repo.one()
+  end
+
   @doc """
   Returns an alert that matches a given `%AlertDescription{}` id.
 
