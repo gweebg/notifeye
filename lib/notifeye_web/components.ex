@@ -28,6 +28,8 @@ defmodule NotifeyeWeb.Components do
       import NotifeyeWeb.Components.Assignments.AdminActions
       import NotifeyeWeb.Components.Assignments.AcknowledgmentForm
       import NotifeyeWeb.Components.Assignments.AlertDetails
+
+      import NotifeyeWeb.Components.Dashboard.AlertsStats
     end
   end
 
