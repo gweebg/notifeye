@@ -93,7 +93,7 @@ defmodule NotifeyeWeb.Components.Dashboard.AlertsStats do
     """
   end
 
-  defp safe(_from, _key, default \\ 0)
+  defp safe(map, _key, default \\ 0)
   defp safe(nil, _key, default), do: default
-  defp safe(from, key, default), do: Map.get(from, key, default)
+  defp safe(map, key, default), do: Map.get(map, key, default)
 end

@@ -20,7 +20,8 @@ defmodule NotifeyeWeb.DashboardLive do
       |> assign(:notification_stats, %{})
       |> assign(:loading, true)
 
-    # Subscribe to dashboard updates if connected
+    # load_all_stats(socket)
+
     if connected?(socket) do
       Dashboard.subscribe_dashboard_updates()
       send(self(), :load_dashboard_data)
@@ -33,10 +34,6 @@ defmodule NotifeyeWeb.DashboardLive do
   @impl true
   def handle_params(_params, _uri, socket) do
     {:noreply, socket}
-  end
-
-  def handle_event("navigate_alert", %{"id" => id}, socket) do
-    {:noreply, push_navigate(socket, to: ~p"/alerts/#{id}")}
   end
 
   @impl true
@@ -77,6 +74,10 @@ defmodule NotifeyeWeb.DashboardLive do
   @impl true
   def handle_info(_message, socket) do
     {:noreply, socket}
+  end
+
+  def handle_event("navigate_alert", %{"id" => id}, socket) do
+    {:noreply, push_navigate(socket, to: ~p"/alerts/#{id}")}
   end
 
   @impl true
@@ -147,30 +148,26 @@ defmodule NotifeyeWeb.DashboardLive do
   defp format_time_window(:week), do: "Last 7 days"
   defp format_time_window(:month), do: "Last 30 days"
 
-  defp time_window_label(:day), do: "Last 24 hours"
-  defp time_window_label(:week), do: "Last 7 days"
-  defp time_window_label(:month), do: "Last 30 days"
+  # defp format_severity(severity) do
+  #   severity
+  #   |> to_string()
+  #   |> String.capitalize()
+  # end
 
-  defp format_severity(severity) do
-    severity
-    |> to_string()
-    |> String.capitalize()
-  end
+  # defp format_status(status) do
+  #   status
+  #   |> to_string()
+  #   |> String.capitalize()
+  # end
 
-  defp format_status(status) do
-    status
-    |> to_string()
-    |> String.capitalize()
-  end
+  # defp severity_badge_class("high"), do: "badge-error"
+  # defp severity_badge_class("medium"), do: "badge-warning"
+  # defp severity_badge_class("low"), do: "badge-info"
+  # defp severity_badge_class(_), do: "badge-neutral"
 
-  defp severity_badge_class("high"), do: "badge-error"
-  defp severity_badge_class("medium"), do: "badge-warning"
-  defp severity_badge_class("low"), do: "badge-info"
-  defp severity_badge_class(_), do: "badge-neutral"
-
-  defp status_badge_class(:open), do: "badge-warning"
-  defp status_badge_class(:closed), do: "badge-success"
-  defp status_badge_class(:unassigned), do: "badge-info"
-  defp status_badge_class(:expired), do: "badge-error"
-  defp status_badge_class(_), do: "badge-neutral"
+  # defp status_badge_class(:open), do: "badge-warning"
+  # defp status_badge_class(:closed), do: "badge-success"
+  # defp status_badge_class(:unassigned), do: "badge-info"
+  # defp status_badge_class(:expired), do: "badge-error"
+  # defp status_badge_class(_), do: "badge-neutral"
 end

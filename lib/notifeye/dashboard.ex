@@ -72,15 +72,49 @@ defmodule Notifeye.Dashboard do
   Currently focuses on Oban jobs for notifications.
   """
   def get_notification_stats(time_window \\ :week) do
-    # TODO: Implement notification stats from Oban jobs
-    # For now, return basic structure
+    cutoff = get_cutoff_date(time_window)
+    notifications_by_state = get_total_notifications_by_state(cutoff)
+
+    total_count =
+      notifications_by_state
+      |> Map.values()
+      |> Enum.sum()
+
     {:ok,
      %{
-       total_notifications: 0,
-       delivery_breakdown: %{},
-       recent_notifications: [],
+       total_notifications: total_count,
+       delivery_breakdown: get_total_notifications_by_state(cutoff),
+       recent_notifications: get_notifications(cutoff),
        time_window: time_window
      }}
+  end
+
+  def get_total_notifications_by_state(cutoff, queue \\ "notifier") do
+    query =
+      Oban.Job
+      |> where([j], j.queue == ^queue)
+      |> where([j], j.state in ["completed", "cancelled", "discarded"])
+      |> where([j], j.inserted_at >= ^cutoff)
+      |> group_by([j], j.state)
+      |> select([j], {j.state, count(j.id)})
+
+    Oban
+    |> Oban.config()
+    |> Oban.Repo.all(query)
+    |> Enum.into(%{}, fn {state, count} ->
+      {String.to_atom(state), count}
+    end)
+  end
+
+  def get_notifications(cutoff, queue \\ "notifier") do
+    query =
+      Oban.Job
+      |> where([j], j.queue == ^queue)
+      |> where([j], j.inserted_at >= ^cutoff)
+
+    Oban
+    |> Oban.config()
+    |> Oban.Repo.all(query)
   end
 
   # Private helper functions
