@@ -10,9 +10,9 @@ defmodule NotifeyeWeb.NavigationConfig do
       :dashboard,
       %{
         type: :single,
-        label: "Admin Dashboard",
+        label: "Dashboard",
         icon: "hero-rectangle-group",
-        path: "/"
+        path: "/dashboard"
       }
     },
     {

@@ -105,6 +105,7 @@ defmodule NotifeyeWeb.Router do
         {NotifeyeWeb.UserAuth, :ensure_admin},
         {NotifeyeWeb.LiveHooks.CurrentPath, :current_path}
       ] do
+      live "/dashboard", DashboardLive, :index
       live "/descriptions", AdminLive.AlertDescriptions.Index, :index
       live "/descriptions/:id", AdminLive.AlertDescriptions.Show, :show
       live "/descriptions/:id/edit", AdminLive.AlertDescriptions.Edit, :edit
