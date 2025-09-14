@@ -7,10 +7,10 @@ defmodule Notifeye.Notifications do
 
   import Ecto.Query, warn: false
 
-  alias Notifeye.Repo
-  alias Notifeye.Notifications.NotificationGroup
   alias Notifeye.Accounts.User
   alias Notifeye.AlertDescriptions.AlertDescription
+  alias Notifeye.Notifications.{Message, Notification, NotificationGroup}
+  alias Notifeye.Repo
 
   @doc """
   Subscribes to notifications about notification group changes.
@@ -295,5 +295,31 @@ defmodule Notifeye.Notifications do
       preload: [:notification_group]
     )
     |> Repo.all()
+  end
+
+  ## Notifications
+
+  @doc """
+  Creates a notification record from a message.
+
+  ## Parameters
+
+    * `message` - A `%Message{}` struct containing the notification data
+    * `job_id` - The ID of the job associated with this notification
+
+  ## Examples
+
+      iex> message = %Message{recipient: "user@example.com", subject: "Alert", body: "System down"}
+      iex> create_notification(message, "job_123")
+      {:ok, %Notification{}}
+
+      iex> create_notification(invalid_message, "job_123")
+      {:error, %Ecto.Changeset{}}
+  """
+  def create_notification(%Message{} = message, status, job_id) do
+    {status, message}
+    |> Notification.from_message(job_id)
+    |> Notification.changeset(%{})
+    |> Repo.insert()
   end
 end

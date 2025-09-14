@@ -7,7 +7,10 @@ defmodule Notifeye.Workers.Notifier do
   an exponential backoff strategy for retries.
   """
 
-  alias Notifeye.Notifications.{Dispatcher, MessageBuilder, RuleEngine, Message}
+  require Logger
+
+  alias Notifeye.Notifications
+  alias Notifeye.Notifications.{Dispatcher, Message, MessageBuilder, RuleEngine}
 
   use Oban.Worker,
     queue: :notifier,
@@ -27,12 +30,13 @@ defmodule Notifeye.Workers.Notifier do
   Performs the notifying job.
   """
   @impl Oban.Worker
-  def perform(%Oban.Job{args: args}) do
+  def perform(%Oban.Job{args: args} = job) do
     args
     |> MessageBuilder.from_args()
     |> RuleEngine.apply()
     |> Dispatcher.notify()
     |> handle_result()
+    |> maybe_persist(job)
   end
 
   defp handle_result(%Message{results: results} = message) do
@@ -50,6 +54,37 @@ defmodule Notifeye.Workers.Notifier do
 
       true ->
         {:error, message}
+    end
+  end
+
+  defp maybe_persist({:ok, %Message{} = message}, %Oban.Job{id: job_id}) do
+    store_notification(message, :ok, job_id)
+  end
+
+  defp maybe_persist({:error, %Message{} = message}, %Oban.Job{
+         id: job_id,
+         attempt: attempt,
+         max_attempts: max_attempts
+       })
+       when attempt == max_attempts do
+    store_notification(message, :error, job_id)
+  end
+
+  defp maybe_persist({:error, %Message{} = _m} = r, %Oban.Job{id: _id}), do: r
+
+  defp store_notification(%Message{} = m, status, job_id) do
+    # IO.inspect(m.results, label: "store_notification -->")
+
+    case Notifications.create_notification(m, status, job_id) do
+      {:ok, _notification} ->
+        :ok
+
+      {:error, changeset} ->
+        Logger.error("""
+        failed to insert notification:
+          oban_job=#{job_id}
+          changeset=#{inspect(changeset)}
+        """)
     end
   end
 end

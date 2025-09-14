@@ -5,8 +5,7 @@ defmodule Notifeye.Accounts.User do
 
   import Ecto.Changeset
 
-  alias Notifeye.Accounts
-  alias Notifeye.Notifications
+  alias Notifeye.{Accounts, Notifications, AlertDescriptions, AlertAssignments}
 
   @roles ~w(user admin lead)a
 
@@ -27,12 +26,13 @@ defmodule Notifeye.Accounts.User do
 
     belongs_to :lead, __MODULE__
 
-    has_many :alert_assignments, Notifeye.AlertAssignments.AlertAssignment, on_replace: :delete
+    has_many :alert_assignments, AlertAssignments.AlertAssignment, on_replace: :delete
 
-    has_many :alert_descriptions, Notifeye.AlertDescriptions.AlertDescription,
-      foreign_key: :edited_by
+    has_many :alert_descriptions, AlertDescriptions.AlertDescription, foreign_key: :edited_by
 
-    many_to_many :notification_groups, Notifeye.Notifications.NotificationGroup,
+    has_many :notifications, Notifications.Notification, foreign_key: :recipient_id
+
+    many_to_many :notification_groups, Notifications.NotificationGroup,
       join_through: "notification_group_users",
       join_keys: [user_id: :id, notification_group_id: :id],
       on_replace: :delete
