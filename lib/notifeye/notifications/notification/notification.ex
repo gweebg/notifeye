@@ -6,7 +6,7 @@ defmodule Notifeye.Notifications.Notification do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias Notifeye.Accounts
+  alias Notifeye.{Accounts, Utils}
   alias Notifeye.Notifications.Message
 
   @types ~w(description_created assignment_created lead_notification group_notification)a
@@ -45,8 +45,6 @@ defmodule Notifeye.Notifications.Notification do
   Raises if `oban_job_id` is `nil`.
   """
   def from_message({status, %Message{} = message}, oban_job_id) when oban_job_id != nil do
-    # IO.inspect(message.results, label: "from_message -->")
-
     providers = message.providers |> Enum.map(& &1.provider_name())
     success = if status == :ok, do: true, else: false
 
@@ -55,7 +53,7 @@ defmodule Notifeye.Notifications.Notification do
       success: success,
       providers: providers,
       metadata: message.metadata,
-      results: message.results,
+      results: Utils.encode(message.results),
       recipient_id: message.to.id,
       oban_job_id: oban_job_id
     }
